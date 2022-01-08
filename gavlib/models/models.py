@@ -3,6 +3,7 @@ from statsmodels.tools.sm_exceptions import ConvergenceWarning
 import statsmodels.formula.api as smf
 from statsmodels.regression.mixed_linear_model import MixedLM
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 
 
@@ -74,7 +75,7 @@ class LinearMixedEffectsModel():
             
         self._y = y
         
-        df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=variablenames)
+        df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=varnames)
         formula = f'{varnames[-1]} ~ {varnames[0]}'
         for varname in varnames[1:-1]:
             formula += f' + {varname}'
@@ -108,8 +109,8 @@ class LinearMixedEffectsModel():
         Inputs
         ------
         ax : pyplot axes, optional, default=gca()
-        plus_minus_colors : list or np.array, length=2, default blue,red
-            Colors to use for the effect lines when they are significantly positive or negative.
+        plus_minus_colors : list or np.array, length=2, default red, blue
+            Colors to use for the effect lines when they are significantly positive or negative, respectively.
         line_alpha : float, default=0.06
             alpha value for lines
         markersize : float, default=8
@@ -123,7 +124,7 @@ class LinearMixedEffectsModel():
             ax = plt.gca()
         
         if plus_minus_colors is None:
-            plus_minus_colors = np.array([[97., 164, 205], [255., 44, 0]]) / 255 # blue and red
+            plus_minus_colors = np.array([[255., 44, 0], [97., 164, 205]]) / 255 # blue and red
         
         model_params = self.get_model_params()
         
