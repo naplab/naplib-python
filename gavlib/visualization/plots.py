@@ -3,17 +3,33 @@ import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
 
-def shadederrorplot(x, y, ax=None, plt_args={}, shade_args={}):
+def shadederrorplot(x, y, ax=None, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Inputs
     ------
     x : shape (time,)
-    y : shape (time, n_samples) 
+    y : shape (time, n_samples)
+    nan_policy : string, default='omit'
+        One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
+        inputs, if 'raise', will raise a ValueError if nan is found in input, if
+        'propogate', do not do anything special with nan values.
+    Raises
+    ------
+    ValueError : if nan found in input
     '''
+    if nan_policy not in ['omit','raise','propogate']:
+        raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
+    if nan_policy == 'raise':
+        if np.any(np.isnan(x)) or np.any(np.isnan(y)):
+            raise ValueError('Found nan in input')
     if ax is None:
         ax = plt.gca()
-    y_mean = y.mean(1)
-    y_err = y.std(1) / np.sqrt(y.shape[1])
+    if nan_policy == 'omit':
+        y_mean = np.nanmean(y, axis=1)
+        y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+    else:
+        y_mean = y.mean(1)
+        y_err = y.std(1) / np.sqrt(y.shape[1])
     ax.plot(x, y_mean, **plt_args)
     ax.fill_between(x, y_mean-y_err, y_mean+y_err, **shade_args)
     
