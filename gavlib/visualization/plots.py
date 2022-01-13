@@ -66,12 +66,16 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     cluster = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
     cluster_labels = cluster.fit_predict(data)
 
-    axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4)
+    if cmap=='bwr':
+        mm1 = np.abs(data.reshape((-1)).min())
+        mm2 = np.abs(data.reshape((-1)).max())
+        mm = max([mm1, mm2])
+        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4, vmin=-mm, vmax=mm)
+    else:
+        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4)
     if varnames:
         axes[1].set_yticks([i for i in range(len(varnames))])
         axes[1].set_yticklabels(varnames, fontsize=8)
-    else:
-        axes[1].set_yticks([])
 
     axes[1].set_xticks([])
 
