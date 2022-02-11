@@ -66,7 +66,13 @@ class LinearMixedEffectsModel():
             varnames.append('y')
         if len(varnames) != X.shape[1] + 1:
             raise Exception(f'Error: incorrect length of input "varnames". Must include name for each feature in X as well as a name for predicted y.')
+        
         self.varnames = varnames
+        
+        # remove spaces and dashes because they break the smf.mixedlm formula
+        varnames_formula = varnames.copy()
+        for bad_char in [' ', '-']:
+            varnames_formula = [v.replace(bad_char, '') for v in varnames_formula]
         
         warnings.simplefilter('ignore', ConvergenceWarning)
         
@@ -75,10 +81,11 @@ class LinearMixedEffectsModel():
             
         self._y = y
         
-        df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=varnames)
-        formula = f'{varnames[-1]} ~ {varnames[0]}'
-        for varname in varnames[1:-1]:
+        df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=varnames_formula)
+        formula = f'{varnames_formula[-1]} ~ {varnames_formula[0]}'
+        for varname in varnames_formula[1:-1]:
             formula += f' + {varname}'
+            
         mixedlm = smf.mixedlm(formula=formula, data=df_tmp, groups=[1 for _ in range(df_tmp.shape[0])])
         mixedlm_results = mixedlm.fit()
         
@@ -177,4 +184,4 @@ class LinearMixedEffectsModel():
         rss_tot = np.sum(np.square(self._y-self._y.mean()))
         rss_res = np.sum(np.square(self.mixedlm_results.resid))
         return 1.0 - rss_res/rss_tot
-        
+
