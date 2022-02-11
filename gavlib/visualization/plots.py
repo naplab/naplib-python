@@ -3,12 +3,15 @@ import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
 
-def shadederrorplot(x, y, ax=None, plt_args={}, shade_args={}, nan_policy='omit'):
+def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Inputs
     ------
     x : shape (time,)
     y : shape (time, n_samples)
+    ax : plt axes to use
+    err_method : string, default='stderr
+        One of ['stderr','std'], the method to use to calculate error bars.
     nan_policy : string, default='omit'
         One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
         inputs, if 'raise', will raise a ValueError if nan is found in input, if
@@ -24,12 +27,22 @@ def shadederrorplot(x, y, ax=None, plt_args={}, shade_args={}, nan_policy='omit'
             raise ValueError('Found nan in input')
     if ax is None:
         ax = plt.gca()
+    allowed_errors = ['stderr','std']
+    if err_method not in allowed_errors:
+        raise ValueError(f'err_method must be one of {allowed_errors}, but found {err_method}')
     if nan_policy == 'omit':
         y_mean = np.nanmean(y, axis=1)
-        y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+        if err_method == 'stderr':
+            y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+        elif err_method == 'std':
+            y_err = np.nanstd(y, axis=1)
     else:
         y_mean = y.mean(1)
-        y_err = y.std(1) / np.sqrt(y.shape[1])
+        if err_method == 'stderr':
+            y_err = y.std(1) / np.sqrt(y.shape[1])
+        elif err_method == 'std':
+            y_err = y.std(1)
+        
     ax.plot(x, y_mean, **plt_args)
     ax.fill_between(x, y_mean-y_err, y_mean+y_err, **shade_args)
     
