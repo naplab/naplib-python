@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-from scipy.stats import zscore
+
 from ..out_struct import OutStruct
 
 def normalize(data, field=None, axis=-1, method='zscore'):
