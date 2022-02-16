@@ -35,12 +35,13 @@ class OutStruct(object):
         
         self._data = data
                 
-    def set_field(self, field, fieldname):
+    def set_field(self, fielddata, fieldname):
         '''
         Parameters
         ----------
-        field : list
-            Must be same length as this object
+        fielddata : list
+            List containing data to add to each trial for this field. Must 
+            be same length as this object
         fieldname : string
             Name of field to add. If this field already exists in the OutStruct
             then the current field will be overwritten.
@@ -48,10 +49,10 @@ class OutStruct(object):
         Returns
         -------
         '''
-        if len(field) != len(self):
+        if len(fielddata) != len(self):
             raise Exception('Length of field is not equal to length of this OutStruct')
         for i in range(len(self.data)):
-            self.data[i][fieldname] = field[i]
+            self.data[i][fieldname] = fielddata[i]
             
     def get_field(self, fieldname):
         '''
