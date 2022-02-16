@@ -12,13 +12,11 @@ class OutStruct(object):
     data : list of dictionaries
         The Nth ictionary defines the trial_data for the Nth stimulus.
         Each dictionary must contain the same keys.
-
     Methods
     -------
     set_field(field, fieldname)
     get_field(fieldname)
     append(trial_data)
-
     Attributes
     ----------
     fields : list of strings
@@ -45,7 +43,6 @@ class OutStruct(object):
         fieldname : string
             Name of field to add. If this field already exists in the OutStruct
             then the current field will be overwritten.
-
         Returns
         -------
         '''
@@ -62,7 +59,6 @@ class OutStruct(object):
         ----------
         fieldname : string
             Which field to get.
-
         Returns
         -------
         field : list
@@ -79,7 +75,6 @@ class OutStruct(object):
         ----------
         index : int
             Which trial to get.
-
         Returns
         -------
         trial_data : dict
@@ -99,7 +94,6 @@ class OutStruct(object):
             Which trial to get.
         trial_data : dict
             Dictionary containing all the same fields as current OutStruct object.
-
         Returns
         -------
         '''
@@ -118,7 +112,6 @@ class OutStruct(object):
         ----------
         trial_data : dict
             Dictionary containing all the same fields as current OutStruct object.
-
         Returns
         -------
         '''

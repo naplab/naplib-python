@@ -2,6 +2,7 @@ from copy import deepcopy
 import numpy as np
 
 from ..out_struct import OutStruct
+from ..utils import _parse_outstruct_args
 
 def normalize(outstruct=None, data='resp', axis=-1, method='zscore'):
     '''Normalize data over multiple trials. If you are trying to normalize a single matrix,
@@ -31,9 +32,8 @@ def normalize(outstruct=None, data='resp', axis=-1, method='zscore'):
     normalized_data : list of np.ndarrays
     
     '''
-
-    if isinstance(outstruct, OutStruct):
-        data = outstruct.get_field(data)
+    
+    data = _parse_outstruct_args(outstruct, data)
     
     if method not in ['zscore', 'center']:
         raise ValueError(f"Bad method input. method must be one of ['zscore', 'center'], but found {method}")
