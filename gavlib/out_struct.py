@@ -1,6 +1,7 @@
+from collections.abc import Iterable
 import numpy as np
 
-class OutStruct(object):
+class OutStruct(Iterable):
     '''
     Class for storing electrode response data along with
     task- and electrode-related variables. Under the hood, it consists
@@ -130,6 +131,31 @@ class OutStruct(object):
 
     def __len__(self):
         return len(self.data)
+    
+    def __repr__(self):
+        return self.__str__() # until we can think of a better __repr__
+    
+    def __str__(self):
+        to_return = f'OutStruct of {len(self)} trials containing {len(self.fields)} fields\n['
+        fieldnames = self.fields
+        to_print = 2 if len(self) > 3 else 3
+        for trial in self[:to_print]:
+            to_return += '{'
+            for f, fieldname in enumerate(fieldnames):
+#                 to_return += f'"{fieldname}": {trial[fieldname].__str__()}'
+                to_return += f'"{fieldname}": {type(trial[fieldname])}'
+                if f < len(fieldnames)-1:
+                    to_return += ', '
+            to_return += '}\n'
+        if to_print == 2:
+            to_return += '...\n'
+            for f, fieldname in enumerate(fieldnames):
+#                 to_return += f'"{fieldname}": {self[-1][fieldname].__str__()}'
+                to_return += f'"{fieldname}": {type(self[-1][fieldname])}'
+                if f < len(fieldnames)-1:
+                    to_return += ', '
+            to_return += '}'
+        return to_return
     
     @property
     def fields(self):
