@@ -4,7 +4,7 @@ import numpy as np
 from ..out_struct import OutStruct
 from ..utils import _parse_outstruct_args
 
-def normalize(outstruct=None, data='resp', axis=-1, method='zscore'):
+def normalize(outstruct=None, data='resp', axis=0, method='zscore'):
     '''Normalize data over multiple trials. If you are trying to normalize a single matrix,
     it must be passed in inside a list, or with an extra first dimension.
     

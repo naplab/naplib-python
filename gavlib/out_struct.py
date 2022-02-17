@@ -13,11 +13,18 @@ class OutStruct(Iterable):
     data : list of dictionaries
         The Nth ictionary defines the trial_data for the Nth stimulus.
         Each dictionary must contain the same keys.
+    strict : bool, default=True
+        If True, requires strict adherance to the following standard
+            - Each trial must contain at least the following fields:
+              ['name','sound','soundf','resp','dataf']
+            - Each trial must contain the exact same set of fields
+        
     Methods
     -------
     set_field(field, fieldname)
     get_field(fieldname)
     append(trial_data)
+    
     Attributes
     ----------
     fields : list of strings
@@ -25,14 +32,13 @@ class OutStruct(Iterable):
     data : list of dictionaries
         Data for each stimulus response and all associated variables
     
-    Returns
-    -------
-    self : returns an instance of self
-    
     '''
-    def __init__(self, data):
+    def __init__(self, data, strict=True):
         
         self._data = data
+        self._strict = strict
+        self._validate_new_out_data(data, strict=strict)
+
                 
     def set_field(self, fielddata, fieldname):
         '''
@@ -81,10 +87,15 @@ class OutStruct(Iterable):
         trial_data : dict
             Returns the index'th 
         '''
+        if isinstance(index, str):
+            return self.get_field(index)
+        if isinstance(index, list):
+            return OutStruct([dict([(field, x[field]) for field in index]) for x in self], strict=False)
         try:
             return self.data[index]
         except IndexError:
             raise IndexError(f'Index invalid for this data.')
+        
 
             
     def __setitem__(self, index, trial_data):
@@ -98,14 +109,17 @@ class OutStruct(Iterable):
         Returns
         -------
         '''
-        if index >= len(self):
-            raise IndexError((f'Index is too large. Current data is length {len(self)} '
-                'but tried to set index {index}. If you want to add to the end of the list '
-                'of trials, use the OutStruct.append() method.'))
+        if isinstance(index, str):
+            self.set_field(trial_data, index)
         else:
-            self.data[index] = trial_data
+            if index >= len(self):
+                raise IndexError((f'Index is too large. Current data is length {len(self)} '
+                    'but tried to set index {index}. If you want to add to the end of the list '
+                    'of trials, use the OutStruct.append() method.'))
+            else:
+                self.data[index] = trial_data
      
-    def append(self, trial_data):
+    def append(self, trial_data, strict=None):
         '''
         Append trial data to end of OutStruct.
         
@@ -113,21 +127,28 @@ class OutStruct(Iterable):
         ----------
         trial_data : dict
             Dictionary containing all the same fields as current OutStruct object.
+        strict : bool, default=self._strict
+            If true, enforces that new data contains the exact same set of fields as
+            the current OutStruct. Default value is self._strict, which is set based
+            on the input when creating a new OutStruct from scratch with __init__()
+
         Returns
         -------
         '''
+        if strict is None:
+            strict = self._strict
+        self._validate_new_out_data([trial_data], strict=strict)
         self.data.append(trial_data)
         
     def __iter__(self):
-        self._iter_n = 0
-        return self
+        return (self[i] for i in range(len(self)))
 
-    def __next__(self):
-        if self._iter_n < len(self):
-            self._iter_n += 1
-            return self[self._iter_n-1]
-        else:
-            raise StopIteration
+#     def __next__(self):
+#         if self._iter_n < len(self):
+#             self._iter_n += 1
+#             return (self[i] for i in range(len(self)))
+#         else:
+#             raise StopIteration
 
     def __len__(self):
         return len(self.data)
@@ -157,6 +178,16 @@ class OutStruct(Iterable):
             to_return += '}'
         return to_return
     
+    def _validate_new_out_data(self, input_data, strict=True):
+        
+        first_trial_fields = set(self.fields)
+        for t, trial in enumerate(input_data):
+            if not isinstance(trial, dict):
+                raise TypeError(f'input data is not a list of dicts, found {type(trial)}')
+            trial_fields = set(trial.keys())
+            if strict and trial_fields != first_trial_fields:
+                raise ValueError(f'New data does not contain the same fields as the first trial.')        
+        
     @property
     def fields(self):
         '''Get names of all fields in this object'''
@@ -166,3 +197,16 @@ class OutStruct(Iterable):
     def data(self):
         return self._data
 
+    
+def concatenate_outstructs(outstructs=None, fieldname='resp', axis=-1):
+    '''
+    Concatenate trials from a field of multiple OutStruct objects by zipping them
+    together and concatenating each trial together.
+    
+    Parameters
+    ----------
+    outstructs
+    '''
+    
+    
+    
