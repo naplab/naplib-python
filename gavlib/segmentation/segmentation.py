@@ -87,6 +87,7 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
                     segments.append(x_i[change_point-prechange_samples:change_point+postchange_samples])
                 new_labels.append(new_lab)
                 prior_labels.append(prior_lab)
+
                 for i, other_labs in enumerate(other_labels_i):
                     other_labels_to_return[i].append(other_labs[change_point-prechange_samples:change_point+postchange_samples])
                     
