@@ -10,9 +10,9 @@ class OutStruct(Iterable):
     
     Parameters
     ----------
-    data : list of dictionaries
-        The Nth ictionary defines the trial_data for the Nth stimulus.
-        Each dictionary must contain the same keys.
+    data : dict or list of dictionaries
+        The Nth ictionary defines the Nth trial data, typically for the Nth stimulus.
+        Each dictionary must contain the same keys if passed in a list of multiple trials.
     strict : bool, default=True
         If True, requires strict adherance to the following standard
             - Each trial must contain at least the following fields:
