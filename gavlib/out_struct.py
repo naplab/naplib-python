@@ -143,13 +143,6 @@ class OutStruct(Iterable):
     def __iter__(self):
         return (self[i] for i in range(len(self)))
 
-#     def __next__(self):
-#         if self._iter_n < len(self):
-#             self._iter_n += 1
-#             return (self[i] for i in range(len(self)))
-#         else:
-#             raise StopIteration
-
     def __len__(self):
         return len(self.data)
     
@@ -198,15 +191,50 @@ class OutStruct(Iterable):
         return self._data
 
     
-def concatenate_outstructs(outstructs=None, fieldname='resp', axis=-1):
+def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
     '''
-    Concatenate trials from a field of multiple OutStruct objects by zipping them
-    together and concatenating each trial together.
+    Join trials from a field of multiple OutStruct objects by zipping them
+    together and concatenating each trial together. The field must be of type
+    np.ndarray and concatenation is done with np.concatenate().
     
     Parameters
     ----------
-    outstructs
+    outstructs : sequence of OutStructs
+        Sequence containing the different outstructs to join
+    fieldname : string, default='resp'
+        Name of the field to concatenate from each OutStruct. For each trial in
+        each outstruct, this field must be of type np.ndarray or something which
+        can be input to np.concatenate().
+    axis : int, default = -1
+        Axis along which to concatenate each trial's data. The default corresponds
+        to the channel dimension of the conventional 'resp' field of an OutStruct.
+    return_outstruct : bool, default=False
+        If True, returns data as an OutStruct with a single field named fieldname.
+
+    Returns
+    -------
+    joined_data : list of np.ndarrays, or OutStruct
+        Joined data of same length as each of the outstructs containing concatenated data
+        for each trial.
     '''
     
+    for out in outstructs:
+        if not isinstance(out, OutStruct):
+            raise TypeError(f'All inputs must be an OutStruct but found {type(out)}')
+        field = out.get_field(fieldname)
+        if not isinstance(field[0], np.ndarray):
+            raise TypeError(f'Can only concatenate np.ndarrays, but found {type(starting_field[0])} in this field')
+
+    starting_fields = [out.get_field(fieldname) for out in outstructs] # each one should be a list of np.arrays
     
+    to_return = []
+    
+    zipped_fields = list(zip(*starting_fields))
+    for i, field_set in enumerate(zipped_fields):
+        to_return.append(np.concatenate(field_set, axis=axis))
+        
+    if return_outstruct:
+        return OutStruct([dict([(fieldname, x)]) for x in to_return], strict=False)
+    return to_return
+        
     

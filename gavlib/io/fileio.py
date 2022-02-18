@@ -2,9 +2,9 @@ import numpy as np
 from hdf5storage import loadmat
 from ..out_struct import OutStruct
 
-def import_out_struct(filepath, strict=True):
+def import_outstruct(filepath, strict=True):
     '''
-    Import out structure from matlab format. Transpose 'resp' field
+    Import outstruct from matlab (.mat) format. Transpose 'resp' field
     so that it is shape (time, channels)
 
     Parameters
