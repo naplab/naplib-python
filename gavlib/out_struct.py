@@ -1,4 +1,4 @@
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 import numpy as np
 
 class OutStruct(Iterable):
@@ -53,6 +53,8 @@ class OutStruct(Iterable):
         Returns
         -------
         '''
+        if not isinstance(fielddata, list):
+            raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
         if len(fielddata) != len(self):
             raise Exception('Length of field is not equal to length of this OutStruct')
         for i in range(len(self.data)):
@@ -84,33 +86,45 @@ class OutStruct(Iterable):
             Which trial to get.
         Returns
         -------
-        trial_data : dict
-            Returns the index'th 
+        data : dict, list, or naplib.OutStruct
+            If index is an integer, returns the corresponding trial as a dict. If index
+            is a string, returns the corresponding field, and if it is a list of strings,
+            returns those fields together in a new OutStruct object.
         '''
         if isinstance(index, str):
             return self.get_field(index)
-        if isinstance(index, list):
-            return OutStruct([dict([(field, x[field]) for field in index]) for x in self], strict=False)
+        if isinstance(index, list) or isinstance(index, np.ndarray):
+            if isinstance(index[0], str):
+                return OutStruct([dict([(field, x[field]) for field in index]) for x in self], strict=False)
+            else:
+                return OutStruct([self.data[i] for i in index], strict=False)
+#             else:
+#                 raise IndexError(f'Cannot index from a list if it is not a list of '
+#                                  f'strings or integers, found list of {type(index[0])}')
         try:
+            # TODO: change this to return a type OutStruct if you do slicing - problem with trying to
+            # print because it says KeyError for self.data[0] for key 0
             return self.data[index]
         except IndexError:
-            raise IndexError(f'Index invalid for this data.')
+            raise IndexError(f'Index invalid for this data. Tried to index {index} but length is {len(self)}.')
         
 
             
-    def __setitem__(self, index, trial_data):
+    def __setitem__(self, index, data):
         '''
         Parameters
         ----------
-        index : int
-            Which trial to get.
-        trial_data : dict
-            Dictionary containing all the same fields as current OutStruct object.
+        index : int or string
+            Which trial to set, or which field to set.
+        data : dict or list of data
+            Either trial data to add or field data to add. If index is an
+            integer, dictionary should contain all the same fields as
+            current OutStruct object.
         Returns
         -------
         '''
         if isinstance(index, str):
-            self.set_field(trial_data, index)
+            self.set_field(data, index)
         else:
             if index >= len(self):
                 raise IndexError((f'Index is too large. Current data is length {len(self)} '
@@ -151,24 +165,28 @@ class OutStruct(Iterable):
     
     def __str__(self):
         to_return = f'OutStruct of {len(self)} trials containing {len(self.fields)} fields\n['
-        fieldnames = self.fields
+        
         to_print = 2 if len(self) > 3 else 3
         for trial in self[:to_print]:
+            fieldnames = [k for k,_ in trial.items()]
             to_return += '{'
             for f, fieldname in enumerate(fieldnames):
 #                 to_return += f'"{fieldname}": {trial[fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(trial[fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
-            to_return += '}\n'
-        if to_print == 2:
-            to_return += '...\n'
+            to_return += '}'
+        if to_print == 3:
+             to_return += ']\n'
+        elif to_print == 2:
+            to_return += '\n...\n{'
+            fieldnames = [k for k,_ in self[-1].items()]
             for f, fieldname in enumerate(fieldnames):
 #                 to_return += f'"{fieldname}": {self[-1][fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(self[-1][fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
-            to_return += '}'
+            to_return += '}]'
         return to_return
     
     def _validate_new_out_data(self, input_data, strict=True):
