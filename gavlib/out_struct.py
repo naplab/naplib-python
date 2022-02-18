@@ -35,7 +35,14 @@ class OutStruct(Iterable):
     '''
     def __init__(self, data, strict=True):
         
-        self._data = data
+        if isinstance(data, dict):
+            data = [data]
+            self._data = data
+        elif isinstance(data, list):
+            self._data = data
+        else:
+            raise TypeError(f'Can only create OutStruct from a dict or a list '
+                            f'of dicts, but found type {type(data)}')
         self._strict = strict
         self._validate_new_out_data(data, strict=strict)
 
@@ -91,6 +98,8 @@ class OutStruct(Iterable):
             is a string, returns the corresponding field, and if it is a list of strings,
             returns those fields together in a new OutStruct object.
         '''
+        if isinstance(index, slice):
+            return OutStruct(self.data[index])
         if isinstance(index, str):
             return self.get_field(index)
         if isinstance(index, list) or isinstance(index, np.ndarray):
@@ -167,20 +176,23 @@ class OutStruct(Iterable):
         to_return = f'OutStruct of {len(self)} trials containing {len(self.fields)} fields\n['
         
         to_print = 2 if len(self) > 3 else 3
-        for trial in self[:to_print]:
-            fieldnames = [k for k,_ in trial.items()]
+        for trial_idx, trial in enumerate(self[:to_print]):
+            fieldnames = list(trial.keys())
             to_return += '{'
             for f, fieldname in enumerate(fieldnames):
 #                 to_return += f'"{fieldname}": {trial[fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(trial[fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
-            to_return += '}'
+            if trial_idx < len(self)-1:
+                to_return += '}\n'
+            else:
+                to_return += '}'
         if to_print == 3:
              to_return += ']\n'
         elif to_print == 2:
             to_return += '\n...\n{'
-            fieldnames = [k for k,_ in self[-1].items()]
+            fieldnames = list(self[-1].keys())
             for f, fieldname in enumerate(fieldnames):
 #                 to_return += f'"{fieldname}": {self[-1][fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(self[-1][fieldname])}'
