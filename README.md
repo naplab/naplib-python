@@ -1,5 +1,5 @@
-# gavlib
-Tools and functions for neural data processing and analysis in python
+# naplib-python
+Tools and functions for neural acoustic data processing and analysis in python
 
 
 ## Installation
@@ -7,7 +7,7 @@ Tools and functions for neural data processing and analysis in python
 To install or update this package through pip, run the following command:
 
 ```bash
-pip install git+https://github.com/gavinmischler/gavlib.git
+pip install git+https://github.com/gavinmischler/naplib-python.git
 ```
 
 ## API

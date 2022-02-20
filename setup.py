@@ -3,16 +3,18 @@ import sys
 from setuptools import setup, find_packages
 
 
-PACKAGE_NAME = "gavlib"
+PACKAGE_NAME = "naplib"
 DESCRIPTION = "Tools and functions for neural data processing and analysis in python"
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
 AUTHOR = (
     "Gavin Mischler",
+    "Vinay Raghavan",
+    "Menoua Keshishian"
 )
 AUTHOR_EMAIL = "gm2944@columbia.edu"
-URL = "https://github.com/gavinmischler/gavlib"
-MINIMUM_PYTHON_VERSION = 3, 5  # Minimum of Python 3.6
+URL = "https://github.com/gavinmischler/naplib-python"
+MINIMUM_PYTHON_VERSION = 3, 5  # Minimum of Python 3.5
 with open("./requirements.txt", "r") as f:
     REQUIRED_PACKAGES = f.read()
 
