@@ -46,3 +46,57 @@ def import_outstruct(filepath, strict=True):
     
     out = OutStruct(data=data)
     return out
+
+def load(filename):
+    '''
+    Load OutStruct or other object from saved file.
+    
+    Parameters
+    ----------
+    filename : string
+        File to load. If doesn't end with .pkl this will be added
+        automatically.
+    
+    Returns
+    -------
+    output : naplib.OutStruct or other object
+        Loaded object.
+    
+    Raises
+    ------
+    FileNotFoundError
+        Can't find file.
+    
+    '''
+    
+    if not filename.endswith('.pkl') and '.' not in filename:
+        filename = filename + '.pkl'
+        
+    with open(filename, 'rb') as inp:
+        output = pickle.load(inp)
+
+    return output
+
+
+def save(filename, obj):
+    '''
+    Save OutStruct or other object with pickle.
+    
+    Parameters
+    ----------
+    filename : string
+        File to load. If doesn't end with .pkl this will be added
+        automatically.
+    obj : OutStruct or other object
+        Data to save.
+    
+    Returns
+    -------
+    
+    '''
+    
+    if not filename.endswith('.pkl') and '.' not in filename:
+        filename = filename + '.pkl'
+    
+    with open(filename, 'wb') as f:
+        pickle.dump(out, f)
