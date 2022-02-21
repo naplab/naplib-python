@@ -37,6 +37,8 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     '''
     Cut x around the transition points given by the changes in the labels.
     
+    Parameters
+    ----------
     outstruct : naplib.OutStruct object, optional
         OutStruct containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` argument. 
@@ -49,12 +51,13 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
             are not used for segmentation but their values surrounding the transition point are returned in a tuple of labels
     elec_lag : list or array-like, default=None
         Provides the lag (in samples) of each electrode, must be length=n_electrodes=data[i].shape[1].
-        Only used if not None.
+        Only used if not None. This can be computed with many methods, for example, using
+        ``nl.segmentation.electrode_lags_fratio``.
         
     Returns
     -------
     segments : array of shape (n_segments, time, electrode, *, ...)
-    
+        Segments cut from data surrounding label transition points.
     labels : array-like
         If input labels is just a list, then is of shape (n_segments,) providing new label after transition point
         If input labels is a tuple of lists, then this is a tuple of array-likes, where the first is the
@@ -85,10 +88,7 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
         label_changepoints, labels_at_changepoints, labels_before_changepoints = get_label_change_points(labels_i)
         
         label_changepoints = label_changepoints.astype('int')
-        good_locs = labels_at_changepoints>0
-        label_changepoints = label_changepoints[good_locs]
-        labels_at_changepoints = labels_at_changepoints[good_locs]
-        labels_before_changepoints = labels_before_changepoints[good_locs]
+        labels_before_changepoints = labels_before_changepoints.astype('int')
         
         for i_c, (change_point, new_lab, prior_lab) in enumerate(zip(label_changepoints[:-1], labels_at_changepoints[:-1], labels_before_changepoints[:-1])):
             if change_point > prechange_samples and change_point+postchange_samples < x_i.shape[0]:
@@ -108,10 +108,12 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     else:
         return np.array(segments), np.array(new_labels), np.array(prior_labels)
     
-def compute_electrode_lags(outstruct=None, data=None, labels=None, max_lag=20, return_fratios=False):
+def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, return_fratios=False):
     '''
     Compute lags of each electrode based on peak of fratio to a given label, such as phoneme labels.
     
+    Parameters
+    ----------
     outstruct : naplib.OutStruct object, optional
         OutStruct containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` argument. 
