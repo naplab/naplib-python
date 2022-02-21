@@ -1,3 +1,4 @@
+import pickle
 import numpy as np
 from hdf5storage import loadmat
 from ..out_struct import OutStruct
@@ -92,11 +93,10 @@ def save(filename, obj):
     
     Returns
     -------
-    
     '''
     
     if not filename.endswith('.pkl') and '.' not in filename:
         filename = filename + '.pkl'
     
     with open(filename, 'wb') as f:
-        pickle.dump(out, f)
+        pickle.dump(obj, f)
