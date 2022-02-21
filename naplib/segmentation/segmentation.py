@@ -10,9 +10,21 @@ from ..utils import _parse_outstruct_args
 
 def get_label_change_points(x):
     '''return the indices where x changes from one categorical (integer) value to another.
-    For example, if x is [0, 0, 0, 1, 1, 3, 3], return will be [0, 3, 5]
+    For example, if x is [0, 0, 0, 1, 1, 3, 3], locations returned will be [3, 5]
     
-    x : array of shape (time, )
+    Parameters
+    ----------
+    x : np.ndarray of shape (time,)
+        Label vector over time.
+    
+    Returns
+    -------
+    locs : array of shape (n_changes, )
+        Indices where labels change.
+    labels : array of shape (n_changes, )
+        New label (from input `x`) after each transition.
+    prior_labels : array of shape (n_changes, )
+        Old label (from input `x`) before each transition.
     '''
     
     diff_x = np.concatenate([np.array([0]), np.diff(x)])
