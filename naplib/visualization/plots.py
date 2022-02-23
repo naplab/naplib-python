@@ -5,17 +5,22 @@ import matplotlib.pyplot as plt
 
 def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args={}, nan_policy='omit'):
     '''
-    Inputs
-    ------
+    Parameters
+    ----------
     x : shape (time,)
     y : shape (time, n_samples)
     ax : plt axes to use
     err_method : string, default='stderr
         One of ['stderr','std'], the method to use to calculate error bars.
+    plt_args : dict
+        Args to be passed to plt.plot(). e.g. 'color','linewidth',...
+    shade_args : dict
+        Args to be passed to plt.fill_between(). e.g. 'color','alpha',...
     nan_policy : string, default='omit'
         One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
         inputs, if 'raise', will raise a ValueError if nan is found in input, if
         'propogate', do not do anything special with nan values.
+        
     Raises
     ------
     ValueError : if nan found in input
@@ -27,6 +32,9 @@ def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args=
             raise ValueError('Found nan in input')
     if ax is None:
         ax = plt.gca()
+    if 'alpha' not in shade_args:
+        shade_args['alpha'] = 0.5
+
     allowed_errors = ['stderr','std']
     if err_method not in allowed_errors:
         raise ValueError(f'err_method must be one of {allowed_errors}, but found {err_method}')
@@ -49,8 +57,8 @@ def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args=
 
 def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
     '''
-    Inputs
-    ------
+    Parameters
+    ----------
     data : shape (n_samples, n_features)
     axes : array of length 2 containing matplotlib axes (optional)
         axes[0] will be for the dendrogram and axes[1] will be for the data

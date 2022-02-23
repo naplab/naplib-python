@@ -8,17 +8,14 @@ def get_phoneme_label_vector(phn_file, length, fs, befaft, mode='phonemes', retu
     Returns label vector as numpy array of shape (time, ) containing categorical labels.
     Assumes that the .phn files were made on wav files that did not have a befaft zero period.
 
+    Parameters
+    ----------
     phn_file : string, path to .phn file
-
     length : int, length of stimulus (in samples) including befaft periods
-
     fs : int, sampling rate
-
     befaft : array or list of length 2, containing befaft time periods in seconds
-
     mode : string, either 'phonemes', or 'manner'. Any empty or 'sp' periods are labeled -1.
         If 'manner': labels correspond to ['plosive','fricative','nasal','sonorant']
-
     return_label_lists : bool, if True, returns a 2-tuple containing the labels as well as the list
         of possible labels, so that the index of a label in the list is the integer label assigned to it.
         
@@ -113,23 +110,17 @@ def get_word_label_vector(wrd_file, length, fs, befaft, wrd_dict=None, wrd_files
     Parameters
     ----------
     wrd_file : string, path to .wrd file
-
     length : int
         length of stimulus (in samples) including befaft periods
-
     fs : int, sampling rate
-
     befaft : array or list of length 2
         containing befaft time periods in seconds
-    
     wrd_dict : dict
         keys are words (capitalized) and values are integers which become the labels for each word
-    
     wrd_files_dir : string
         Path to directory containing all the .wrd files to be included in the dictionary. This is
         ignored if wrd_dict is supplied, but otherwise, a new wrd_dict is created using the .wrd
         files in this directory. By default, this will make 'sp' (space) have a label of -1.
-        
     return_wrd_dict : bool
         Whether or not to return the wrd_dict along with the labels as a tuple
         
@@ -137,7 +128,6 @@ def get_word_label_vector(wrd_file, length, fs, befaft, wrd_dict=None, wrd_files
     -------
     labels : np.array, shape (time,)
         Integer labels over time. Full length is befaft[0]*fs+length+befaft[1]*fs
-        
     wrd_dict : dict
         Word dictionary (word to integer) used to create the labels.
         Only returned if return_wrd_dict==True
@@ -181,9 +171,13 @@ def create_wrd_dict(wrd_files_dir, list_to_skip=[]):
     ----------
     wrd_files_dir : string
         Path to directory containing all the .wrd files to be used
-        
     list_to_skip : list of strings, default=[]
         Words which will not be added to the dictionary.
+        
+    Returns
+    -------
+    wrd_dict : dict
+        Dictionary of word:int (key:value) pairs for all the words in the corpus of files in the directory.
     '''
     
     pattern = r'[0-9]'
