@@ -1,3 +1,3 @@
-from .operations import sliding_window
+from .operations import sliding_window, concat_apply
 
-__all__ = ['sliding_window']
+__all__ = ['sliding_window','concat_apply']
