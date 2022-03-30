@@ -1,4 +1,10 @@
 import copy
+import contextlib
+from functools import partialmethod
+from contextlib import contextmanager,redirect_stderr,redirect_stdout
+from os import devnull
+
+import tqdm
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_X_y
@@ -8,6 +14,17 @@ from mne.decoding.receptive_field import _reshape_for_est, _delays_to_slice, _ti
 
 from ..out_struct import OutStruct
 from ..utils import _parse_outstruct_args
+
+
+@contextmanager
+def suppress_stdout_stderr():
+    """A context manager that redirects stdout and stderr to devnull.
+    This is used to suppress tqdm outputs from fitting, which produce
+    a progress bar to sys.stderr."""
+    with open(devnull, 'w') as fnull:
+        with redirect_stderr(fnull) as err, redirect_stdout(fnull) as out:
+            yield (err, out)
+
 
 class TRF(BaseEstimator):
     '''
@@ -114,7 +131,7 @@ class TRF(BaseEstimator):
             if y is not None:
                 y = y.reshape(-1, y.shape[-1], order='F')
         return X, y
-    
+
     def fit(self, outstruct=None, X='aud', y='resp'):
         '''
         Fit a multi-output model to the data in X and y, which contain multiple trials.
@@ -194,7 +211,7 @@ class TRF(BaseEstimator):
                 y_thistarget = y_thistarget[:,np.newaxis,:]
             
             if len(self.alpha) > 1:
-                print(f'  Running cross-validation on alphas...')
+                print(f'Running cross-validation on alphas...')
                 
                 scores = []
                 
@@ -217,10 +234,12 @@ class TRF(BaseEstimator):
                     
                     # Create input features
                     X_train_delayed, y_train_delayed = self._delay_and_reshape(X_train, y_train)
-
-                    cov_, x_y_, n_ch_x, X_offset, y_offset = _compute_corrs(
-                        X_train_delayed, y_train_delayed, self._smin, self._smax, self.n_jobs,
-                        self.fit_intercept, edge_correction=True)
+                    
+                    # use this context manager to suppress tqdm output
+                    with suppress_stdout_stderr():
+                        cov_, x_y_, n_ch_x, X_offset, y_offset = _compute_corrs(
+                            X_train_delayed, y_train_delayed, self._smin, self._smax, self.n_jobs,
+                            self.fit_intercept, edge_correction=True)
                     rf.cov_ = cov_
                     rf.estimator.cov_ = cov_
                     rf.estimator_ = rf.estimator
@@ -251,12 +270,14 @@ class TRF(BaseEstimator):
                 ix_best_alpha_lap = np.argmax(mean_scores)
                 best_alpha_thistarget = self.alpha[ix_best_alpha_lap]
                 _print_alpha_xvals(self.alpha, mean_scores)
-                print('chose alpha={:.2e}'.format(best_alpha_thistarget))
+                print('chose alpha={:.2e}\n'.format(best_alpha_thistarget))
             else:
                 best_alpha_thistarget = self.alpha[0]
                 
             rf = self._get_single_RF_model(alpha_val=best_alpha_thistarget)
-            rf.fit(X_, y_thistarget)
+            # use this context manager to suppress tqdm output
+            with suppress_stdout_stderr():
+                rf.fit(X_, y_thistarget)
             # remove last lag of weights because it has significant edge effect
             rf.estimator_.coef_ = rf.coef_[:,:,:-1]
             rf.coef_ = rf.coef_[:,:,:-1] 
