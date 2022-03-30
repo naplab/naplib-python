@@ -129,11 +129,17 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None):
     
     if tmin is not None and tmax is not None:
         delays_sec = np.linspace(tmin, tmax, coef.shape[1])
+        lag_string = 'Lag (s)'
     else:
         delays_sec = np.arange(0, coef.shape[1])
+        lag_string = 'Lag (samples)'
+        
+    ax.set_xlabel(lag_string)
     
     if freqs is None:
         freqs = np.arange(0, coef.shape[0])
+        ax.set_ylabel('Frequency')
+        
     
     kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
               cmap='bwr', shading='gouraud')

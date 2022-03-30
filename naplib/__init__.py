@@ -2,6 +2,7 @@ import naplib.alignment
 import naplib.segmentation
 import naplib.stats
 import naplib.visualization
+import naplib.encoding
 import naplib.io
 import naplib.preprocessing
 import naplib.array_ops
