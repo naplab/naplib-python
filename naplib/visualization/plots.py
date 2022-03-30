@@ -104,3 +104,37 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     plt.show()
     
     return dend, cluster_labels
+
+
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None):
+    '''
+    Plot STRF weights as image. Weights are automatically centered at 0
+    so the center of the colormap is 0.
+    
+    Parameters
+    ----------
+    coef : np.array, shape (freq, lag)
+    tmin : float, optional
+        Time of first lag (first column)
+    tmax : float, optional
+        Time of final lag (last column)
+    freqs : list or array-like, length=coef.shape[0]
+        Frequency of each row in STRF.
+    ax : plt axes to use, optional
+    
+    '''
+    
+    if ax is None:
+        ax = plt.gca()
+    
+    if tmin is not None and tmax is not None:
+        delays_sec = np.linspace(tmin, tmax, coef.shape[1])
+    else:
+        delays_sec = np.arange(0, coef.shape[1])
+    
+    if freqs is None:
+        freqs = np.arange(0, coef.shape[0])
+    
+    kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
+              cmap='bwr', shading='gouraud')
+    ax.pcolormesh(delays_sec, freqs, coef, **kwargs)

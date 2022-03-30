@@ -1,3 +1,3 @@
-from .plots import shadederrorplot, hierarchicalclusterplot
+from .plots import shadederrorplot, hierarchicalclusterplot, imSTRF
 
-__all__  = ['shadederrorplot', 'hierarchicalclusterplot']
+__all__  = ['shadederrorplot', 'hierarchicalclusterplot', 'imSTRF']
