@@ -5,6 +5,7 @@ from contextlib import contextmanager,redirect_stderr,redirect_stdout
 from os import devnull
 
 import tqdm
+from tqdm import tqdm as tqdm_
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_X_y
@@ -63,9 +64,13 @@ class TRF(BaseEstimator):
     n_jobs : int | str
         Number of jobs to run in parallel. Can be 'cuda' if CuPy
         is installed properly and ``estimator is None``.
-    random_state : int, default=1
-        Random state for generation of random gaussian noise
-        if ``noise_between_trials`` is True in self.fit().
+    verbose : int, default=1
+        Level of printing output desired.
+        0 prints nothing, 1 prints only a single tqdm progress bar for
+        the fitting over the n-outputs in .fit(), and 2 prints information about
+        cross-validation, such as the alpha value chosen and the corresponding scores,
+        during the fitting procedure for each output.
+        
 
     Notes
     -----
@@ -87,7 +92,7 @@ class TRF(BaseEstimator):
                  fit_intercept=False,
                  scoring='corrcoef',
                  n_jobs=1,
-                 random_state=1):
+                 verbose=1):
         
         if tmin >= tmax:
             raise ValueError(f'tmin must be less than tmax, but got {tmin} and {tmax}')
@@ -104,7 +109,7 @@ class TRF(BaseEstimator):
         self.fit_intercept = fit_intercept
         self.scoring = scoring
         self.n_jobs = n_jobs
-        self.random_state = random_state
+        self.verbose = verbose
         
         if len(self.alpha) > 1 and self.xval_test_portion > 0.5:
             raise ValueError(f'xval_test_portion must be no more than 0.5 if multiple alphas were given,'+
@@ -200,9 +205,15 @@ class TRF(BaseEstimator):
         self.valid_samples_ = _delays_to_slice(self.delays_)
         
         # for each target variable, fit a TRF model with cross-validation
-        for target_idx in range(y_.shape[1]):
+        if self.verbose >= 1:
+            disable_tqdm = False
+        else:
+            disable_tqdm = True
+
+        for target_idx in tqdm_(range(y_.shape[1]), disable=disable_tqdm):
             
-            print(f'Fitting model for output variable {target_idx}...')
+            if self.verbose >= 2:
+                print(f'Fitting model for output variable {target_idx}...')
             
             y_thistarget = y_[:,target_idx]
             if self.ndim_y_ == 2:
@@ -211,7 +222,8 @@ class TRF(BaseEstimator):
                 y_thistarget = y_thistarget[:,np.newaxis,:]
             
             if len(self.alpha) > 1:
-                print(f'Running cross-validation on alphas...')
+                if self.verbose >= 2:
+                    print(f'Running cross-validation on alphas...')
                 
                 scores = []
                 
@@ -269,8 +281,9 @@ class TRF(BaseEstimator):
                 # choose best alpha
                 ix_best_alpha_lap = np.argmax(mean_scores)
                 best_alpha_thistarget = self.alpha[ix_best_alpha_lap]
-                _print_alpha_xvals(self.alpha, mean_scores)
-                print('chose alpha={:.2e}\n'.format(best_alpha_thistarget))
+                _print_alpha_xvals(self.alpha, mean_scores, verbose=self.verbose)
+                if self.verbose >= 2:
+                    print('chose alpha={:.2e}\n'.format(best_alpha_thistarget))
             else:
                 best_alpha_thistarget = self.alpha[0]
                 
@@ -422,11 +435,12 @@ class TRF(BaseEstimator):
         
         return np.average(y_scores, axis=1, weights=weights)
             
-def _print_alpha_xvals(alphas, alpha_scores):
+def _print_alpha_xvals(alphas, alpha_scores, verbose=1):
     
-    print('Cross-validation scores:')
-    for alpha_i, score_i in zip(alphas, alpha_scores):
-        print('alpha={:.2e} : {:.4f}'.format(alpha_i, score_i))
+    if verbose >= 2:
+        print('Cross-validation scores:')
+        for alpha_i, score_i in zip(alphas, alpha_scores):
+            print('alpha={:.2e} : {:.4f}'.format(alpha_i, score_i))
                 
 def _xval_time_splits(data, test_portion):
     '''
