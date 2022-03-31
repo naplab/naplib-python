@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_stars_for_pvalues(pvals):
+def stars(pvals):
     '''
     Convert pvalues to strings of stars for significance.
     thresholds: [inf, 0.05, 0.01, 0.001, 0.001]
@@ -13,6 +13,13 @@ def get_stars_for_pvalues(pvals):
     Returns
     -------
     stars : string or list of strings
+    
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> pvalues = [0.06, 0.03, 0.0008]
+    >>> nl.stats.stars(pvalues)
+    ['n.s.','*','****']
     '''
     thresholds = [np.inf, 0.05, 0.01, 0.001, 0.001, 0.0001]
     stars_strings = ['n.s.', '*', '**', '***', '****']
