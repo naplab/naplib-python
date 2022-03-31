@@ -119,8 +119,8 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         Time of first lag (first column)
     tmax : float, optional
         Time of final lag (last column)
-    freqs : list or array-like, length=coef.shape[0]
-        Frequency of each row in STRF.
+    freqs : list or array-like, length=2, optional
+        Frequency of lowest and highest frequency bin in STRF.
     ax : plt.Axes, optional
         Axes to plot on.
     smooth : bool, default=True
@@ -140,9 +140,8 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         
     ax.set_xlabel(lag_string)
     
-    if freqs is None:
-        freqs = np.arange(0, coef.shape[0])
-        ax.set_ylabel('Frequency')
+    freqs_ = np.arange(0, coef.shape[0])
+    ax.set_ylabel('Frequency')
         
     if smooth:
         kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
@@ -151,4 +150,9 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
                   cmap='bwr')
         
-    ax.pcolormesh(delays_sec, freqs, coef, **kwargs)
+    ax.pcolormesh(delays_sec, freqs_, coef, **kwargs)
+    
+    if freqs is not None:
+        yticks = ax.get_yticks()
+        ax.set_yticks([0, coef.shape[0]-1])
+        ax.set_yticklabels([freqs[0], freqs[-1]])
