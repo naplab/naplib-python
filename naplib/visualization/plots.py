@@ -106,7 +106,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
     '''
     Plot STRF weights as image. Weights are automatically centered at 0
     so the center of the colormap is 0.
@@ -114,14 +114,18 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None):
     Parameters
     ----------
     coef : np.array, shape (freq, lag)
+        STRF weights.
     tmin : float, optional
         Time of first lag (first column)
     tmax : float, optional
         Time of final lag (last column)
     freqs : list or array-like, length=coef.shape[0]
         Frequency of each row in STRF.
-    ax : plt axes to use, optional
-    
+    ax : plt.Axes, optional
+        Axes to plot on.
+    smooth : bool, default=True
+        Whether or not to smooth the STRF image. Smoothing is
+        done with 'gouraud' shading in plt.pcolormesh().
     '''
     
     if ax is None:
@@ -129,12 +133,22 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None):
     
     if tmin is not None and tmax is not None:
         delays_sec = np.linspace(tmin, tmax, coef.shape[1])
+        lag_string = 'Lag (s)'
     else:
         delays_sec = np.arange(0, coef.shape[1])
+        lag_string = 'Lag (samples)'
+        
+    ax.set_xlabel(lag_string)
     
     if freqs is None:
         freqs = np.arange(0, coef.shape[0])
-    
-    kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
-              cmap='bwr', shading='gouraud')
+        ax.set_ylabel('Frequency')
+        
+    if smooth:
+        kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
+                  cmap='bwr', shading='gouraud')
+    else:
+        kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
+                  cmap='bwr')
+        
     ax.pcolormesh(delays_sec, freqs, coef, **kwargs)
