@@ -31,7 +31,7 @@ def import_outstruct(filepath, strict=True):
         trial_dict = {}
         for f, t in zip(fieldnames, trial):
             tmp_t = t.squeeze()
-            if f == 'resp':
+            if f == 'resp' or f == 'aud':
                 tmp_t = tmp_t.transpose()
             try:
                 tmp_t = tmp_t.item()
