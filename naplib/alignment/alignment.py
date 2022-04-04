@@ -5,6 +5,9 @@ import numpy as np
 
 def get_phoneme_label_vector(phn_file, length, fs, befaft, mode='phonemes', return_label_lists=False):
     '''
+    Creates a time-series vector of phoneme labels based on the output of the Penn-Phonetic Alignment
+    procedure.
+    
     Returns label vector as numpy array of shape (time, ) containing categorical labels.
     Assumes that the .phn files were made on wav files that did not have a befaft zero period.
 

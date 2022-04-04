@@ -5,16 +5,115 @@ from contextlib import contextmanager,redirect_stderr,redirect_stdout
 from os import devnull
 
 import tqdm
-from tqdm import tqdm as tqdm_
+from tqdm.auto import tqdm as tqdm_
 import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.utils import check_X_y
 from mne.decoding import TimeDelayingRidge, ReceptiveField
-from mne.decoding.time_delaying_ridge import _compute_corrs, _fit_corrs, _compute_reg_neighbors
+from mne.decoding.time_delaying_ridge import _fit_corrs, _compute_reg_neighbors, _edge_correct
 from mne.decoding.receptive_field import _reshape_for_est, _delays_to_slice, _times_to_delays, _delay_time_series, _corr_score, _r2_score
 
 from ..out_struct import OutStruct
 from ..utils import _parse_outstruct_args
+
+from mne.cuda import _setup_cuda_fft_multiply_repeated
+from mne.filter import next_fast_len
+from mne.fixes import jit
+from mne.parallel import check_n_jobs
+from mne.utils import warn, logger
+
+
+def _compute_corrs(X, y, smin, smax, n_jobs=1, fit_intercept=False,
+                   edge_correction=True):
+    """Compute auto- and cross-correlations.
+    This class if copied from mne.decoding.time_delaying_ridge.py, but removes
+    the progres bar.
+    """
+    if fit_intercept:
+        # We could do this in the Fourier domain, too, but it should
+        # be a bit cleaner numerically to do it here.
+        X_offset = np.mean(X, axis=0)
+        y_offset = np.mean(y, axis=0)
+        if X.ndim == 3:
+            X_offset = X_offset.mean(axis=0)
+            y_offset = np.mean(y_offset, axis=0)
+        X = X - X_offset
+        y = y - y_offset
+    else:
+        X_offset = y_offset = 0.
+    if X.ndim == 2:
+        assert y.ndim == 2
+        X = X[:, np.newaxis, :]
+        y = y[:, np.newaxis, :]
+    assert X.shape[:2] == y.shape[:2]
+    len_trf = smax - smin
+    len_x, n_epochs, n_ch_x = X.shape
+    len_y, n_epcohs, n_ch_y = y.shape
+    assert len_x == len_y
+
+    n_fft = next_fast_len(2 * X.shape[0] - 1)
+
+    n_jobs, cuda_dict = _setup_cuda_fft_multiply_repeated(
+        n_jobs, [1.], n_fft, 'correlation calculations')
+
+    # create our Toeplitz indexer
+    ij = np.empty((len_trf, len_trf), int)
+    for ii in range(len_trf):
+        ij[ii, ii:] = np.arange(len_trf - ii)
+        x = np.arange(n_fft - 1, n_fft - len_trf + ii, -1)
+        ij[ii + 1:, ii] = x
+
+    x_xt = np.zeros([n_ch_x * len_trf] * 2)
+    x_y = np.zeros((len_trf, n_ch_x, n_ch_y), order='F')
+    n = n_epochs * (n_ch_x * (n_ch_x + 1) // 2 + n_ch_x)
+    logger.info('Fitting %d epochs, %d channels' % (n_epochs, n_ch_x))
+    count = 0
+    for ei in range(n_epochs):
+        this_X = X[:, ei, :]
+        # XXX maybe this is what we should parallelize over CPUs at some point
+        X_fft = cuda_dict['rfft'](this_X, n=n_fft, axis=0)
+        X_fft_conj = X_fft.conj()
+        y_fft = cuda_dict['rfft'](y[:, ei, :], n=n_fft, axis=0)
+
+        for ch0 in range(n_ch_x):
+            for oi, ch1 in enumerate(range(ch0, n_ch_x)):
+                this_result = cuda_dict['irfft'](
+                    X_fft[:, ch0] * X_fft_conj[:, ch1], n=n_fft, axis=0)
+                # Our autocorrelation structure is a Toeplitz matrix, but
+                # it's faster to create the Toeplitz ourselves than use
+                # linalg.toeplitz.
+                this_result = this_result[ij]
+                # However, we need to adjust for coeffs that are cut off,
+                # i.e. the non-zero delays should not have the same AC value
+                # as the zero-delay ones (because they actually have fewer
+                # coefficients).
+                #
+                # These adjustments also follow a Toeplitz structure, so we
+                # construct a matrix of what has been left off, compute their
+                # inner products, and remove them.
+                if edge_correction:
+                    _edge_correct(this_result, this_X, smax, smin, ch0, ch1)
+
+                # Store the results in our output matrix
+                x_xt[ch0 * len_trf:(ch0 + 1) * len_trf,
+                     ch1 * len_trf:(ch1 + 1) * len_trf] += this_result
+                if ch0 != ch1:
+                    x_xt[ch1 * len_trf:(ch1 + 1) * len_trf,
+                         ch0 * len_trf:(ch0 + 1) * len_trf] += this_result.T
+                count += 1
+
+            # compute the crosscorrelations
+            cc_temp = cuda_dict['irfft'](
+                y_fft * X_fft_conj[:, slice(ch0, ch0 + 1)], n=n_fft, axis=0)
+            if smin < 0 and smax >= 0:
+                x_y[:-smin, ch0] += cc_temp[smin:]
+                x_y[len_trf - smax:, ch0] += cc_temp[:smax]
+            else:
+                x_y[:, ch0] += cc_temp[smin:smax]
+            count += 1
+
+    x_y = np.reshape(x_y, (n_ch_x * len_trf, n_ch_y), order='F')
+    return x_xt, x_y, n_ch_x, X_offset, y_offset
 
 
 @contextmanager
@@ -288,9 +387,31 @@ class TRF(BaseEstimator):
                 best_alpha_thistarget = self.alpha[0]
                 
             rf = self._get_single_RF_model(alpha_val=best_alpha_thistarget)
+            rf._y_dim = self.ndim_y_
+            rf.delays_ = self.delays_
+            rf.valid_samples_ = self.valid_samples_
+            self.estimator_ = rf.estimator
+            
+            X_train_delayed, y_train_delayed = self._delay_and_reshape(X_, y_thistarget)
             # use this context manager to suppress tqdm output
             with suppress_stdout_stderr():
-                rf.fit(X_, y_thistarget)
+                cov_, x_y_, n_ch_x, X_offset, y_offset = _compute_corrs(
+                            X_train_delayed, y_train_delayed, self._smin, self._smax, self.n_jobs,
+                            self.fit_intercept, edge_correction=True)
+            rf.cov_ = cov_
+            rf.estimator.cov_ = cov_
+            rf.estimator_ = rf.estimator
+            coef_ = _fit_corrs(cov_, x_y_, n_ch_x,
+                            self.reg_type, best_alpha_thistarget, n_ch_x)
+            coef_ = coef_[:,:-1]
+
+            rf.coef_ = coef_
+            rf.estimator_.coef_ = coef_
+
+            if self.fit_intercept:
+                rf.estimator_.intercept_ = y_offset - np.dot(X_offset, self.coef_.sum(-1).T)
+            else:
+                rf.estimator_.intercept_ = 0.
             # remove last lag of weights because it has significant edge effect
             rf.estimator_.coef_ = rf.coef_[:,:,:-1]
             rf.coef_ = rf.coef_[:,:,:-1] 

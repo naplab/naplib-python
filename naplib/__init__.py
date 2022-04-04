@@ -6,6 +6,7 @@ import naplib.encoding
 import naplib.io
 import naplib.preprocessing
 import naplib.array_ops
+import naplib.model_selection
 import naplib.utils
 from .out_struct import OutStruct, join_fields
 
