@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing a pull request!
+Thanks for contributing a pull request to naplib-python!
 -->
 
 #### Reference Issues/PRs
