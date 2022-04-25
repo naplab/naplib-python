@@ -91,9 +91,9 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         mm1 = np.abs(data.reshape((-1)).min())
         mm2 = np.abs(data.reshape((-1)).max())
         mm = max([mm1, mm2])
-        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4, vmin=-mm, vmax=mm)
+        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4, vmin=-mm, vmax=mm, interpolation='none')
     else:
-        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4)
+        axes[1].imshow(data[leaves,:].T, cmap=cmap, aspect=4, interpolation='none')
     if varnames:
         axes[1].set_yticks([i for i in range(len(varnames))])
         axes[1].set_yticklabels(varnames, fontsize=8)
