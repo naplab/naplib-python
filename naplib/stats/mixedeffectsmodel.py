@@ -11,8 +11,8 @@ class LinearMixedEffectsModel():
     '''
     A linear mixed effects model which can be used for main effect plots.
     
-    Inputs
-    ------
+    Parameters
+    ----------
     alpha : float, default=0.05
         Alpha level for confidence interval.
     zscore_x : bool, default False
@@ -34,13 +34,6 @@ class LinearMixedEffectsModel():
         Confidence interval around each param.
     rsquared : np.float
         R-squared value.
-    
-    Methods
-    -------
-    fit
-    plot_effects
-    get_model_params
-    summary
     
     '''
     def __init__(self, alpha=0.05, zscore_x=False):
