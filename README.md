@@ -2,6 +2,7 @@
 Tools and functions for neural acoustic data processing and analysis in python. The documentation can be acccessed at the link below. It contains the API reference as well as example notebooks.
 
 - [**Documentation**](https://naplib-python.readthedocs.io/en/latest/index.html)
+- [**Examples**](https://naplib-python.readthedocs.io/en/latest/examples/index.html)
 - [**License**](https://naplib-python.readthedocs.io/en/latest/license.html)
 
 
