@@ -24,7 +24,7 @@ print(sys.path[0])
 # -- Project information -----------------------------------------------------
 
 project = 'naplib-python'
-copyright = '2022, Gavin Mischler, Vinay Raghavan, Menoua Keshishian'
+copyright = '2022, Neural Acoustic Processing Lab, Columbia University, New York'
 author = 'Gavin Mischler, Vinay Raghavan, Menoua Keshishian'
 
 
