@@ -17,8 +17,7 @@ import IPython
 # Use RTD Theme
 import sphinx_rtd_theme
 
-sys.path.insert(0, os.path.abspath('../..'))
-print(sys.path[0])
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
