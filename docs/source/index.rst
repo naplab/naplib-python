@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to naplib-python's documentation!
-=========================================
+Overview of naplib-python
+=========================
 
 naplib-python is a Python module for analyzing neural data such as ECoG or EEG.
 
@@ -12,6 +12,7 @@ naplib-python is a Python module for analyzing neural data such as ECoG or EEG.
    :maxdepth: 1
    :caption: Using naplib-python
 
+   self
    install
    references/index
    examples
