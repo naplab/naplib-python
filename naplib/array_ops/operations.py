@@ -75,7 +75,6 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
      [1. 2. 3.]
      [2. 3. 4.]
      [3. 4. 0.]]
-    
     '''
     
     if fill_out_of_bounds:

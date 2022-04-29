@@ -9,7 +9,8 @@ from ..stats import fratio
 from ..utils import _parse_outstruct_args
 
 def get_label_change_points(x):
-    '''return the indices where x changes from one categorical (integer) value to another.
+    '''
+    Find the indices where x changes from one categorical (integer) value to another.
     For example, if x is [0, 0, 0, 1, 1, 3, 3], locations returned will be [3, 5]
     
     Parameters
@@ -47,8 +48,8 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     labels : list or array-like, same length as data, or tuple of lists or array-likes each the same length as data
         if not a tuple, labels[i] is shape (time, ) giving integer label of each sample
         if a tuple, then labels[0][i] is shape (time, ) giving integer label of each sample, and the
-            transition points of these labels are used to segment. The other lists of labels (like labels[1])
-            are not used for segmentation but their values surrounding the transition point are returned in a tuple of labels
+        transition points of these labels are used to segment. The other lists of labels (like labels[1])
+        are not used for segmentation but their values surrounding the transition point are returned in a tuple of labels
     elec_lag : list or array-like, default=None
         Provides the lag (in samples) of each electrode, must be length=n_electrodes=data[i].shape[1].
         Only used if not None. This can be computed with many methods, for example, using
@@ -61,7 +62,7 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     labels : array-like
         If input labels is just a list, then is of shape (n_segments,) providing new label after transition point
         If input labels is a tuple of lists, then this is a tuple of array-likes, where the first is the
-            same as described above, and the others are arrays of shape (n_segments, time)
+        same as described above, and the others are arrays of shape (n_segments, time)
             
     prior_labels : array-like, shape (n_segments,)
         Gives label that came before the transition in the main labels array used for segmentation

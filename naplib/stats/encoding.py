@@ -4,12 +4,22 @@ def dprime(D, L):
     '''
     Compute DPrime.
     
+    Parameters
+    ----------
     D : array-like of shape (features, instance)
+        Data features.
     L : array-like of shape (instance, )
+        Labels for each instance.ß
     
     Returns
     -------
-    tuple of (all f's, f-statistic i.e. between group variability / within group variability, and stdev. of f's)
+    allf : np.ndarray
+        Allf
+    f_stat : float
+        F-statistic.
+    f_std : float
+        Standard dev of allf.
+
     '''
     
     labels = np.unique(L).squeeze()
@@ -66,9 +76,12 @@ def dprime(D, L):
         
 def fratio(D, L, elec_mode='all'):
     '''
-    F ratio over time
+    F ratio over time.
     
+    Parameters
+    ----------
     D : array-like of shape (electrodes, time, instances)
+        Data features over time.
     L : array-like containing labels for each instance
         L is either of shape (1, instances) if each instance has the same 
         label across the full time axis, or is of shape (time, instances)

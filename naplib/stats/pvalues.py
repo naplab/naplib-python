@@ -6,9 +6,10 @@ def stars(pvals):
     thresholds: [inf, 0.05, 0.01, 0.001, 0.001]
     stars:    ['n.s.', '*', '**', '***', '****']
     
-    Inputs
-    ------
+    Parameters
+    ----------
     pvals : float or list/np.ndarray of floats
+        Pvalue or pvalues to convert to stars.
     
     Returns
     -------
