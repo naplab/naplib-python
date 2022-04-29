@@ -13,14 +13,14 @@ AUTHOR = (
     "Menoua Keshishian"
 )
 AUTHOR_EMAIL = "gm2944@columbia.edu"
-URL = "https://github.com/gavinmischler/naplib-python"
+URL = "https://github.com/naplab/naplib-python"
 MINIMUM_PYTHON_VERSION = 3, 5  # Minimum of Python 3.5
 with open("./requirements.txt", "r") as f:
     REQUIRED_PACKAGES = f.read()
 
 # Find package version.
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
-for line in open(os.path.join(PROJECT_PATH, "gavlib", "__init__.py")):
+for line in open(os.path.join(PROJECT_PATH, "naplib", "__init__.py")):
     if line.startswith("__version__ = "):
         VERSION = line.strip().split()[2][1:-1]
 
