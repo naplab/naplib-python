@@ -1,5 +1,5 @@
-Encoding
-========
+Visualization
+=============
 
 .. currentmodule:: naplib.visualization
 

@@ -23,7 +23,8 @@ def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args=
         
     Raises
     ------
-    ValueError : if nan found in input
+    ValueError
+        if nan found in input
     '''
     if nan_policy not in ['omit','raise','propogate']:
         raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
