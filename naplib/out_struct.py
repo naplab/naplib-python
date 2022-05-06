@@ -253,7 +253,7 @@ def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
             raise TypeError(f'All inputs must be an OutStruct but found {type(out)}')
         field = out.get_field(fieldname)
         if not isinstance(field[0], np.ndarray):
-            raise TypeError(f'Can only concatenate np.ndarrays, but found {type(starting_field[0])} in this field')
+            raise TypeError(f'Can only concatenate np.ndarrays, but found {type(field[0])} in this field')
 
     starting_fields = [out.get_field(fieldname) for out in outstructs] # each one should be a list of np.arrays
     
