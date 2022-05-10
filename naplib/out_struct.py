@@ -7,6 +7,9 @@ class OutStruct(Iterable):
     task- and electrode-related variables. Under the hood, it consists
     of a list of dictionaries where each dictionary contains all the data
     for one trial.
+
+    Please see the :ref:`example notebooks <working with outstructs>` for more detailed
+    tutorials which demonstrate using the OutStruct object in different types of analysis.
     
     Parameters
     ----------
@@ -14,23 +17,10 @@ class OutStruct(Iterable):
         The Nth ictionary defines the Nth trial data, typically for the Nth stimulus.
         Each dictionary must contain the same keys if passed in a list of multiple trials.
     strict : bool, default=True
-        If True, requires strict adherance to the following standard
-            - Each trial must contain at least the following fields:
-              ['name','sound','soundf','resp','dataf']
-            - Each trial must contain the exact same set of fields
-        
-    Methods
-    -------
-    set_field(field, fieldname)
-    get_field(fieldname)
-    append(trial_data)
-    
-    Attributes
-    ----------
-    fields : list of strings
-        Names of all fields stored in this OutStruct
-    data : list of dictionaries
-        Data for each stimulus response and all associated variables
+        If True, requires strict adherance to the following standards:
+        1) Each trial must contain at least the following fields:
+        ['name','sound','soundf','resp','dataf']
+        2) Each trial must contain the exact same set of fields
     
     '''
     def __init__(self, data, strict=True):
@@ -87,19 +77,48 @@ class OutStruct(Iterable):
             
     def __getitem__(self, index):
         '''
+        Get either a trial or a field.
+
         Parameters
         ----------
-        index : int
-            Which trial to get.
+        index : int or string
+            Which trial to get, or which field to get.
+
         Returns
         -------
-        data : dict, list, or naplib.OutStruct
+        data : dict, list, or OutStruct
             If index is an integer, returns the corresponding trial as a dict. If index
             is a string, returns the corresponding field, and if it is a list of strings,
             returns those fields together in a new OutStruct object.
+
+        Examples
+        --------
+        >>> # Get a specific trial based on its index, which returns a dict
+        >>> from naplib import OutStruct
+        >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
+        ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> out = OutStruct(trial_data, strict=False)
+        >>> out[0]
+        {'name': 'Zero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
+
+        >>> # Get a slice of trials, which returns an OutStruct object
+        >>> out[:2]
+        OutStruct of 2 trials containing 3 fields
+        [{"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}
+        {"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}]
+
+        >>> # Get a list of trial data from a single field
+        >>> out['name']
+        ['TrialZero', 'TrialOne']
+
+        >>> # Get multiple fields using a list of fieldnames, which returns an OutStruct containing that subset of fields
+        >>> out[['resp','trial']]
+        OutStruct of 2 trials containing 2 fields
+        [{"resp": <class 'list'>, "trial": <class 'int'>}
+        {"resp": <class 'list'>, "trial": <class 'int'>}]
         '''
         if isinstance(index, slice):
-            return OutStruct(self.data[index])
+            return OutStruct(self.data[index], strict=self._strict)
         if isinstance(index, str):
             return self.get_field(index)
         if isinstance(index, list) or isinstance(index, np.ndarray):
@@ -121,26 +140,46 @@ class OutStruct(Iterable):
             
     def __setitem__(self, index, data):
         '''
+        Set a specific trial or set of trials, or set a specific field.
+
         Parameters
         ----------
         index : int or string
-            Which trial to set, or which field to set.
+            Which trial to set, or which field to set. If an integer, must be <= the
+            length of the OutStruct, since you can only set a currently existing trial
+            or append to the end, but you cannot set a trial that is beyond that. 
         data : dict or list of data
             Either trial data to add or field data to add. If index is an
             integer, dictionary should contain all the same fields as
             current OutStruct object.
-        Returns
-        -------
+
+        Examples
+        --------
+        >>> # Set a field of an OutStruct
+        >>> from naplib import OutStruct
+        >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
+        ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> out = OutStruct(trial_data)
+        >>> out[0] = {'name': 'New', 'trial': 10, 'resp': [[0,-1],[-2,-3]]}
+        >>> out[0]r 
+        {'name': 'New', 'trial': 10, 'resp': [[0, -1], [-2, -3]]}
+
+        >>> # We can also set all values of a field across trials
+        >>> out['name'] = ['TrialZero','TrialOne']
+        >>> out['name']
+        ['TrialZero', 'TrialOne']
         '''
         if isinstance(index, str):
             self.set_field(data, index)
         else:
-            if index >= len(self):
+            if index > len(self):
                 raise IndexError((f'Index is too large. Current data is length {len(self)} '
                     'but tried to set index {index}. If you want to add to the end of the list '
                     'of trials, use the OutStruct.append() method.'))
+            elif index == len(self):
+                self.append(data)
             else:
-                self.data[index] = trial_data
+                self.data[index] = data
      
     def append(self, trial_data, strict=None):
         '''
@@ -167,6 +206,17 @@ class OutStruct(Iterable):
         return (self[i] for i in range(len(self)))
 
     def __len__(self):
+        '''The number of trials in the OutStruct.
+
+        Examples
+        --------
+        >>> from naplib import OutStruct
+        >>> trial_data = [{'trial': 0, 'resp': [[0,1],[2,3]]},
+                          {'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> out = OutStruct(trial_data, strict=False)
+        >>> len(out)
+        2
+        '''
         return len(self.data)
     
     def __repr__(self):
@@ -213,11 +263,13 @@ class OutStruct(Iterable):
         
     @property
     def fields(self):
-        '''Get names of all fields in this object'''
+        '''List of strings containing names of all fields in this object'''
         return [k for k, _ in self.data[0].items()]
     
     @property
     def data(self):
+        '''List of dictionaries containing data for each stimulus
+        response and all associated variables'''
         return self._data
 
     

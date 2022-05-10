@@ -8,6 +8,7 @@ The package is split up into submodules.
 .. toctree::
     :maxdepth: 2
 
+    outstruct
     alignment
     array_ops
     encoding
