@@ -77,7 +77,8 @@ class OutStruct(Iterable):
             
     def __getitem__(self, index):
         '''
-        Get either a trial or a field.
+        Get either a trial or a field using bracket indexing. See examples
+        below for details.
 
         Parameters
         ----------
@@ -110,6 +111,8 @@ class OutStruct(Iterable):
         >>> # Get a list of trial data from a single field
         >>> out['name']
         ['TrialZero', 'TrialOne']
+        >>> out[0]
+        {'name': 'TrialZero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
         >>> # Get multiple fields using a list of fieldnames, which returns an OutStruct containing that subset of fields
         >>> out[['resp','trial']]
@@ -126,9 +129,6 @@ class OutStruct(Iterable):
                 return OutStruct([dict([(field, x[field]) for field in index]) for x in self], strict=False)
             else:
                 return OutStruct([self.data[i] for i in index], strict=False)
-#             else:
-#                 raise IndexError(f'Cannot index from a list if it is not a list of '
-#                                  f'strings or integers, found list of {type(index[0])}')
         try:
             # TODO: change this to return a type OutStruct if you do slicing - problem with trying to
             # print because it says KeyError for self.data[0] for key 0
@@ -140,7 +140,8 @@ class OutStruct(Iterable):
             
     def __setitem__(self, index, data):
         '''
-        Set a specific trial or set of trials, or set a specific field.
+        Set a specific trial or set of trials, or set a specific field, using
+        bracket indexing. See examples below for details.
 
         Parameters
         ----------
@@ -183,7 +184,7 @@ class OutStruct(Iterable):
      
     def append(self, trial_data, strict=None):
         '''
-        Append trial data to end of OutStruct.
+        Append a single trial of data to the end of an OutStruct.
         
         Parameters
         ----------
@@ -194,8 +195,25 @@ class OutStruct(Iterable):
             the current OutStruct. Default value is self._strict, which is set based
             on the input when creating a new OutStruct from scratch with __init__()
 
-        Returns
-        -------
+        Raises
+        ------
+        TypeError
+            If input data is not a dict.
+        ValueError
+            If strict is `True` and the fields contained in the trial_data do
+            not match the fields currently stored in the OutStruct.
+
+        Examples
+        --------
+        >>> # Set a field of an OutStruct
+        >>> from naplib import OutStruct
+        >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
+        ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> out = OutStruct(trial_data)
+        >>> new_trial_data = {'name': 'Two', 'trial': 2, 'resp': [[8,9],[10,11]]}
+        >>> out.append(new_trial_data)
+        >>> len(out)
+        3
         '''
         if strict is None:
             strict = self._strict
@@ -206,7 +224,7 @@ class OutStruct(Iterable):
         return (self[i] for i in range(len(self)))
 
     def __len__(self):
-        '''The number of trials in the OutStruct.
+        '''Get the number of trials in the OutStruct with ``len(outstruct)``.
 
         Examples
         --------
@@ -263,13 +281,13 @@ class OutStruct(Iterable):
         
     @property
     def fields(self):
-        '''List of strings containing names of all fields in this object'''
+        '''List of strings containing names of all fields in this OutStruct.'''
         return [k for k, _ in self.data[0].items()]
     
     @property
     def data(self):
         '''List of dictionaries containing data for each stimulus
-        response and all associated variables'''
+        response and all associated variables.'''
         return self._data
 
     
