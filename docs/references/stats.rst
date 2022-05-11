@@ -17,6 +17,7 @@ Linear Mixed Effects Model
 --------------------------
 
 .. autoclass:: LinearMixedEffectsModel
+	:members:
 
 Stars for P-Values
 ------------------

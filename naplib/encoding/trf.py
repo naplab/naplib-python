@@ -131,9 +131,11 @@ class TRF(BaseEstimator):
     Allows the fitting of temporal receptive field (TRF) models
     to one or more targets at a time using cross-validation. These can be
     encoding models (stimulus-to-brain) or decoding (brain-to-stimulus) models.
-    
-    Internally, fits several mne.decoding.ReceptiveField models, one for each
+    Internally, this fits several mne.decoding.ReceptiveField models, one for each
     target variable.
+
+    Please see the :ref:`TRF example notebooks <STRF examples>` for more detailed
+    tutorials which show how to train, test, and inspect TRF and STRF models.
     
     Parameters
     ----------

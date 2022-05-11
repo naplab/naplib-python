@@ -4,6 +4,7 @@ Examples
 
 Example notebooks are split into the following groups based on the processing and analyses they illustrate.
 
+.. _working with outstructs:
 
 Working with OutStructs and Array Operations
 ============================================
@@ -15,6 +16,7 @@ The following examples demonstrate ways to use the OutStruct class and other nap
    out_structure_manipulation
    array_ops_examples
 
+.. _STRF examples:
 
 STRF
 ====
