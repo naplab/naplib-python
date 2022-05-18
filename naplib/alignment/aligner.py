@@ -39,8 +39,8 @@ class Aligner():
 
         if tmp_dir is None:
             tmp_dir = 'data_/'
-            # append underscores until the name does not exist in current
-            # working directory so we don't overwrite an existing folder
+            # check if this folder already exists, in which case throw an error
+            # so we don't overwrite a folder by default.
             if isdir(tmp_dir):
                 raise ValueError(f'No tmp_dir was provided, but could not use '
                     'the default "data_/" because a folder with that name '

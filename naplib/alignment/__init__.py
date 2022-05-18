@@ -1,4 +1,4 @@
-from .prosody_aligner import Aligner
+from .aligner import Aligner
 from .alignment import get_phoneme_label_vector
 from .alignment import get_word_label_vector
 from .alignment import create_wrd_dict
