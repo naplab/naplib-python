@@ -111,25 +111,33 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     
 def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, return_fratios=False):
     '''
-    Compute lags of each electrode based on peak of fratio to a given label, such as phoneme labels.
+    Compute lags of each electrode based on peak of f-ratio to a given label, such as phoneme labels.
+    The data is segmented around onset transitions in the labels, and an electrode's lag is defined
+    as the peak of the f-ratio after the transition.
     
     Parameters
     ----------
     outstruct : naplib.OutStruct object, optional
         OutStruct containing data to be normalized in one of the field. If not given, must give
-        the data to be normalized directly as the ``data`` argument. 
-    data : list or array-like, length 18
+        the data to be normalized directly as the ``data`` parameter. 
+    data : string, or list or array-like
+        Electrode data to use to compute lags with the fratio.
+        If a string, must specify a field of the ``outstruct`` parameter. If a list or array-like,
         data[i] is shape (time, n_electrodes, *, ...)
-    labels : list or array-like, same length as data
-    return_fratios : bool
-        whether or not to return smoothed_fratios along with lags
+    labels : string, or list or array-like
+        Labels over time for each trial. The onset changes of these labels will
+        be used to segment the data and compute the f-ratio after the transition.
+        If a string, must specify a field of the outstruct. If a list or array-like, then
+        labels[i] is of shape (time,)
+    return_fratios : bool, default=False
+        Whether or not to return smoothed_fratios along with lags in a tuple. Default False.
     
     Returns
     -------
     lags : np.ndarray, shape=(n_electrodes,)
-        lag of each electrode, in samples
+        Lag of each electrode, in samples
     smoothed_fratios : np.ndarray, shape=(n_electrodes, time)
-        fratio of each electrode over time, after gaussian smoothing.
+        Fratio of each electrode over time, after gaussian smoothing.
         Only returned if ``return_fratios``==True
     '''
         
