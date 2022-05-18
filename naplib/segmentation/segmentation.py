@@ -138,7 +138,7 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
         Lag of each electrode, in samples
     smoothed_fratios : np.ndarray, shape=(n_electrodes, time)
         Fratio of each electrode over time, after gaussian smoothing.
-        Only returned if ``return_fratios``==True
+        Only returned if ``return_fratios=True``
     '''
         
     segments, labels, _ = segment_around_labeltransitions(outstruct=outstruct, data=data, labels=labels, prechange_samples=0, postchange_samples=max_lag)
