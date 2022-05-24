@@ -50,8 +50,11 @@ def _parse_outstruct_args(outstruct, *args, allow_different_lengths=False):
     
     outstruct_fieldnames = outstruct.fields
     for arg in args:
-        if arg in outstruct_fieldnames:
-            args_out.append(outstruct.get_field(arg))
+        if isinstance(arg, str):
+            if arg in outstruct_fieldnames:
+                args_out.append(outstruct.get_field(arg))
+            else:
+                raise ValueError(f"{arg} is a string but is not a field of the outstruct.")
         else:
             if isinstance(arg, list):
                 if not allow_different_lengths and len(arg) != len(outstruct):

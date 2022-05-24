@@ -4,7 +4,12 @@ import sys
 import unicodedata
 import string
 
+import numpy as np
+from scipy.io.wavfile import write as write_wavfile
+
+from .alignment import create_wrd_dict, get_phoneme_label_vector, get_word_label_vector
 from ..utils import _parse_outstruct_args
+from ..out_struct import OutStruct
 
 
 class Aligner():
@@ -89,7 +94,121 @@ class Aligner():
         ascii_file = open(os.path.join(new_folder, new_name), 'wb')
         ascii_file.write(ascii_data)
 
-    def align_from_files(self, audio_dir, text_dir):
+    def align(self, outstruct=None, name='name', sound='sound',
+              soundf='soundf', transcript='transcript',
+              dataf='dataf', length='length', befaft='befaft'):
+        '''
+        Perform alignment across a set of paired audio-text files stored
+        in fields of an OutStruct. This function will create a set of
+        .TextGrid files, as well as corresponding .phn and .wrd
+        files in the output_dir which describe the timing of phonemes and
+        words within each audio. These files can be used in conjunction
+        with the other functions in `naplib.alignment`, such as
+        ``get_phoneme_label_vector`` and ``get_word_label_vector``,
+        which take these files as input. This function will automatically
+        use ``naplib.alignment.get_phoneme_label_vector`` and
+        ``naplib.alignment.get_word_label_vector`` to produce phoneme and
+        word label vectors for each stimulus which can be placed into the
+        OutStruct and further analyzed.
+
+        This function is essentially equivalent to storing audio and text
+        in directories and using ``Aligner.align_files`` followed by
+        ``Aligner.get_label_vecs_from_files``.
+
+        Parameters
+        ----------
+        outstruct : naplib.OutStruct
+            OutStruct containing the data to align. It must contain the
+            following fields. 
+        name : string or list of strings, default='name'
+            If a string, specifies a field of the outstruct which contains
+            the name for each trial. Otherwise, a list of strings specifies
+            the name for each trial.
+        sound : string or list of np.ndarrays, default='sound'
+            If a string, specifies a field of the outstruct which contains
+            the sound waveform for each trial. Otherwise, a list of np.ndarrays
+            specifies the waveform for each trial.
+        soundf : string, integer, or list of integers
+            If a string, specifies a field of the outstruct which contains
+            the sampling rate for each trial. Otherwise, a list of integers
+            specifies the sampling rate for each trial, or a single integer gives the
+            sampling rate for all trials.
+        transcript : string or list of strings
+            If a string, specifies a field of the outstruct which contains
+            the transcript text for each trial. Otherwise, a list of strings
+            specifies the transcript text for each trial.
+        dataf : string, integer, or list of integers
+            If a string, specifies a field of the outstruct which contains
+            the desired sampling rate of the output. Otherwise, a list of integers
+            specifies the Desired sampling rate of the output for each trial, or
+            a single integer gives the desired sampling rate of the output
+            for all trials.
+        length : string or list of integers
+            If a string, specifies a field of the outstruct which contains
+            the desired output length (in samples) for each trial. Otherwise,
+            a list of integers specifies the desired output length (in samples)
+            for each trial.
+        befaft : string or list of np.ndarrays, or a single np.ndarray
+            If a string, specifies a field of the outstruct which contains
+            the before and after time (in sec) for each trial. Otherwise,
+            a list should contain the befaft period for each trial, and a single
+            np.ndarray of length 2 specifies the befaft period for all trials.
+
+        Returns
+        -------
+        phoneme_labels : list of np.ndarrays
+            Phoneme label vector for each trial. phoneme_labels[i] is a np.ndarray
+            of shape (time,) and sampling rate dataf[i]
+        word_labels : list of np.ndarrays
+            Word label vector for each trial. word_labels[i] is a np.ndarray
+            of shape (time,) and sampling rate dataf[i]
+
+        Note
+        ----
+        This function will produce the following files in the output_dir to aid in
+        its running.
+
+        | working directory
+        | └── output_dir
+        | │   └── trial1.phn
+        | │   └── trial1.wrd
+        | │   └── trial1.TextGrid
+        | │   └── trial2.phn
+        | │   └── trial2.wrd
+        | │   └── trial2.TextGrid
+        '''
+
+        names, sounds, soundf, transcripts, dataf, lengths = _parse_outstruct_args(outstruct,
+                                                                                   name,
+                                                                                   sound,
+                                                                                   soundf,
+                                                                                   transcript,
+                                                                                   dataf,
+                                                                                   length)
+
+        # Write sounds to wav files in tmp folder and text to .txt files
+        audio_dir = join(self.tmp_dir, 'tmp_sounds')
+        os.makedirs(audio_dir, exist_ok=True)
+        text_dir = join(self.tmp_dir, 'tmp_text')
+        os.makedirs(text_dir, exist_ok=True)
+        for name, soundwave, soundf_, script in zip(names, sounds, soundf, transcripts):
+            fname_wav = join(audio_dir, f'{name}.wav')
+            write_wavfile(fname_wav, int(soundf_), soundwave)
+            fname_txt = join(text_dir, f'{name}.txt')
+            with open(fname_txt, "w") as text_file:
+                n = text_file.write(script)
+                text_file.close()
+
+        # Align text and audio from files
+        self.align_files(audio_dir, text_dir)
+
+        # Get the label vectors from the alignment files
+        return self.get_label_vecs_from_files(outstruct=outstruct, name=names,
+                                  dataf=dataf, length=lengths,
+                                  befaft=np.array([0, 0]))
+
+
+    def align_files(self, audio_dir, text_dir):
         '''
         Perform alignment across a set of paired audio-text files stored
         in directories. This function will create a set of .TextGrid files,
@@ -208,24 +327,12 @@ class Aligner():
                     wrd_file.close()
 
 
-        print('All done!')
+        print('Finished creating alignment files.')
 
-    def align(self, outstruct=None, name='name', sound='sound',
-              soundf='soundf', transcript='transcript',
-              dataf='dataf'):
+    def get_label_vecs_from_files(self, outstruct=None, name='name',
+                                  dataf='dataf', length='length',
+                                  befaft='befaft'):
         '''
-        Perform alignment across a set of paired audio-text files stored
-        in fields of an OutStruct. This function will create a set of
-        .TextGrid files, as well as corresponding .phn and .wrd
-        files in the output_dir which describe the timing of phonemes and
-        words within each audio. These files can be used in conjunction
-        with the other functions in `naplib.alignment`, such as
-        ``get_phoneme_label_vector`` and ``get_word_label_vector``,
-        which take these files as input. This function will automatically
-        use ``naplib.alignment.get_phoneme_label_vector`` and
-        ``naplib.alignment.get_word_label_vector`` to produce phoneme and
-        word label vectors for each stimulus which can be placed into the
-        OutStruct and further analyzed.
 
         Parameters
         ----------
@@ -236,19 +343,6 @@ class Aligner():
             If a string, specifies a field of the outstruct which contains
             the name for each trial. Otherwise, a list of strings specifies
             the name for each trial.
-        sound : string or list of np.ndarrays, default='sound'
-            If a string, specifies a field of the outstruct which contains
-            the sound waveform for each trial. Otherwise, a list of np.ndarrays
-            specifies the waveform for each trial.
-        soundf : string, integer, or list of integers
-            If a string, specifies a field of the outstruct which contains
-            the sampling rate for each trial. Otherwise, a list of integers
-            specifies the sampling rate for each trial, or a single integer gives the
-            sampling rate for all trials.
-        transcript : string or list of strings
-            If a string, specifies a field of the outstruct which contains
-            the transcript text for each trial. Otherwise, a list of strings
-            specifies the transcript text for each trial.
         dataf : string, integer, or list of integers
             If a string, specifies a field of the outstruct which contains
             the desired sampling rate of the output. Otherwise, a list of integers
@@ -260,18 +354,28 @@ class Aligner():
             the desired output length (in samples) for each trial. Otherwise,
             a list of integers specifies the desired output length (in samples)
             for each trial.
+        befaft : string or list of np.ndarrays, or a single np.ndarray
+            If a string, specifies a field of the outstruct which contains
+            the before and after time (in sec) for each trial. Otherwise,
+            a list should contain the befaft period for each trial, and a single
+            np.ndarray of length 2 specifies the befaft period for all trials.
 
         Returns
         -------
-        phoneme_labels : list of np.ndarrays
+        alignment_outstruct: OutStruct
+            OutStruct containing all alignment information, with all the fields
+            described by the return values below. 
+        phn_labels : list of np.ndarrays
             Phoneme label vector for each trial. phoneme_labels[i] is a np.ndarray
-            of shape (time,) and sampling rate 
+            of shape (time,) and sampling rate dataf[i]
+        wrd_labels : list of np.ndarrays
+            Word label vector for each trial. word_labels[i] is a np.ndarray
+            of shape (time,) and sampling rate dataf[i]
 
         Note
         ----
-        After running this function, several files will be created and put into
-        the output_dir. If the `name` field of each trial is "trial1", "trial2",
-        etc, then the output_dir will look like this.
+        This function requires that the following files ALREADY exist in the aligner's
+        output_dir.
 
         | working directory
         | └── output_dir
@@ -282,73 +386,47 @@ class Aligner():
         | │   └── trial2.wrd
         | │   └── trial2.TextGrid
         '''
-        import textgrid
 
-        print(f'Resampling audio and putting in {self.tmp_dir} directory...')
+        names, dataf, lengths, befafts = _parse_outstruct_args(outstruct, name, dataf, length, befaft)
 
-        resample_path = join(self.filedir_, 'resample.sh')
+        wrd_dict = create_wrd_dict(self.output_dir)
 
-        # resample the audios to 16000 and put them in the tmp data folder
-        os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
+        alignment_results = []
 
-        print(f'Converting text files to ascii in {self.tmp_dir} directory...')
+        print(f'Creating label vectors for phonemes, manner of articulation, and words.')
+        for n in range(len(outstruct)):
 
-        for root, dirs, files in os.walk(text_dir, topdown=False):
-            for name in files:
-                if '.txt' in name:
-                    self._convert_text_to_ascii(name, root)
+            this_trial_result = {}
+    
+            # filenames for the .phn and .wrd files
+            filename_phn = join(self.output_dir, f'{names[n]}.phn')
+            filename_wrd = join(self.output_dir, f'{names[n]}.wrd')
+            
+            # desired length of the output label vector
+            length = lengths[n]
+            
+            # sampling rate of our data
+            fs = dataf[n]
+            
+            # before-after period for our data is 0 since we are using an outstruct where the
+            # durations of sound and output should already be matched
+            befaft = befafts[n]
+            
+            # compute label vectors for phonemes, manner of articulation, and words, for this trial
+            label_vec_phn, phn_label_list = get_phoneme_label_vector(filename_phn, length, fs, befaft, return_label_lists=True)
+            label_vec_manner, manner_label_list = get_phoneme_label_vector(filename_phn, length, fs, befaft, mode='manner', return_label_lists=True)
+            label_vec_wrd = get_word_label_vector(filename_wrd, length, fs, befaft, wrd_dict=wrd_dict)
 
-        print('Performing alignment...')
+            this_trial_result['phn_labels'] = label_vec_phn
+            this_trial_result['manner_labels'] = label_vec_manner
+            this_trial_result['wrd_labels'] = label_vec_wrd
+            this_trial_result['phn_label_list'] = phn_label_list
+            this_trial_result['manner_label_list'] = manner_label_list
+            this_trial_result['wrd_dict'] = wrd_dict
 
-        # perform alignment using ProsodyLab-Aligner
-        sys.path.insert(1, self.filedir_)
-        prosodylab_main_file = join(self.filedir_, 'prosodylab_aligner/__main__.py')
-        eng_zip_file = join(self.filedir_, 'eng.zip')
-        os.system(f'python3 {prosodylab_main_file} -a {self.tmp_dir} -d {self.dictionary_file} -r {eng_zip_file}')
-        sys.path.remove(self.filedir_)
-
-        print(f'Converting .TextGrid files to .phn and .wrd in {output_dir}')
-
-        os.makedirs(output_dir, exist_ok=True)
-
-        # Convert textgrid files to .phn and .wrd files in output_dir
-        for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
-            for name in files:
-                if '.TextGrid' in name:
-
-                    # print(f'looking at {os.path.join(root, name)}')
-
-                    # copy TextGrid file to output_dir so they are saved
-                    os.system(f'cp {join(root, name)} {join(output_dir, name)}')
-
-                    new_phn_name = name.replace('.TextGrid', '.phn')
-                    new_wrd_name = name.replace('.TextGrid', '.wrd')
-
-                    tg = textgrid.TextGrid.fromFile(join(root, name))
-                    phones = tg[0]
-                    words = tg[1]
-
-                    # write phn file
-
-                    phn_file = open(os.path.join(output_dir, new_phn_name), 'w')
-
-                    for phone_seg in phones:
-                        if phone_seg.mark == "":
-                            phone_seg.mark = "sp"
-                        if phone_seg.mark != "sil":
-                            print(f"{phone_seg.minTime} {phone_seg.maxTime} {phone_seg.mark}", file=phn_file)
-
-                    phn_file.close()
-
-                    # write wrd file
-
-                    wrd_file = open(os.path.join(output_dir, new_wrd_name), 'w')
-
-                    for word_seg in words:
-                        if word_seg.mark != "sil":
-                            print(f"{word_seg.minTime} {word_seg.maxTime} {word_seg.mark}", file=wrd_file)
-
-                    wrd_file.close()
+            alignment_results.append(this_trial_result)
+            
+        # Add the computed label vectors to the outstruct
+        return OutStruct(alignment_results, strict=False)
 
 
-        print('All done!')
