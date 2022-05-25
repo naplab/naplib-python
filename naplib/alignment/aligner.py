@@ -43,8 +43,12 @@ class Aligner():
     tmp_dir : string, path-like, optional
         Directory to hold temporary files that are created. If not provided, creates
         a folder called `data_/` in the current working directory and uses that.
+    verbose : int, default=1
+            Integer specifying the level of verbosity of print statements and messages
+            while the function is running. 0 indicates no output, and higher values
+            generate more output.
     '''
-    def __init__(self, output_dir, dictionary_file=None, tmp_dir=None):
+    def __init__(self, output_dir, dictionary_file=None, tmp_dir=None, verbose=1):
 
         os.makedirs(output_dir, exist_ok=True)
         if tmp_dir is None:
@@ -62,6 +66,7 @@ class Aligner():
         if dictionary_file is None:
             dictionary_file = join(self.filedir_, 'eng.dict')
         self.dictionary_file = dictionary_file
+        self.verbose = verbose
 
         try:
             import yaml
@@ -96,7 +101,7 @@ class Aligner():
 
     def align(self, outstruct=None, name='name', sound='sound',
               soundf='soundf', transcript='transcript',
-              dataf='dataf', length='length', befaft='befaft'):
+              dataf='dataf', length='length'):
         '''
         Perform alignment across a set of paired audio-text files stored
         in fields of an OutStruct. This function will create a set of
@@ -128,31 +133,26 @@ class Aligner():
             If a string, specifies a field of the outstruct which contains
             the sound waveform for each trial. Otherwise, a list of np.ndarrays
             specifies the waveform for each trial.
-        soundf : string, integer, or list of integers
+        soundf : string, integer, or list of integers, default='soundf'
             If a string, specifies a field of the outstruct which contains
             the sampling rate for each trial. Otherwise, a list of integers
             specifies the sampling rate for each trial, or a single integer gives the
             sampling rate for all trials.
-        transcript : string or list of strings
+        transcript : string or list of strings, default='transcript'
             If a string, specifies a field of the outstruct which contains
             the transcript text for each trial. Otherwise, a list of strings
             specifies the transcript text for each trial.
-        dataf : string, integer, or list of integers
+        dataf : string, integer, or list of integers, default='dataf'
             If a string, specifies a field of the outstruct which contains
             the desired sampling rate of the output. Otherwise, a list of integers
             specifies the Desired sampling rate of the output for each trial, or
             a single integer gives the desired sampling rate of the output
             for all trials.
-        length : string or list of integers
+        length : string or list of integers, default='length'
             If a string, specifies a field of the outstruct which contains
             the desired output length (in samples) for each trial. Otherwise,
             a list of integers specifies the desired output length (in samples)
             for each trial.
-        befaft : string or list of np.ndarrays, or a single np.ndarray
-            If a string, specifies a field of the outstruct which contains
-            the before and after time (in sec) for each trial. Otherwise,
-            a list should contain the befaft period for each trial, and a single
-            np.ndarray of length 2 specifies the befaft period for all trials.
 
         Returns
         -------
@@ -262,21 +262,24 @@ class Aligner():
         '''
         import textgrid
 
-        print(f'Resampling audio and putting in {self.tmp_dir} directory...')
+        if self.verbose >= 1:
+            print(f'Resampling audio and putting in {self.tmp_dir} directory...')
 
         resample_path = join(self.filedir_, 'resample.sh')
 
         # resample the audios to 16000 and put them in the tmp data folder
         os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
 
-        print(f'Converting text files to ascii in {self.tmp_dir} directory...')
+        if self.verbose >= 1:
+            print(f'Converting text files to ascii in {self.tmp_dir} directory...')
 
         for root, dirs, files in os.walk(text_dir, topdown=False):
             for name in files:
                 if '.txt' in name:
                     self._convert_text_to_ascii(name, root)
 
-        print('Performing alignment...')
+        if self.verbose >= 1:
+            print('Performing alignment...')
 
         # perform alignment using ProsodyLab-Aligner
         sys.path.insert(1, self.filedir_)
@@ -285,7 +288,8 @@ class Aligner():
         os.system(f'python3 {prosodylab_main_file} -a {self.tmp_dir} -d {self.dictionary_file} -r {eng_zip_file}')
         sys.path.remove(self.filedir_)
 
-        print(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')
+        if self.verbose >= 1:
+            print(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')
 
         # Convert textgrid files to .phn and .wrd files in output_dir
         for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
@@ -327,7 +331,8 @@ class Aligner():
                     wrd_file.close()
 
 
-        print('Finished creating alignment files.')
+        if self.verbose >= 1:
+            print('Finished creating alignment files.')
 
     def get_label_vecs_from_files(self, outstruct=None, name='name',
                                   dataf='dataf', length='length',
@@ -343,22 +348,26 @@ class Aligner():
             If a string, specifies a field of the outstruct which contains
             the name for each trial. Otherwise, a list of strings specifies
             the name for each trial.
-        dataf : string, integer, or list of integers
+        dataf : string, integer, or list of integers, default='dataf'
             If a string, specifies a field of the outstruct which contains
             the desired sampling rate of the output. Otherwise, a list of integers
             specifies the Desired sampling rate of the output for each trial, or
             a single integer gives the desired sampling rate of the output
             for all trials.
-        length : string or list of integers
+        length : string or list of integers, default='length'
             If a string, specifies a field of the outstruct which contains
             the desired output length (in samples) for each trial. Otherwise,
             a list of integers specifies the desired output length (in samples)
             for each trial.
-        befaft : string or list of np.ndarrays, or a single np.ndarray
+        befaft : string or list of np.ndarrays, or a single np.ndarray, default='befaft'
             If a string, specifies a field of the outstruct which contains
             the before and after time (in sec) for each trial. Otherwise,
             a list should contain the befaft period for each trial, and a single
-            np.ndarray of length 2 specifies the befaft period for all trials.
+            np.ndarray of length 2 specifies the befaft period for all trials. For
+            example, befaft=np.array([0.5, 0.5]) indicates that for each trial, the
+            wav file which was used to produce the alignment is 0.5 seconds shorter
+            at the beginning and 0.5 seconds shorter at the end than the desired
+            output length.
 
         Returns
         -------
@@ -366,11 +375,28 @@ class Aligner():
             OutStruct containing all alignment information, with all the fields
             described by the return values below. 
         phn_labels : list of np.ndarrays
-            Phoneme label vector for each trial. phoneme_labels[i] is a np.ndarray
-            of shape (time,) and sampling rate dataf[i]
+            Phoneme label vector for each trial. alignment_outstruct['phoneme_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
+        manner_labels : list of np.ndarrays
+            Manner of articulation label vector for each trial.
+            alignment_outstruct['manner_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
         wrd_labels : list of np.ndarrays
-            Word label vector for each trial. word_labels[i] is a np.ndarray
-            of shape (time,) and sampling rate dataf[i]
+            Word label vector for each trial. alignment_outstruct['word_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
+        phn_label_list : list of lists of strings
+            Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
+            so alignment_outstruct['phn_label_list'][i] is a list of phonemes, where the
+            index of a given phoneme in the list encodes that phoneme's label in ``phn_labels``.
+        manner_label_list : list of lists of strings
+            Manner of articulation label list returned by ``naplib.alignment.get_phoneme_label_vector``,
+            so alignment_outstruct['manner_label_list'][i] is a list of manners, where the
+            index of a given manner in the list encodes that manner's label in ``manner_labels``.
+        wrd_dict : dict
+            Dictionary of word:int (key:value) pairs for all the words in the corpus
+            of files in the directory, created by ``naplib.alignment.create_wrd_dict``
+            So, alignment_outstruct['wrd_dict'][i] is a dictionary
+            which maps a word to its integer value as it is represented in ``wrd_labels``.
 
         Note
         ----
@@ -393,7 +419,9 @@ class Aligner():
 
         alignment_results = []
 
-        print(f'Creating label vectors for phonemes, manner of articulation, and words.')
+        if self.verbose >= 1:
+            print(f'Creating label vectors for phonemes, manner of articulation, and words.')
+
         for n in range(len(outstruct)):
 
             this_trial_result = {}

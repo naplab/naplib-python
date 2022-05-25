@@ -186,7 +186,8 @@ def create_wrd_dict(wrd_files_dir, list_to_skip=[]):
     Returns
     -------
     wrd_dict : dict
-        Dictionary of word:int (key:value) pairs for all the words in the corpus of files in the directory.
+        Dictionary of word:int (key:value) pairs for all the words in the corpus
+        of files in the directory.
     '''
     
     pattern = r'[0-9]'
