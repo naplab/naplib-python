@@ -45,11 +45,17 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
         the data to be normalized directly as the ``data`` argument. 
     data : list or array-like, or a string specifying a field of the outstruct
         Data to be segmented based on the data[i] is shape (time, electrode, *, ...)
-    labels : list or array-like, same length as data, or tuple of lists or array-likes each the same length as data
-        if not a tuple, labels[i] is shape (time, ) giving integer label of each sample
-        if a tuple, then labels[0][i] is shape (time, ) giving integer label of each sample, and the
+    labels : string, or list of np.ndarrays or array-like with the same length as data, or a tuple of lists or array-likes each the same length as data
+        If a string, specifies a field of the oustruct containing labels to use for
+        segmenting. If a single list or np.ndarray (not a tuple), then labels[i]
+        is shape (time, ) giving integer label of each trial.
+        If a tuple, then labels[0][i] is shape (time, ) giving integer label of each sample, and the
         transition points of these labels are used to segment. The other lists of labels (like labels[1])
         are not used for segmentation but their values surrounding the transition point are returned in a tuple of labels
+    prechange_samples : int, default=50
+        Number of samples to include in each segment that come before a label transition.
+    postchange_samples : int, default=300
+        Number of samples to include in each segment that come after a label transition.
     elec_lag : list or array-like, default=None
         Provides the lag (in samples) of each electrode, must be length=n_electrodes=data[i].shape[1].
         Only used if not None. This can be computed with many methods, for example, using
@@ -66,6 +72,58 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
             
     prior_labels : array-like, shape (n_segments,)
         Gives label that came before the transition in the main labels array used for segmentation
+
+    Examples
+    --------
+    >>> from naplib.segmentation import segment_around_labeltransitions
+    >>> # In this example, we imagine we only have 1 trial of data, so all the lists of data and labels
+    >>> # are length 1. In practice, they could be any length though.
+    >>> arr = np.arange(20).reshape(10,2) # array of shape (time, features/electrodes)
+    >>> arr
+    array([[ 0,  1],
+           [ 2,  3],
+           [ 4,  5],
+           [ 6,  7],
+           [ 8,  9],
+           [10, 11],
+           [12, 13],
+           [14, 15],
+           [16, 17],
+           [18, 19]])
+    >>> # use a label of categorical values to segment the array based on
+    >>> # transitions in the categorical label
+    >>> label = np.array([0,0,1,1,1,0,0,3,3,3])
+    >>> segments, labels, prior_labels = segment_around_labeltransitions(data=[arr], labels=[label],
+    ...                                                                  prechange_samples=0,
+    ...                                                                  postchange_samples=3)
+    >>> segments
+    array([[[ 4,  5],
+            [ 6,  7],
+            [ 8,  9]],
+           [[10, 11],
+            [12, 13],
+            [14, 15]],
+           [[14, 15],
+            [16, 17],
+            [18, 19]]])
+    >>> labels, prior_labels
+    (array([1, 0, 3]), array([0, 1, 0]))
+    >>> # We can also get the full segment value of these labels or another set of
+    >>> # labels around the transition, rather than just the single values of the
+    >>> # labels at the transition point, simply by passing other label vectors
+    >>> # that we want to be segmented as the 2nd through nth value in a tuple of labels
+    >>> label2 = np.array([0,1,2,3,4,5,6,7,8,9]) # another set of labels of interest
+    >>> label_tuple = ([label], [label], [label2])
+    >>> segments, labels, prior_labels = segment_around_labeltransitions(data=[arr], labels=label_tuple, prechange_samples=0, postchange_samples=3)
+    >>> labels # this time we get a tuple of 3 labels. The first is the same as before, and the others are fully segmented 
+    (array([1, 0, 3]),
+     array([[1, 1, 1],
+            [0, 0, 3],
+            [3, 3, 3]]),
+     array([[2, 3, 4],
+            [5, 6, 7],
+            [7, 8, 9]]))
+
 
     '''
     
@@ -91,8 +149,8 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
         label_changepoints = label_changepoints.astype('int')
         labels_before_changepoints = labels_before_changepoints.astype('int')
         
-        for i_c, (change_point, new_lab, prior_lab) in enumerate(zip(label_changepoints[:-1], labels_at_changepoints[:-1], labels_before_changepoints[:-1])):
-            if change_point > prechange_samples and change_point+postchange_samples < x_i.shape[0]:
+        for i_c, (change_point, new_lab, prior_lab) in enumerate(zip(label_changepoints, labels_at_changepoints, labels_before_changepoints)):
+            if change_point > prechange_samples and change_point+postchange_samples <= x_i.shape[0]:
                 if elec_lag is not None:
                     tmp_x_i_region = np.array([x_i[change_point-prechange_samples+elec_lag[elec_idx]:change_point+postchange_samples+elec_lag[elec_idx], elec_idx] for elec_idx in range(len(elec_lag))])
                     segments.append(tmp_x_i_region.transpose())

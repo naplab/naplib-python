@@ -41,4 +41,15 @@ The following examples illustrate various uses of temporal receptive fields (TRF
    STRF_crossvalidation
    STRF_vs_STRFLab
 
+.. _alignment examples:
+
+Phoneme and Word Alignment
+==========================
+
+The following examples demonstrate how to align text and audio to get precise phoneme or word alignments.
+
+.. toctree::
+   :maxdepth: 1
+
+   phoneme_and_word_alignment
 
