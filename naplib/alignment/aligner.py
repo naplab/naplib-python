@@ -156,20 +156,18 @@ class Aligner():
 
         Returns
         -------
-        Returns
-        -------
         alignment_outstruct: OutStruct
             OutStruct containing all alignment information, with all the fields
             described by the return values below. 
         phn_labels : list of np.ndarrays
-            Phoneme label vector for each trial. alignment_outstruct['phoneme_labels'][i]
+            Phoneme label vector for each trial. alignment_outstruct['phn_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         manner_labels : list of np.ndarrays
             Manner of articulation label vector for each trial.
             alignment_outstruct['manner_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         wrd_labels : list of np.ndarrays
-            Word label vector for each trial. alignment_outstruct['word_labels'][i]
+            Word label vector for each trial. alignment_outstruct['wrd_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         phn_label_list : list of lists of strings
             Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
@@ -397,14 +395,14 @@ class Aligner():
             OutStruct containing all alignment information, with all the fields
             described by the return values below. 
         phn_labels : list of np.ndarrays
-            Phoneme label vector for each trial. alignment_outstruct['phoneme_labels'][i]
+            Phoneme label vector for each trial. alignment_outstruct['phn_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         manner_labels : list of np.ndarrays
             Manner of articulation label vector for each trial.
             alignment_outstruct['manner_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         wrd_labels : list of np.ndarrays
-            Word label vector for each trial. alignment_outstruct['word_labels'][i]
+            Word label vector for each trial. alignment_outstruct['wrd_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         phn_label_list : list of lists of strings
             Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
