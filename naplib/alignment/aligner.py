@@ -122,7 +122,7 @@ class Aligner():
 
         Parameters
         ----------
-        outstruct : naplib.OutStruct
+        outstruct : OutStruct
             OutStruct containing the data to align. It must contain the
             following fields. 
         name : string or list of strings, default='name'
@@ -156,12 +156,34 @@ class Aligner():
 
         Returns
         -------
-        phoneme_labels : list of np.ndarrays
-            Phoneme label vector for each trial. phoneme_labels[i] is a np.ndarray
-            of shape (time,) and sampling rate dataf[i]
-        word_labels : list of np.ndarrays
-            Word label vector for each trial. word_labels[i] is a np.ndarray
-            of shape (time,) and sampling rate dataf[i]
+        Returns
+        -------
+        alignment_outstruct: OutStruct
+            OutStruct containing all alignment information, with all the fields
+            described by the return values below. 
+        phn_labels : list of np.ndarrays
+            Phoneme label vector for each trial. alignment_outstruct['phoneme_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
+        manner_labels : list of np.ndarrays
+            Manner of articulation label vector for each trial.
+            alignment_outstruct['manner_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
+        wrd_labels : list of np.ndarrays
+            Word label vector for each trial. alignment_outstruct['word_labels'][i]
+            is a np.ndarray of shape (time,) and sampling rate dataf[i].
+        phn_label_list : list of lists of strings
+            Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
+            so alignment_outstruct['phn_label_list'][i] is a list of phonemes, where the
+            index of a given phoneme in the list encodes that phoneme's label in ``phn_labels``.
+        manner_label_list : list of lists of strings
+            Manner of articulation label list returned by ``naplib.alignment.get_phoneme_label_vector``,
+            so alignment_outstruct['manner_label_list'][i] is a list of manners, where the
+            index of a given manner in the list encodes that manner's label in ``manner_labels``.
+        wrd_dict : dict
+            Dictionary of word:int (key:value) pairs for all the words in the corpus
+            of files in the directory, created by ``naplib.alignment.create_wrd_dict``
+            So, alignment_outstruct['wrd_dict'][i] is a dictionary
+            which maps a word to its integer value as it is represented in ``wrd_labels``.
 
         Note
         ----
@@ -341,7 +363,7 @@ class Aligner():
 
         Parameters
         ----------
-        outstruct : naplib.OutStruct
+        outstruct : OutStruct
             OutStruct containing the data to align. It must contain the
             following fields. 
         name : string or list of strings, default='name'
