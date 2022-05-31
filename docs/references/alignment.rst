@@ -3,6 +3,12 @@ Alignment
 
 .. currentmodule:: naplib.alignment
 
+Aligner for Phonemes and Words
+------------------------------
+
+.. autoclass:: Aligner
+	:members:
+
 Phoneme Labels from Phonetic Alignment File
 -------------------------------------------
 

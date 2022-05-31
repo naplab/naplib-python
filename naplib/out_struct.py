@@ -47,8 +47,6 @@ class OutStruct(Iterable):
         fieldname : string
             Name of field to add. If this field already exists in the OutStruct
             then the current field will be overwritten.
-        Returns
-        -------
         '''
         if not isinstance(fielddata, list):
             raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
@@ -224,7 +222,8 @@ class OutStruct(Iterable):
         return (self[i] for i in range(len(self)))
 
     def __len__(self):
-        '''Get the number of trials in the OutStruct with ``len(outstruct)``.
+        '''
+        Get the number of trials in the OutStruct with ``len(outstruct)``.
 
         Examples
         --------
