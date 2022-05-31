@@ -11,6 +11,9 @@ def get_phoneme_label_vector(phn_file, length, fs, befaft, mode='phonemes', retu
     Returns label vector as numpy array of shape (time, ) containing categorical labels.
     Assumes that the .phn files were made on wav files that did not have a befaft zero period.
 
+    This function can be used instead of the ``get_label_vecs_from_files`` method
+    inside the ``Aligner`` class if you only want a single file's label vector.
+
     Parameters
     ----------
     phn_file : string, path to .phn file
@@ -110,6 +113,9 @@ def get_word_label_vector(wrd_file, length, fs, befaft, wrd_dict=None, wrd_files
     Returns label vector as numpy array of shape (time, ) containing categorical labels.
     Assumes that the .wrd files were made on wav files that did not have a befaft zero period.
 
+    This function can be used instead of the ``get_label_vecs_from_files`` method
+    inside the ``Aligner`` class if you only want a single file's label vector.
+
     Parameters
     ----------
     wrd_file : string, path to .wrd file
@@ -180,7 +186,8 @@ def create_wrd_dict(wrd_files_dir, list_to_skip=[]):
     Returns
     -------
     wrd_dict : dict
-        Dictionary of word:int (key:value) pairs for all the words in the corpus of files in the directory.
+        Dictionary of word:int (key:value) pairs for all the words in the corpus
+        of files in the directory.
     '''
     
     pattern = r'[0-9]'

@@ -44,8 +44,12 @@ class LinearMixedEffectsModel():
         
     def fit(self, X, y, varnames=None):
         '''
+        Parameters
+        ----------
         X : np.array, shape (num_samples, num_features)
+            Feature data.
         y : np.array, shape (num_samples,)
+            Target data to predict.
         varnames : list, optional, default None
             List of variable names, must be length (num_features+1), giving name
             for each feature in X as well as a name for the predicted output in y.
@@ -106,8 +110,8 @@ class LinearMixedEffectsModel():
         '''
         Create main effects plot.
         
-        Inputs
-        ------
+        Parameters
+        ----------
         ax : pyplot axes, optional, default=gca()
         plus_minus_colors : list or np.array, length=2, default red, blue
             Colors to use for the effect lines when they are significantly positive or negative, respectively.

@@ -7,5 +7,6 @@ TRF
 ---
 
 .. autoclass:: TRF
+	:members:
 	:exclude-members: get_params, set_params
 

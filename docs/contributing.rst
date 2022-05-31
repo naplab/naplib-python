@@ -79,7 +79,7 @@ repository on GitHub, clone, and develop on a branch. Steps:
    `this guide <https://help.github.com/articles/fork-a-repo/>`_.
 
 
-2. Clone your fork of the mvlearn repo from your GitHub account to
+2. Clone your fork of the naplib-python repo from your GitHub account to
    your local disk:
 
    .. code:: bash
@@ -172,8 +172,8 @@ Guidelines
 Coding Guidelines
 ~~~~~~~~~~~~~~~~~
 
-Uniformly formatted code makes it easier to share code ownership.
-mvlearn package closely follows the official Python guidelines
+Uniformly formatted code makes it easier to share code ownership. The
+naplib-python package closely follows the official Python guidelines
 detailed in `PEP8 <https://www.python.org/dev/peps/pep-0008/>`__
 that detail how code should be formatted and indented. Please read it
 and follow it.
