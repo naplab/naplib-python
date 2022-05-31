@@ -99,7 +99,7 @@ class OutStruct(Iterable):
             returns those fields together in a new OutStruct object.
         '''
         if isinstance(index, slice):
-            return OutStruct(self.data[index])
+            return OutStruct(self.data[index], strict=self._strict)
         if isinstance(index, str):
             return self.get_field(index)
         if isinstance(index, list) or isinstance(index, np.ndarray):
@@ -135,12 +135,14 @@ class OutStruct(Iterable):
         if isinstance(index, str):
             self.set_field(data, index)
         else:
-            if index >= len(self):
+            if index > len(self):
                 raise IndexError((f'Index is too large. Current data is length {len(self)} '
                     'but tried to set index {index}. If you want to add to the end of the list '
                     'of trials, use the OutStruct.append() method.'))
+            elif index == len(self):
+                self.append(data)
             else:
-                self.data[index] = trial_data
+                self.data[index] = data
      
     def append(self, trial_data, strict=None):
         '''
