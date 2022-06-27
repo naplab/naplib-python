@@ -3,7 +3,7 @@ from itertools import chain
 import numpy as np
 from sklearn.model_selection._split import _BaseKFold
 from sklearn.utils.validation import indexable
-from sklearn.utils import _safe_indexing
+from sklearn.utils import _safe_indexing, check_random_state
 
 from ..out_struct import OutStruct
 
