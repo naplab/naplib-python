@@ -16,8 +16,8 @@ class LinearMixedEffectsModel():
     from subject A and the other half from subject B, and you want to
     know the main effects of other predictor features.
     
-    Inputs
-    ------
+    Parameters
+    ----------
     alpha : float, default=0.05
         Alpha level for confidence interval.
     zscore_x : bool, default False
