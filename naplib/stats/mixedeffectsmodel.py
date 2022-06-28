@@ -10,9 +10,14 @@ import matplotlib.pyplot as plt
 class LinearMixedEffectsModel():
     '''
     A linear mixed effects model which can be used for main effect plots.
+    A mixed effects model is useful when the data has some non-independence
+    whose effect should be accounted for separately from the effects of
+    the independent variables. For example, if half of the data comes
+    from subject A and the other half from subject B, and you want to
+    know the main effects of other predictor features.
     
-    Parameters
-    ----------
+    Inputs
+    ------
     alpha : float, default=0.05
         Alpha level for confidence interval.
     zscore_x : bool, default False
@@ -42,29 +47,38 @@ class LinearMixedEffectsModel():
         self.varnames = []
         self._isfit = False
         
-    def fit(self, X, y, varnames=None):
+    def fit(self, X, y, random_effect=None, varnames=None):
         '''
-        Parameters
-        ----------
         X : np.array, shape (num_samples, num_features)
-            Feature data.
         y : np.array, shape (num_samples,)
-            Target data to predict.
+        random_effect : np.array, shape (num_samples,), optional
+            If given, used as a random effect in the model.
         varnames : list, optional, default None
-            List of variable names, must be length (num_features+1), giving name
-            for each feature in X as well as a name for the predicted output in y.
+            List of variable names, must be length (num_features+1) or
+            (num_features + num_features_r + 1), giving the name
+            for each feature in X, each feature in random_effect (if given)
+            as well as a name for the predicted output in y.
             
         Returns
         -------
             model : returns an instance of self
         '''
+        if random_effect is not None:
+            if random_effect.ndim == 1:
+                random_effect = random_effect[:, np.newaxis]
+            elif random_effect.shape[1] > 1:
+                raise ValueError(f'Only 1 random effect variable is currently supported, but got {random_effect.shape[1]}')
+        
+        
         if varnames is None:
             varnames = [f'feature-{i}' for i in range(X.shape[1])]
             varnames.append('y')
-        if len(varnames) != X.shape[1] + 1:
+        if random_effect is None and len(varnames) != X.shape[1] + 1:
             raise Exception(f'Error: incorrect length of input "varnames". Must include name for each feature in X as well as a name for predicted y.')
-        
-        self.varnames = varnames
+        if random_effect is not None and len(varnames) != X.shape[1] + random_effect.shape[1] + 1:
+            raise Exception(f'Error: incorrect length of input "varnames". Must include name for each feature in X, each feature in random_effect,'
+                            f' as well as a name for predicted y.')
+        self.varnames = varnames[:X.shape[1]] + varnames[-1:]
         
         # remove spaces and dashes because they break the smf.mixedlm formula
         varnames_formula = varnames.copy()
@@ -78,12 +92,21 @@ class LinearMixedEffectsModel():
             
         self._y = y
         
-        df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=varnames_formula)
-        formula = f'{varnames_formula[-1]} ~ {varnames_formula[0]}'
-        for varname in varnames_formula[1:-1]:
-            formula += f' + {varname}'
+        if random_effect is None:
+            df_tmp = pd.DataFrame(np.concatenate((X, y.reshape(-1,1)), axis=1), columns=varnames_formula)
+            formula = f'{varnames_formula[-1]} ~ {varnames_formula[0]}'
+            for varname in varnames_formula[1:-1]:
+                formula += f' + {varname}'
+            mixedlm = smf.mixedlm(formula=formula, data=df_tmp, groups=[1 for _ in range(df_tmp.shape[0])])
+
+        else:
+            df_tmp = pd.DataFrame(np.concatenate((X, random_effect, y.reshape(-1,1)), axis=1), columns=varnames_formula)
+            formula = f'{varnames_formula[-1]} ~ {varnames_formula[0]}'
+            for varname in varnames_formula[1:X.shape[1]]:
+                formula += f' + {varname}'
+            mixedlm = smf.mixedlm(formula=formula, data=df_tmp, groups=varnames[-2], re_formula='1')
+
             
-        mixedlm = smf.mixedlm(formula=formula, data=df_tmp, groups=[1 for _ in range(df_tmp.shape[0])])
         mixedlm_results = mixedlm.fit()
         
         self.mixedlm = mixedlm
@@ -110,8 +133,8 @@ class LinearMixedEffectsModel():
         '''
         Create main effects plot.
         
-        Parameters
-        ----------
+        Inputs
+        ------
         ax : pyplot axes, optional, default=gca()
         plus_minus_colors : list or np.array, length=2, default red, blue
             Colors to use for the effect lines when they are significantly positive or negative, respectively.
@@ -181,4 +204,3 @@ class LinearMixedEffectsModel():
         rss_tot = np.sum(np.square(self._y-self._y.mean()))
         rss_res = np.sum(np.square(self.mixedlm_results.resid))
         return 1.0 - rss_res/rss_tot
-
