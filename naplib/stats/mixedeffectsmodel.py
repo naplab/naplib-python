@@ -49,6 +49,8 @@ class LinearMixedEffectsModel():
         
     def fit(self, X, y, random_effect=None, varnames=None):
         '''
+        Parameters
+        ----------
         X : np.array, shape (num_samples, num_features)
         y : np.array, shape (num_samples,)
         random_effect : np.array, shape (num_samples,), optional
@@ -123,6 +125,11 @@ class LinearMixedEffectsModel():
     def get_model_params(self):
         '''
         Get model params after fitting.
+        
+        Returns
+        -------
+        param_dict : dict   
+            dict of model params, pvalues, and confidence intervals for each variable.
         '''
         if not self._isfit:
             raise Exception('Must call .fit() before trying to acces model params.')
@@ -133,8 +140,8 @@ class LinearMixedEffectsModel():
         '''
         Create main effects plot.
         
-        Inputs
-        ------
+        Parameters
+        ----------
         ax : pyplot axes, optional, default=gca()
         plus_minus_colors : list or np.array, length=2, default red, blue
             Colors to use for the effect lines when they are significantly positive or negative, respectively.
