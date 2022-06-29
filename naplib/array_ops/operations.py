@@ -22,7 +22,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
     
     Parameters
     ----------
-    arr : shape (time, *feature_dims)
+    arr : np.ndarray, shape (time, *feature_dims)
         Data to be windowed. Windowing is only applied across first dimension,
         which is assumed to be time. All other dimensions are kept the same for
         the output.
@@ -50,11 +50,14 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
     
     Returns
     -------
-    windowed_resps : shape (n_samples, window_len, *feature_dims)
+    windows : np.ndarray, shape (n_samples, window_len, *feature_dims...)
+        Windowed array segments.
     
     
     Examples
     --------
+    >>> import numpy as np
+    >>> from naplib.array_ops import sliding_window
     >>> arr = np.arange(1,5)
     >>> slide1 = sliding_window(arr, 3)
     >>> slide2 = sliding_window(arr, 3, 0, False)
@@ -74,7 +77,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
      [3. 4. 0.]
      [4. 0. 0.]]
     >>> print(slide4)
-     [[0. 1. 2.]
+    [[0. 1. 2.]
      [1. 2. 3.]
      [2. 3. 4.]
      [3. 4. 0.]]
@@ -89,7 +92,6 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
             arr = np.concatenate([fill_value*np.ones([window_len-1-window_key_idx, *arr.shape[1:]]), arr, fill_value*np.ones([window_key_idx, *arr.shape[1:]])], axis=0)
         else:
             raise ValueError(f'window_key_idx must be an integer from 0 to window_len-1, but got {window_key_idx}')
-        
     
     return _extract_windows_vectorized(arr, window_len-2, arr.shape[0]-window_len, window_len)
 
@@ -126,6 +128,50 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
     
     Examples
     --------
+    >>> import numpy as np
+    >>> from naplib.array_ops import concat_apply
+    >>> data = [np.arange(20).reshape((5,4)), np.arange(20, 40).reshape((5,4))] # 2 trials, 5 samples with 4 channels
+    >>> data
+    [array([[ 0,  1,  2,  3],
+            [ 4,  5,  6,  7],
+            [ 8,  9, 10, 11],
+            [12, 13, 14, 15],
+            [16, 17, 18, 19]]),
+     array([[20, 21, 22, 23],
+            [24, 25, 26, 27],
+            [28, 29, 30, 31],
+            [32, 33, 34, 35],
+            [36, 37, 38, 39]])]
+    >>> # We can use PCA to reduce the channel dimensionality by fitting PCA on the
+    >>> # concatenated data, transforming it, and then splitting it back into 2 trials
+    >>> from sklearn.decomposition import PCA
+    >>> data_pca = concat_apply(data, PCA(2).fit_transform)
+    >>> data_pca
+    [array([[-3.60000000e+01,  8.63623587e-15],
+            [-2.80000000e+01, -2.36903429e-15],
+        [-2.00000000e+01, -1.34899193e-15],
+            [-1.20000000e+01, -5.15542367e-16],
+            [-4.00000000e+00, -4.16724783e-16]]),
+     array([[4.00000000e+00, 4.16724783e-16],
+            [1.20000000e+01, 5.15542367e-16],
+            [2.00000000e+01, 1.34899193e-15],
+            [2.80000000e+01, 2.36903429e-15],
+            [3.60000000e+01, 3.01589107e-15]])]
+    >>> # We can downsample the channel dimension, making use of
+    >>> # the function_kwargs parameter
+    >>> from scipy.signal import resample
+    >>> downsampled_channels = concat_apply(data, resample, function_kwargs={'num': 3, 'axis': 1})
+    >>> downsampled_channels
+    [array([[ 0.5      ,  1.1339746,  2.8660254],
+            [ 4.5      ,  5.1339746,  6.8660254],
+            [ 8.5      ,  9.1339746, 10.8660254],
+            [12.5      , 13.1339746, 14.8660254],
+            [16.5      , 17.1339746, 18.8660254]]),
+     array([[20.5      , 21.1339746, 22.8660254],
+            [24.5      , 25.1339746, 26.8660254],
+            [28.5      , 29.1339746, 30.8660254],
+            [32.5      , 33.1339746, 34.8660254],
+            [36.5      , 37.1339746, 38.8660254]])]
     '''
     lengths = np.array([x.shape[axis] for x in data_list])
     data_cat = np.concatenate(data_list, axis=axis)
