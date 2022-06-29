@@ -2,6 +2,9 @@ from copy import deepcopy
 import numpy as np
 
 def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_size):
+    '''
+    Vectorized method to extract sub-windows of an array.
+    '''
     start = clearing_time_index + 1 - sub_window_size + 1
     
     sub_windows = (
@@ -90,7 +93,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
     
     return _extract_windows_vectorized(arr, window_len-2, arr.shape[0]-window_len, window_len)
 
-def concat_apply(data_list, function, axis=0):
+def concat_apply(data_list, function, axis=0, function_kwargs=None):
     '''
     Apply a function to a list of data by first contatenating the
     list into a single array along the `axis` dimension, passing it into the function,
@@ -108,9 +111,16 @@ def concat_apply(data_list, function, axis=0):
         `axis` dimensions is unchanged. For example, this could be something like 
         sklearn.manifold.TSNE().fit_transform if `axis=0`, or your own custom function.
     
+    axis : int, default=0
+        Axis over which to concatenate and then re-split the data_list before
+        and after applying the function.
+
+    function_kwargs : dict, default=None
+        If provided, a dict of keyword arguments to pass to the function.
+
     Returns
     -------
-    output : list of np.array's
+    output : list of np.ndarray's
         List of arrays after chopping up the output of the function into arrays
         of the same length as the original input.
     
@@ -120,7 +130,12 @@ def concat_apply(data_list, function, axis=0):
     lengths = np.array([x.shape[axis] for x in data_list])
     data_cat = np.concatenate(data_list, axis=axis)
     
-    func_output = function(data_cat)
+    if function_kwargs is None:
+        function_kwargs = {}
+    if not isinstance(function_kwargs, dict):
+        raise TypeError(f'function_kwargs must be a dict of keyword arguments, but got {type(function_kwargs)}')
+
+    func_output = function(data_cat, **function_kwargs)
 
     # split output back into list, but cut off the last because it is an empty array
     output = [x for x in np.split(func_output, np.cumsum(lengths), axis=axis)[:-1]]
