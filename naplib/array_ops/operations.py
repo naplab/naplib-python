@@ -142,6 +142,7 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
             [28, 29, 30, 31],
             [32, 33, 34, 35],
             [36, 37, 38, 39]])]
+
     >>> # We can use PCA to reduce the channel dimensionality by fitting PCA on the
     >>> # concatenated data, transforming it, and then splitting it back into 2 trials
     >>> from sklearn.decomposition import PCA
@@ -157,6 +158,7 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
             [2.00000000e+01, 1.34899193e-15],
             [2.80000000e+01, 2.36903429e-15],
             [3.60000000e+01, 3.01589107e-15]])]
+
     >>> # We can downsample the channel dimension, making use of
     >>> # the function_kwargs parameter
     >>> from scipy.signal import resample
