@@ -54,7 +54,10 @@ class LinearMixedEffectsModel():
         X : np.array, shape (num_samples, num_features)
         y : np.array, shape (num_samples,)
         random_effect : np.array, shape (num_samples,), optional
-            If given, used as a random effect in the model.
+            If given, used as a random effect in the model. For example,
+            to use group identity as a random effect, this should be an array
+            of integers specifying what group each sample belongs to. The
+            values do not matter, only the categorical groups they form.
         varnames : list, optional, default None
             List of variable names, must be length (num_features+1) or
             (num_features + num_features_r + 1), giving the name
