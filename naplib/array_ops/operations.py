@@ -178,12 +178,17 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
     lengths = np.array([x.shape[axis] for x in data_list])
     data_cat = np.concatenate(data_list, axis=axis)
     
+    N = data_cat.shape[axis]
+    
     if function_kwargs is None:
         function_kwargs = {}
     if not isinstance(function_kwargs, dict):
         raise TypeError(f'function_kwargs must be a dict of keyword arguments, but got {type(function_kwargs)}')
 
     func_output = function(data_cat, **function_kwargs)
+    
+    if func_output.shape[axis] != N:
+        raise RuntimeError(f'The callable function changed the size of the concatenation and splitting dimension from {N} to {func_output.shape[axis]}, but this dimension must remain constant.')
 
     # split output back into list, but cut off the last because it is an empty array
     output = [x for x in np.split(func_output, np.cumsum(lengths), axis=axis)[:-1]]
