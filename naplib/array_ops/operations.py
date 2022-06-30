@@ -126,6 +126,10 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
         List of arrays after chopping up the output of the function into arrays
         of the same length as the original input.
     
+    Raises
+    ------
+    RuntimeError: If the callable function changes the size of the concatenation/splitting axis.
+    
     Examples
     --------
     >>> import numpy as np
@@ -188,7 +192,7 @@ def concat_apply(data_list, function, axis=0, function_kwargs=None):
     func_output = function(data_cat, **function_kwargs)
     
     if func_output.shape[axis] != N:
-        raise RuntimeError(f'The callable function changed the size of the concatenation and splitting dimension from {N} to {func_output.shape[axis]}, but this dimension must remain constant.')
+        raise RuntimeError(f'The callable function changed the size of the concatenation and splitting axis from {N} to {func_output.shape[axis]}, but this dimension must remain constant.')
 
     # split output back into list, but cut off the last because it is an empty array
     output = [x for x in np.split(func_output, np.cumsum(lengths), axis=axis)[:-1]]
