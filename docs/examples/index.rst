@@ -32,7 +32,7 @@ The following examples demonstrate ways to use the OutStruct class and other nap
 STRF
 ====
 
-The following examples illustrate various uses of temporal receptive fields (TRF).
+The following examples illustrate various training and using spectro-temporal receptive fields (STRF).
 
 .. toctree::
    :maxdepth: 1
@@ -65,3 +65,14 @@ The following examples demonstrate how to align text and audio to get precise ph
 
    phoneme_and_word_alignment
 
+.. _stats examples:
+
+Statistics
+==========
+
+The following examples demonstrate the use of some of the statistical tools in naplib.
+
+.. toctree::
+   :maxdepth: 1
+
+   mixed_effects_models
