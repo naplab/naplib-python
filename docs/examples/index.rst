@@ -41,6 +41,18 @@ The following examples illustrate various uses of temporal receptive fields (TRF
    STRF_crossvalidation
    STRF_vs_STRFLab
 
+.. _stimulus reconstruction examples:
+
+Stimulus Reconstruction
+=======================
+
+The following examples illustrate training and testing stimulus reconstruction models from ECoG recordings.
+
+.. toctree::
+   :maxdepth: 1
+      
+   stimulus_reconstruction
+
 .. _alignment examples:
 
 Phoneme and Word Alignment
