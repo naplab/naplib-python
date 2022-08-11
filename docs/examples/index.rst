@@ -8,6 +8,7 @@ Example notebooks are split into the following groups based on the processing an
 
 Python Basics from a Matlab Background
 ======================================
+
 The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
 
 .. toctree::
@@ -19,6 +20,7 @@ The following examples show some of the basics of setting up python, Jupyter not
 
 OutStructs and Array Operations in naplib-python
 ================================================
+
 The following examples demonstrate ways to use the OutStruct class and other naplib functionality to make processing neural data easy.
 
 .. toctree::
@@ -31,6 +33,7 @@ The following examples demonstrate ways to use the OutStruct class and other nap
 
 Importing Data from Outside Sources
 ===================================
+
 The following examples demonstrate ways to import neural data from various file types.
 
 .. toctree::
@@ -38,6 +41,18 @@ The following examples demonstrate ways to import neural data from various file 
     
    import_bids_data
    out_structure_manipulation
+
+.. _visualization examples
+
+Visualizing Neural Data
+=======================
+
+The following tutorials show ways to visualize neural data using naplib-python. Some visualization tools are built directly into naplib, while others make use of external toolkits like MNE.
+
+.. toctree::
+   :maxdepth: 1
+    
+   plot_eeg_topomap
 
 .. _STRF examples:
 

@@ -122,7 +122,8 @@ def read_bids(root,
               session=None,
               befaft=[0, 0],
               crop_by='onset',
-              info_include=['sfreq', 'ch_names']):
+              info_include=['sfreq', 'ch_names'],
+              resp_channels=None):
     '''
     Read data from the `BIDS file structure <https://bids.neuroimaging.io/>`_ [1]
     to create an OutStruct object. The BIDS file structure is a commonly used structure
@@ -165,6 +166,10 @@ def read_bids(root,
         List of metadata info to include from the raw info. For example, you may wish to include
         other items such as 'file_id', 'line_freq', etc, for later use, if they are stored in
         the BIDS data.
+    resp_channels : list, default=None
+        List of channel names to select as response channels to be put in the 'resp' field of
+        the OutStruct. By default, all channels which are not of type 'stim' will be included.
+        Note, the order of these channels may not be conserved.
     
     Returns
     -------
@@ -173,12 +178,9 @@ def read_bids(root,
         
     Notes
     -----
-    A significant amount of information stored in the BIDS format may be lost by default when using this
-    function to read data into an OutStruct. The ``info_include`` argument can be used to save some
-    of this, but if additional metadata is needed, it is recommended to read in the data manually
-    using `MNE-BIDS <https://mne.tools/mne-bids/stable/index.html>`_, storing the information needed,
-    and then using this method to put the response, stim, and simple event/trial data
-    into an OutStruct.
+    The measurement information that is read-in by this function is stored in the outstruct.mne_info
+    attribute. This info can be used in conjunction with
+    `mne's visualization functions <https://mne.tools/stable/visualization.html>`_. 
     
     References
     ----------
@@ -200,8 +202,10 @@ def read_bids(root,
                          suffix=suffix, datatype=datatype)
     
     raw = read_raw_bids(bids_path=bids_path, verbose=False)
-        
+            
     raws = _crop_raw_bids(raw, crop_by, befaft)
+    
+    raw_info = None
     
     # figure out which channels are stimulus channels
     stim_channels = [ch for ch, ch_type in zip(raw.ch_names, raw.get_channel_types()) if ch_type == 'stim']
@@ -210,7 +214,13 @@ def read_bids(root,
     raw_responses = []
     raw_stims = []
     for raw_trial in raws:
-        raw_responses.append(raw_trial.copy().drop_channels(stim_channels))
+        raw_resp = raw_trial.copy().drop_channels(stim_channels)
+        if resp_channels is not None:
+            raw_resp = raw_resp.pick_channels(resp_channels, verbose=0)
+        raw_responses.append(raw_resp)
+        
+        if raw_info is None:
+            raw_info = raw_resp.info
 
         # if any of the channels are 'stim' channels, store them separately from responses
         if 'stim' in raw_trial.get_channel_types():
@@ -227,6 +237,7 @@ def read_bids(root,
             trial_data['description'] = raw_responses[trial].annotations[0]['description']
         if raw_stims[trial] is not None:
             trial_data['stim'] = raw_stims[trial].get_data().transpose(1,0) # time by channels
+            trial_data['stim_ch_names'] = raw_stims[trial].info['ch_names']
         trial_data['resp'] = raw_responses[trial].get_data().transpose(1,0) # time by channels
         trial_data['befaft'] = befaft
         for info_key in info_include:
@@ -236,7 +247,9 @@ def read_bids(root,
                 trial_data[info_key] = raw_responses[trial].info[info_key]
         outstruct_data.append(trial_data)  
 
-    return OutStruct(outstruct_data, strict=False)
+    outstruct = OutStruct(outstruct_data, strict=False)
+    outstruct.set_mne_info(raw_info)
+    return outstruct
     
     
 def _crop_raw_bids(raw_instance, crop_by, befaft):
