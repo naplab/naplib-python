@@ -26,6 +26,18 @@ The following examples demonstrate ways to use the OutStruct class and other nap
       
    out_structure_manipulation
    array_ops_examples
+   
+.. _import data examples:
+
+Importing Data from Outside Sources
+===================================
+The following examples demonstrate ways to import neural data from various file types.
+
+.. toctree::
+   :maxdepth: 1
+    
+   import_bids_data
+   out_structure_manipulation
 
 .. _STRF examples:
 

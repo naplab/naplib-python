@@ -1,6 +1,8 @@
 from collections.abc import Iterable, Sequence
 import numpy as np
 
+STRICT_FIELDS_REQUIRED = set(['name','sound','soundf','resp','dataf'])
+
 class OutStruct(Iterable):
     '''
     Class for storing electrode response data along with
@@ -16,14 +18,14 @@ class OutStruct(Iterable):
     data : dict or list of dictionaries
         The Nth ictionary defines the Nth trial data, typically for the Nth stimulus.
         Each dictionary must contain the same keys if passed in a list of multiple trials.
-    strict : bool, default=True
+    strict : bool, default=False
         If True, requires strict adherance to the following standards:
         1) Each trial must contain at least the following fields:
         ['name','sound','soundf','resp','dataf']
         2) Each trial must contain the exact same set of fields
     
     '''
-    def __init__(self, data, strict=True):
+    def __init__(self, data, strict=False):
         
         if isinstance(data, dict):
             data = [data]
@@ -277,11 +279,14 @@ class OutStruct(Iterable):
             trial_fields = set(trial.keys())
             if strict and trial_fields != first_trial_fields:
                 raise ValueError(f'New data does not contain the same fields as the first trial.')        
-        
+            if strict:
+                for required_field in STRICT_FIELDS_REQUIRED:
+                    if required_field not in trial_fields:
+                        raise ValueError(f'For a "strict" OutStruct, the data does not contain the required field {required_field}.')
     @property
     def fields(self):
         '''List of strings containing names of all fields in this OutStruct.'''
-        return [k for k, _ in self.data[0].items()]
+        return [k for k, _ in self._data[0].items()]
     
     @property
     def data(self):
