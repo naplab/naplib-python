@@ -351,7 +351,8 @@ class OutStruct(Iterable):
     
     @property
     def mne_info(self):
-        '''`mne.info<https://mne.tools/dev/generated/mne.Info.html>`_ object
+        '''
+        `mne.Info <https://mne.tools/dev/generated/mne.Info.html>`_ instance
         which stores measurement information and can be used with mne's visualization
         functions. This is empty by default unless it is manually added or read in
         by a function like `naplib.io.read_bids`.
