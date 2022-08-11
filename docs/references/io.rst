@@ -17,3 +17,8 @@ Load
 ----
 
 .. autofunction:: load
+
+Read BIDS
+---------
+
+.. autofunction:: read_bids
