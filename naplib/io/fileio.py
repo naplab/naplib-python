@@ -161,9 +161,10 @@ def read_bids(root,
         when the events are momentary stimulus presentations that have very short duration
         because only the responses during the short duration of the event will be saved, and
         all of the following responses are truncated.
-    info_include : list of strings, default=['sfreq']
+    info_include : list of strings, default=['sfreq, ch_names']
         List of metadata info to include from the raw info. For example, you may wish to include
-        other items such as 'file_id', 'line_freq', etc for later use.
+        other items such as 'file_id', 'line_freq', etc, for later use, if they are stored in
+        the BIDS data.
     
     Returns
     -------
