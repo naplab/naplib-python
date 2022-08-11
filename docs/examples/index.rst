@@ -42,18 +42,6 @@ The following examples demonstrate ways to import neural data from various file 
    import_bids_data
    out_structure_manipulation
 
-.. _visualization examples
-
-Visualizing Neural Data
-=======================
-
-The following tutorials show ways to visualize neural data using naplib-python. Some visualization tools are built directly into naplib, while others make use of external toolkits like MNE.
-
-.. toctree::
-   :maxdepth: 1
-    
-   plot_eeg_topomap
-
 .. _STRF examples:
 
 STRF
@@ -91,6 +79,18 @@ The following examples demonstrate how to align text and audio to get precise ph
    :maxdepth: 1
 
    phoneme_and_word_alignment
+   
+.. _visualization examples
+
+Visualizing Neural Data
+=======================
+
+The following tutorials show ways to visualize neural data using naplib-python. Some visualization tools are built directly into naplib, while others make use of external toolkits like MNE.
+
+.. toctree::
+   :maxdepth: 1
+    
+   plot_eeg_topomap
 
 .. _stats examples:
 
