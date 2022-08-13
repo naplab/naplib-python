@@ -2,7 +2,10 @@ from itertools import groupby
 
 from ..out_struct import OutStruct
 
-def _parse_outstruct_args(outstruct, *args, allow_different_lengths=False):
+def _parse_outstruct_args(outstruct,
+                          *args,
+                          allow_different_lengths=False,
+                          allow_strings_without_outstruct=True):
     '''
     Parse a variable number of arguments and return a tuple with either the field
     from the outstruct which is specified by a given arg or the arg itself if it
@@ -22,19 +25,26 @@ def _parse_outstruct_args(outstruct, *args, allow_different_lengths=False):
     allow_different_lengths : bool, default=False
         If True, args are not required to all have the same length, and they do not need
         to be the same length as the outstruct if one is provided.
+    allow_strings_without_outstruct : bool | list of bool (length len(args)), default=True
+        If True, then string args that are passed in are accepted and returned back
+        even if no outstruct was provided. 
 
     Returns
     -------
     *args_out : single arg or tuple of args, same length as *args input
     '''
-    # if not outstruct was provided, then just parse the args on their own
+    # if no outstruct was provided, then just parse the args on their own
     if not isinstance(outstruct, OutStruct):
         args = list(args)
+        if isinstance(allow_strings_without_outstruct, bool):
+            allow_strings_without_outstruct = [allow_strings_without_outstruct for _ in range(len(args))]
         if len(args) > 1:
             lengths = []
             for i, arg in enumerate(args):
                 if isinstance(arg, list):
                     lengths.append(len(arg))
+                if not allow_strings_without_outstruct[i]:
+                    raise ValueError(f'Input is a string but no OutStruct was provided from which to select a field based on the string.')
             if len(lengths) > 0:
                 if not allow_different_lengths and not _all_equal_list(lengths):
                     raise ValueError(f"The supplied list arguments have different lengths, but they must all be the same length.")

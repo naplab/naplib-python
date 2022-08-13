@@ -144,7 +144,7 @@ class TRF(BaseEstimator):
     tmax : float
         The ending lag (noninclusive), in seconds (or samples if ``sfreq`` == 1).
         Must be > tmin.
-    sfreq : float
+    sfreq : int
         The sampling frequency used to convert times into samples.
     reg_type : str, default='ridge'
         Regularization type. Can be "ridge" (default) or "laplacian".
