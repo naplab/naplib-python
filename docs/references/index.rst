@@ -9,6 +9,7 @@ The package is split up into submodules.
     :maxdepth: 2
 
     outstruct
+    features
     alignment
     array_ops
     encoding
