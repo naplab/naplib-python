@@ -3,6 +3,11 @@ Stats
 
 .. currentmodule:: naplib.stats
 
+T-Test Responsive Electrodes
+----------------------------
+
+.. autofunction:: responsive_ttest
+
 DPrime
 ------
 
