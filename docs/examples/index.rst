@@ -8,6 +8,7 @@ Example notebooks are split into the following groups based on the processing an
 
 Python Basics from a Matlab Background
 ======================================
+
 The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
 
 .. toctree::
@@ -19,6 +20,7 @@ The following examples show some of the basics of setting up python, Jupyter not
 
 OutStructs and Array Operations in naplib-python
 ================================================
+
 The following examples demonstrate ways to use the OutStruct class and other naplib functionality to make processing neural data easy.
 
 .. toctree::
@@ -26,13 +28,26 @@ The following examples demonstrate ways to use the OutStruct class and other nap
       
    out_structure_manipulation
    array_ops_examples
+   
+.. _import data examples:
+
+Importing Data from Outside Sources
+===================================
+
+The following examples demonstrate ways to import neural data from various file types.
+
+.. toctree::
+   :maxdepth: 1
+    
+   import_bids_data
+   out_structure_manipulation
 
 .. _STRF examples:
 
 STRF
 ====
 
-The following examples illustrate various uses of temporal receptive fields (TRF).
+The following examples illustrate various training and using spectro-temporal receptive fields (STRF).
 
 .. toctree::
    :maxdepth: 1
@@ -40,6 +55,18 @@ The following examples illustrate various uses of temporal receptive fields (TRF
    STRF_fitting_basics
    STRF_crossvalidation
    STRF_vs_STRFLab
+
+.. _stimulus reconstruction examples:
+
+Stimulus Reconstruction
+=======================
+
+The following examples illustrate training and testing stimulus reconstruction models from ECoG recordings.
+
+.. toctree::
+   :maxdepth: 1
+      
+   stimulus_reconstruction
 
 .. _alignment examples:
 
@@ -52,4 +79,27 @@ The following examples demonstrate how to align text and audio to get precise ph
    :maxdepth: 1
 
    phoneme_and_word_alignment
+   
+.. _visualization examples
 
+Visualizing Neural Data
+=======================
+
+The following tutorials show ways to visualize neural data using naplib-python. Some visualization tools are built directly into naplib, while others make use of external toolkits like MNE.
+
+.. toctree::
+   :maxdepth: 1
+    
+   plot_eeg_topomap
+
+.. _stats examples:
+
+Statistics
+==========
+
+The following examples demonstrate the use of some of the statistical tools in naplib.
+
+.. toctree::
+   :maxdepth: 1
+
+   mixed_effects_models

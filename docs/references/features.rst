@@ -1,7 +1,16 @@
-Alignment
-==========
+Features
+========
 
-.. currentmodule:: naplib.alignment
+.. currentmodule:: naplib.features
+
+The following functions and classes are useful for extracting
+features from acoustic signals, such as time-frequency representations
+and linguistic features.
+
+Auditory Spectrogram
+--------------------
+
+.. autofunction:: auditory_spectrogram
 
 Aligner for Phonemes and Words
 ------------------------------

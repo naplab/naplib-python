@@ -1,5 +1,8 @@
 from collections.abc import Iterable, Sequence
 import numpy as np
+from mne import Info
+
+STRICT_FIELDS_REQUIRED = set(['name','sound','soundf','resp','dataf'])
 
 class OutStruct(Iterable):
     '''
@@ -16,14 +19,19 @@ class OutStruct(Iterable):
     data : dict or list of dictionaries
         The Nth ictionary defines the Nth trial data, typically for the Nth stimulus.
         Each dictionary must contain the same keys if passed in a list of multiple trials.
-    strict : bool, default=True
+    strict : bool, default=False
         If True, requires strict adherance to the following standards:
         1) Each trial must contain at least the following fields:
         ['name','sound','soundf','resp','dataf']
         2) Each trial must contain the exact same set of fields
     
+    Attributes
+    ----------
+    fields : list of strings
+        Field names in the data.
+    
     '''
-    def __init__(self, data, strict=True):
+    def __init__(self, data, strict=False):
         
         if isinstance(data, dict):
             data = [data]
@@ -35,6 +43,8 @@ class OutStruct(Iterable):
                             f'of dicts, but found type {type(data)}')
         self._strict = strict
         self._validate_new_out_data(data, strict=strict)
+        self._info = dict()
+        self._mne_info = None
 
                 
     def set_field(self, fielddata, fieldname):
@@ -134,7 +144,6 @@ class OutStruct(Iterable):
         except IndexError:
             raise IndexError(f'Index invalid for this data. Tried to index {index} but length is {len(self)}.')
         
-
             
     def __setitem__(self, index, data):
         '''
@@ -218,6 +227,47 @@ class OutStruct(Iterable):
         self._validate_new_out_data([trial_data], strict=strict)
         self.data.append(trial_data)
         
+    def set_info(self, info):
+        '''
+        Set the info dict for this OutStruct. If there is already data in the
+        `info` attribute, it is replaced with this.
+        
+        Parameters
+        ----------
+        info : dict
+            Dictionary containing info to store in the OutStruct's `info` attribute.
+            
+        '''
+        if not isinstance(info, dict):
+            raise TypeError(f'info must be a dict but got {type(info)}')
+        self._info = info
+        
+    def update_info(self, info):
+        '''
+        Add data from a dict to this object's `info` attribute. If there is already data in the
+        `info` attribute, this new info is simply added. Keys which exist in the current
+        `info` dict and also in this new dict will be replaced, while others will be kept.
+        
+        Parameters
+        ----------
+        info : dict
+            Dictionary containing info to add to the OutStruct's `info` attribute.
+        '''
+        self._info.update(info)
+        
+    def set_mne_info(self, info):
+        '''
+        Set the mne_info attribute, which contains measurement information.
+        
+        Parameters
+        ----------
+        info : mne.Info instance
+            Info to set.
+        '''
+        if not isinstance(info, Info):
+            raise TypeError(f'input info must be an instance of mne.Info, but got {type(info)}')
+        self._mne_info = info
+    
     def __iter__(self):
         return (self[i] for i in range(len(self)))
 
@@ -277,11 +327,15 @@ class OutStruct(Iterable):
             trial_fields = set(trial.keys())
             if strict and trial_fields != first_trial_fields:
                 raise ValueError(f'New data does not contain the same fields as the first trial.')        
-        
+            if strict:
+                for required_field in STRICT_FIELDS_REQUIRED:
+                    if required_field not in trial_fields:
+                        raise ValueError(f'For a "strict" OutStruct, the data does not contain the required field {required_field}.')
+    
     @property
     def fields(self):
         '''List of strings containing names of all fields in this OutStruct.'''
-        return [k for k, _ in self.data[0].items()]
+        return [k for k, _ in self._data[0].items()]
     
     @property
     def data(self):
@@ -289,6 +343,24 @@ class OutStruct(Iterable):
         response and all associated variables.'''
         return self._data
 
+    @property
+    def info(self):
+        '''Dictionary which can be used to store metadata info which does not
+        change over trials, such as subject, recording, or task information.'''
+        return self._info
+    
+    @property
+    def mne_info(self):
+        '''
+        `mne.Info <https://mne.tools/dev/generated/mne.Info.html>`_ instance
+        which stores measurement information and can be used with mne's visualization
+        functions. This is empty by default unless it is manually added or read in
+        by a function like `naplib.io.read_bids`.
+        '''
+        if self._mne_info is None:
+            raise ValueError('No mne_info is available for this OutStruct. This must '
+                             'be read in from external data or added manually to the OutStruct.')
+        return self._mne_info
     
 def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
     '''
