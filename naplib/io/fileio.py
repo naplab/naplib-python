@@ -46,7 +46,7 @@ def import_outstruct(filepath, strict=True):
         for f, t in zip(fieldnames, trial):
             tmp_t = t.squeeze()
             if f == 'resp' or f == 'aud':
-                tmp_t = tmp_t.transpose()
+                tmp_t = tmp_t.transpose((1,0))
             try:
                 tmp_t = tmp_t.item()
             except:
