@@ -1,4 +1,4 @@
-import naplib.alignment
+import naplib.features
 import naplib.segmentation
 import naplib.stats
 import naplib.visualization

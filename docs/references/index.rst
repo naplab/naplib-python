@@ -10,7 +10,6 @@ The package is split up into submodules.
 
     outstruct
     features
-    alignment
     array_ops
     encoding
     io

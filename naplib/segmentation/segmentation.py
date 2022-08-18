@@ -7,6 +7,7 @@ except:
 
 from ..stats import fratio
 from ..utils import _parse_outstruct_args
+from ..out_struct import OutStruct
 
 def get_label_change_points(x):
     '''
@@ -34,13 +35,13 @@ def get_label_change_points(x):
     labels_prior = x[locs-1]
     return locs, labels, labels_prior
 
-def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prechange_samples=50, postchange_samples=300, elec_lag=None):
+def segment_around_label_transitions(outstruct=None, data=None, labels=None, prechange_samples=50, postchange_samples=300, elec_lag=None):
     '''
     Cut x around the transition points given by the changes in the labels.
     
     Parameters
     ----------
-    outstruct : naplib.OutStruct object, optional
+    outstruct : OutStruct, optional
         OutStruct containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` argument. 
     data : list or array-like, or a string specifying a field of the outstruct
@@ -75,7 +76,7 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
 
     Examples
     --------
-    >>> from naplib.segmentation import segment_around_labeltransitions
+    >>> from naplib.segmentation import segment_around_label_transitions
     >>> # In this example, we imagine we only have 1 trial of data, so all the lists of data and labels
     >>> # are length 1. In practice, they could be any length though.
     >>> arr = np.arange(20).reshape(10,2) # array of shape (time, features/electrodes)
@@ -93,9 +94,9 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     >>> # use a label of categorical values to segment the array based on
     >>> # transitions in the categorical label
     >>> label = np.array([0,0,1,1,1,0,0,3,3,3])
-    >>> segments, labels, prior_labels = segment_around_labeltransitions(data=[arr], labels=[label],
-    ...                                                                  prechange_samples=0,
-    ...                                                                  postchange_samples=3)
+    >>> segments, labels, prior_labels = segment_around_label_transitions(data=[arr], labels=[label],
+    ...                                                                   prechange_samples=0,
+    ...                                                                   postchange_samples=3)
     >>> segments
     array([[[ 4,  5],
             [ 6,  7],
@@ -114,7 +115,7 @@ def segment_around_labeltransitions(outstruct=None, data=None, labels=None, prec
     >>> # that we want to be segmented as the 2nd through nth value in a tuple of labels
     >>> label2 = np.array([0,1,2,3,4,5,6,7,8,9]) # another set of labels of interest
     >>> label_tuple = ([label], [label], [label2])
-    >>> segments, labels, prior_labels = segment_around_labeltransitions(data=[arr], labels=label_tuple, prechange_samples=0, postchange_samples=3)
+    >>> segments, labels, prior_labels = segment_around_label_transitions(data=[arr], labels=label_tuple, prechange_samples=0, postchange_samples=3)
     >>> labels # this time we get a tuple of 3 labels. The first is the same as before, and the others are fully segmented 
     (array([1, 0, 3]),
      array([[1, 1, 1],
@@ -175,7 +176,7 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
     
     Parameters
     ----------
-    outstruct : naplib.OutStruct object, optional
+    outstruct : OutStruct, optional
         OutStruct containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` parameter. 
     data : string, or list or array-like
@@ -187,6 +188,8 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
         be used to segment the data and compute the f-ratio after the transition.
         If a string, must specify a field of the outstruct. If a list or array-like, then
         labels[i] is of shape (time,)
+    max_lag : int, default=20
+        Maximum lag to look for in the f-ratio (in samples).
     return_fratios : bool, default=False
         Whether or not to return smoothed_fratios along with lags in a tuple. Default False.
     
@@ -199,7 +202,7 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
         Only returned if ``return_fratios=True``
     '''
         
-    segments, labels, _ = segment_around_labeltransitions(outstruct=outstruct, data=data, labels=labels, prechange_samples=0, postchange_samples=max_lag)
+    segments, labels, _ = segment_around_label_transitions(outstruct=outstruct, data=data, labels=labels, prechange_samples=0, postchange_samples=max_lag)
     
     fratios_lags = fratio(segments.transpose((2,1,0)), labels, elec_mode='individual')
     
