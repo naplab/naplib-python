@@ -188,6 +188,8 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
         be used to segment the data and compute the f-ratio after the transition.
         If a string, must specify a field of the outstruct. If a list or array-like, then
         labels[i] is of shape (time,)
+    max_lag : int, default=20
+        Maximum lag to look for in the f-ratio (in samples).
     return_fratios : bool, default=False
         Whether or not to return smoothed_fratios along with lags in a tuple. Default False.
     
