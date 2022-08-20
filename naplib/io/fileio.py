@@ -46,7 +46,8 @@ def import_outstruct(filepath, strict=True):
         for f, t in zip(fieldnames, trial):
             tmp_t = t.squeeze()
             if f == 'resp' or f == 'aud':
-                tmp_t = tmp_t.transpose((1,0))
+                if tmp_t.ndim > 1:
+                    tmp_t = tmp_t.transpose(1,0,*[i for i in range(2, tmp_t.ndim)]) # only switch the first 2 dimensions if there are more than 2
             try:
                 tmp_t = tmp_t.item()
             except:

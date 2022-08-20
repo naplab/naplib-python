@@ -29,6 +29,13 @@ class OutStruct(Iterable):
     ----------
     fields : list of strings
         Field names in the data.
+    mne_info : mne.Info instance
+        Measurement info object containing things like electrode locations
+        (only if OutStruct is created from reading a file format like BIDS).
+    info : dict
+        Extra info (not trial-specific) that a user wants to store
+        using outstruct.set_info or outstruct.update_info
+
     
     '''
     def __init__(self, data, strict=False):

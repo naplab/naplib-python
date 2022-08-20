@@ -10,4 +10,4 @@ import naplib.model_selection
 import naplib.utils
 from .out_struct import OutStruct, join_fields
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
