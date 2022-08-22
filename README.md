@@ -7,10 +7,16 @@ Tools and functions for neural acoustic data processing and analysis in python. 
 
 ## Installation
 
-To install or update this package through pip, run the following command:
+naplib-python is available on PyPi. To install or update this package with pip, run the following command:
 
 ```bash
-pip install git+https://github.com/naplab/naplib-python.git
+pip install naplib
+```
+
+To upgrade the version, run:
+
+```bash
+pip install --upgrade naplib
 ```
 
 ## API
