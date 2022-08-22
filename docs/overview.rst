@@ -9,7 +9,7 @@ Motivation
 naplib-python aims to facilitate the easy processing and analysis of neural-acoustic data - i.e. neural recordings collected from sensory systems in response to auditory stimuli. The collection of algorithms and methods in the package can be used with a wide variety of data modalities, enabling the easy transfer of methods and code between researchers in the field of auditory neuroscience.
 
 Highlighted examples to get started
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 The following examples can give you a sense of how to get started with naplib-python for analyzing neural-acoustic data.
 
