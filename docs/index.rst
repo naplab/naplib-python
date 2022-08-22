@@ -9,13 +9,14 @@ Overview of naplib-python
 naplib-python is a Python module for analyzing neural data such as ECoG or EEG.
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Using naplib-python
+   :maxdepth: 1
+   :caption: Documentation
 
    self
    install
    references/index
    examples/index
+   changelog
 
 .. toctree::
    :maxdepth: 1
@@ -31,6 +32,8 @@ naplib-python is a Python module for analyzing neural data such as ECoG or EEG.
    naplib-python @ GitHub <https://github.com/naplab/naplib-python>
    Issue Tracker <https://github.com/naplab/naplib-python/issues>
 
+.. include:: overview.rst
+   :start-line: 2
 
 Indices and tables
 ==================
