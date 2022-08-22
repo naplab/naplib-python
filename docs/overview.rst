@@ -11,7 +11,7 @@ naplib-python aims to facilitate the easy processing and analysis of neural-acou
 Highlighted examples to get started
 -----------------------------------
 
-The following examples can give you a sense of how to get started with naplib-python for analyzing neural-acoustic data.
+The following examples can give you a sense of how to get started with naplib-python for analyzing neural-acoustic data. More examples and tutorial notebooks can be found in the `Examples page <examples/index.html>`_.
 
 - `Importing data <examples/import_bids_data.html>`_:
     Getting started with naplib-python by importing data from BIDS format.
