@@ -8,13 +8,17 @@ def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args=
     Parameters
     ----------
     x : shape (time,)
+        Values to use as x-index
     y : shape (time, n_samples)
-    ax : plt axes to use
+        Data to plot. The average over the n_samples will be plotted on the main
+        line, surrounded by a shaded region determined by the ``err_method`` parameter.
+    ax : plt.Axes instance, optional
+        Axes to use. If not specified, will use current axes.
     err_method : string, default='stderr
         One of ['stderr','std'], the method to use to calculate error bars.
-    plt_args : dict
+    plt_args : dict, default={}
         Args to be passed to plt.plot(). e.g. 'color','linewidth',...
-    shade_args : dict
+    shade_args : dict, default={}
         Args to be passed to plt.fill_between(). e.g. 'color','alpha',...
     nan_policy : string, default='omit'
         One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
@@ -61,8 +65,11 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     Parameters
     ----------
     data : shape (n_samples, n_features)
-    axes : array of length 2 containing matplotlib axes (optional)
-        axes[0] will be for the dendrogram and axes[1] will be for the data
+        Data to cluster and display. 
+    axes : list of plt.Axes, length 2, optional
+        array of length 2 containing matplotlib axes to plot on.
+        axes[0] will be for the dendrogram and axes[1] will be for the data. If not
+        specified, will create new axes in subplots.
     varnames : list of strings, length must = n_features, default=None
         variable names which will be printed as yticklabels on the data plot
     cmap : string, default='bwr'
@@ -72,9 +79,10 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     
     Returns
     -------
-    cluster_dict : dict output from scipy.cluster.hierarchy.dendrogram
-    cluster_labels : np.array
-        cluster labels from sklearn.cluster.AgglomerativeClustering
+    cluster_dict : dict
+        output from scipy.cluster.hierarchy.dendrogram
+    cluster_labels : np.ndarray
+        cluster labels from sklearn.cluster.AgglomerativeClustering, shape=(n_samples,)
     '''
     if axes is None:
         _, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2.5,1]})
@@ -109,21 +117,22 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
 
 def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
     '''
-    Plot STRF weights as image. Weights are automatically centered at 0
-    so the center of the colormap is 0.
+    Plot STRF weights as image. Colormap is automatically centered at 0 so
+    that 0 corresponds to white, positive values are red, and negative values
+    are blue.
     
     Parameters
     ----------
     coef : np.array, shape (freq, lag)
         STRF weights.
     tmin : float, optional
-        Time of first lag (first column)
+        Time of first lag (first column in coef)
     tmax : float, optional
-        Time of final lag (last column)
+        Time of final lag (last column in coef)
     freqs : list or array-like, length=2, optional
         Frequency of lowest and highest frequency bin in STRF.
     ax : plt.Axes, optional
-        Axes to plot on.
+        Axes to plot on. If not specified, will use current axes.
     smooth : bool, default=True
         Whether or not to smooth the STRF image. Smoothing is
         done with 'gouraud' shading in plt.pcolormesh().
