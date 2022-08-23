@@ -99,6 +99,9 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
         x_resampled = resample(x.squeeze(), int(x.shape[0]/sfreq*next_pow2))
     else:
         x_resampled = x.squeeze().copy()
+
+    # zero-padding
+    x_resampled[-1] = 0.
         
     shift = round(math.log2(sfreq/16384)) # octaves to shift
     
