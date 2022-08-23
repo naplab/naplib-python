@@ -1,4 +1,3 @@
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/naplib.svg)](https://img.shields.io/pypi/pyversions/naplib.svg)
 [![GH Actions Tests](https://github.com/naplab/naplib-python/actions/workflows/python-package.yml/badge.svg)](https://github.com/naplab/naplib-python/actions)
 [![codecov](https://codecov.io/gh/mvlearn/mvlearn/branch/main/graph/badge.svg)](https://codecov.io/gh/mvlearn/mvlearn)
 [![PyPI version](https://badge.fury.io/py/naplib.svg)](https://badge.fury.io/py/naplib)
