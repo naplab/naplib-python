@@ -271,11 +271,6 @@ class TRF(BaseEstimator):
         
         X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))
 
-        if not isinstance(X_, list):
-            raise TypeError(f'X input must be of type list but got {type(X_)}')
-        if not isinstance(y_, list):
-            raise TypeError(f'y input must be of type list but got {type(y_)}')
-
         X_ = np.concatenate(X_, axis=0)
 
         if y_[0].ndim == 1:

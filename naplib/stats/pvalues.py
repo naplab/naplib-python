@@ -22,7 +22,7 @@ def stars(pvals):
     >>> nl.stats.stars(pvalues)
     ['n.s.','*','****']
     '''
-    thresholds = [np.inf, 0.05, 0.01, 0.001, 0.001, 0.0001]
+    thresholds = [np.inf, 0.05, 0.01, 0.001, 0.0001, 0.00001]
     stars_strings = ['n.s.', '*', '**', '***', '****']
     float_flag = False
     
