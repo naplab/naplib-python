@@ -109,7 +109,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     cochba = cochba['COCHBA']
     
     L, M = cochba.shape
-    L_x = x.shape[0]
+    L_x = x_resampled.shape[0]
     
     L_frm = round(frame_len * (2**(4+shift))) # frame length (points)
     
