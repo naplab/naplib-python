@@ -50,8 +50,8 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     x : np.ndarray
         Acoustic signal to convert to time-frequency representation
     sfreq : int
-        Sampling rate of the signal. If not a power of 2, then it will be
-        downsampled to the nearest power of 2.
+        Sampling rate of the signal. For best performance, it may be
+        recommended to resample the signal to a power of 2 sampling rate.
     frame_len : float, default=8
         Frame length of the output, in ms. Typically 8, 16, or a power of 2.
     tc : float, default=4
