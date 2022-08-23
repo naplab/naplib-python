@@ -15,3 +15,4 @@ def small_sound():
 def test_small_sound_linear_factor(small_sound):
     spec = auditory_spectrogram(small_sound, 10000, frame_len=8, tc=4, factor='linear')
     assert spec.shape[1] == 128
+
