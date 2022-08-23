@@ -1,3 +1,9 @@
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/naplib.svg)](https://img.shields.io/pypi/pyversions/naplib.svg)
+[![GH Actions Tests](https://github.com/naplab/naplib-python/actions/workflows/python-package.yml/badge.svg)](https://github.com/naplab/naplib-python/actions)
+[![codecov](https://codecov.io/gh/mvlearn/mvlearn/branch/main/graph/badge.svg)](https://codecov.io/gh/mvlearn/mvlearn)
+[![PyPI version](https://badge.fury.io/py/naplib.svg)](https://badge.fury.io/py/naplib)
+[![License](https://img.shields.io/github/license/naplab/naplib-python)](https://opensource.org/licenses/MIT)
+
 # naplib-python
 Tools and functions for neural acoustic data processing and analysis in python. The documentation can be acccessed at the link below. It contains the API reference as well as example notebooks.
 
