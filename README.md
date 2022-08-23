@@ -1,5 +1,5 @@
 [![GH Actions Tests](https://github.com/naplab/naplib-python/actions/workflows/python-package.yml/badge.svg)](https://github.com/naplab/naplib-python/actions)
-[![codecov](https://codecov.io/gh/mvlearn/mvlearn/branch/main/graph/badge.svg)](https://codecov.io/gh/mvlearn/mvlearn)
+[![codecov](https://codecov.io/gh/naplab/naplib-python/branch/main/graph/badge.svg)](https://codecov.io/gh/naplab/naplib-python)
 [![PyPI version](https://badge.fury.io/py/naplib.svg)](https://badge.fury.io/py/naplib)
 [![License](https://img.shields.io/github/license/naplab/naplib-python)](https://opensource.org/licenses/MIT)
 
