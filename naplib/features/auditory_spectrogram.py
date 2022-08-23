@@ -92,18 +92,16 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     if isinstance(factor, str) and factor not in ['linear', 'boolean', 'half-wave']:
         raise ValueError(f"If a string, factor must be one of {'linear', 'boolean', 'half-wave'}, but got '{factor}'")
         
-    ispow2 = (sfreq and (not(sfreq & (sfreq - 1))) )
+    # ispow2 = (sfreq and (not(sfreq & (sfreq - 1))) )
         
-    if not ispow2:
-        next_pow2 = _largest_pow2_less_than(sfreq)
-        x_resampled = resample(x.squeeze(), int(x.shape[0]/sfreq*next_pow2))
-    else:
-        x_resampled = x.squeeze().copy()
+    # if not ispow2:
+    #     next_pow2 = _largest_pow2_less_than(sfreq)
+    #     x_resampled = resample(x.squeeze(), int(x.shape[0]/sfreq*next_pow2))
+    # else:
+    x_resampled = x.squeeze().copy()
 
-    # zero-padding
-    x_resampled[-1] = 0.
         
-    shift = round(math.log2(sfreq/16384)) # octaves to shift
+    shift = round(math.log2(sfreq/16384.)) # octaves to shift
     
     # read in cochlear filter from file
     filedir = dirname(__file__)
@@ -115,6 +113,8 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     L_x = x_resampled.shape[0]
     
     L_frm = round(frame_len * (2**(4+shift))) # frame length (points)
+
+
     
     if tc > 0:
         alpha = math.exp(-1/(tc * 2**(4+shift))) # decay factor
@@ -129,7 +129,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     
     # allocate memory for output
     N = math.ceil(L_x / L_frm)
-    x_resampled = np.pad(x_resampled, (N*L_frm-L_x,0))
+    x_resampled = np.pad(x_resampled, (0,N*L_frm-L_x))
     indexer = np.arange(L_frm-1, N*L_frm, L_frm)
     
     output = np.zeros((N, M-1))
