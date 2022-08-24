@@ -43,7 +43,7 @@ def _parse_outstruct_args(outstruct,
             for i, arg in enumerate(args):
                 if isinstance(arg, list):
                     lengths.append(len(arg))
-                if not allow_strings_without_outstruct[i]:
+                if isinstance(arg, str) and not allow_strings_without_outstruct[i]:
                     raise ValueError(f'Input is a string but no OutStruct was provided from which to select a field based on the string.')
             if len(lengths) > 0:
                 if not allow_different_lengths and not _all_equal_list(lengths):

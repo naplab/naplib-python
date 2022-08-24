@@ -260,8 +260,7 @@ class TRF(BaseEstimator):
             should be of shape (time, num_targets[, num_features_y]).
             If a string, it must specify one of the fields of the outstruct
             provided in the first argument. If a multidimensional array, first dimension
-            indicates the trial/instances which will be concatenated over to compute
-            normalization statistics.
+            indicates the trial/instances.
         
                 
         Returns
@@ -271,7 +270,7 @@ class TRF(BaseEstimator):
         '''
         
         X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))
-        
+
         X_ = np.concatenate(X_, axis=0)
 
         if y_[0].ndim == 1:
@@ -353,6 +352,7 @@ class TRF(BaseEstimator):
                         cov_, x_y_, n_ch_x, X_offset, y_offset = _compute_corrs(
                             X_train_delayed, y_train_delayed, self._smin, self._smax, self.n_jobs,
                             self.fit_intercept, edge_correction=True)
+
                     rf.cov_ = cov_
                     rf.estimator.cov_ = cov_
                     rf.estimator_ = rf.estimator
@@ -361,7 +361,7 @@ class TRF(BaseEstimator):
                         
                         coef_ = _fit_corrs(cov_, x_y_, n_ch_x,
                                 self.reg_type, alpha_, n_ch_x)
-                        coef_ = coef_[:,:-1]
+                        coef_ = coef_[:,:,:-1]
                         
                         rf.coef_ = coef_
                         rf.estimator_.coef_ = coef_
@@ -405,7 +405,8 @@ class TRF(BaseEstimator):
             rf.estimator_ = rf.estimator
             coef_ = _fit_corrs(cov_, x_y_, n_ch_x,
                             self.reg_type, best_alpha_thistarget, n_ch_x)
-            coef_ = coef_[:,:-1]
+            # remove last lag of weights because it has significant edge effect
+            coef_ = coef_[:,:,:-1]
 
             rf.coef_ = coef_
             rf.estimator_.coef_ = coef_
@@ -415,8 +416,8 @@ class TRF(BaseEstimator):
             else:
                 rf.estimator_.intercept_ = 0.
             # remove last lag of weights because it has significant edge effect
-            rf.estimator_.coef_ = rf.coef_[:,:,:-1]
-            rf.coef_ = rf.coef_[:,:,:-1] 
+            rf.estimator_.coef_ = rf.coef_
+            rf.coef_ = rf.coef_
             self.models_.append(rf)
             
         return self
@@ -521,7 +522,11 @@ class TRF(BaseEstimator):
         if not hasattr(self, 'models_'):
             raise ValueError(f'Must call .fit() before can call .score()')
         
-        X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))        
+        X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))    
+
+        for i in range(len(y_)):
+            if y_[i].ndim==1:
+                y_[i] = y_[i][:,np.newaxis]
 
         y_preds = []
         for x, yy in zip(X_, y_):
@@ -584,4 +589,3 @@ def _xval_time_splits(data, test_portion):
         yield train_data, test_data
 
 _SCORERS = {'r2': _r2_score, 'corrcoef': _corr_score}
-
