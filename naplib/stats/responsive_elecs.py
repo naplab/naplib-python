@@ -39,7 +39,9 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
         the first half second of the `resp` is the responses before the onset
         of the stimulus, and also the final half second is responses for half
         a second after the stimulus ended. If no outstruct is provided, this
-        cannot be a string.
+        cannot be a string. Note: if this is a list it must be of same length
+        as the resp, so to specify the same befaft for all trials, use a np.ndarray
+        of length 2.
     sfreq : str | int, default='dataf'
         The sampling frequency of the responses. If a string, specifies field of
         the outstruct containing the sampling frequency.
@@ -111,6 +113,7 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
                                          allow_different_lengths=True,
                                          allow_strings_without_outstruct=False)
 
+
     if isinstance(resp, np.ndarray):
         resp = [r for r in resp]
 
@@ -164,7 +167,7 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
         outstruct_copy[resp_fieldname] = resp_corrected
         return outstruct_copy, stats
 
-    return resp, stats
+    return resp_corrected, stats
 
 
     
