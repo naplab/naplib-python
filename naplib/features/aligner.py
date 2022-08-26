@@ -433,7 +433,11 @@ class Aligner():
         | │   └── trial2.TextGrid
         '''
 
-        names, dataf, lengths, befafts = _parse_outstruct_args(outstruct, name, dataf, length, befaft)
+        names, dataf, lengths, befafts = _parse_outstruct_args(outstruct, name, dataf, length, befaft, allow_strings_without_outstruct=False)
+
+        for len_ in lengths:
+            if not isinstance(len_, int):
+                raise TypeError(f'Each length must be an integer but found {type(len_)}')
 
         wrd_dict = create_wrd_dict(self.output_dir)
 
@@ -442,7 +446,7 @@ class Aligner():
         if self.verbose >= 1:
             print(f'Creating label vectors for phonemes, manner of articulation, and words.')
 
-        for n in range(len(outstruct)):
+        for n in range(len(names)):
 
             this_trial_result = {}
     
