@@ -108,6 +108,6 @@ venv.bak/
 # macos
 .DS_Store
 
-# test output files from Aligner
-aligner_output*/
-aligner_tmp*/
+# aligner test files
+.scores.csv
+.aligned.mlf
