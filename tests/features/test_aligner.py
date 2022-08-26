@@ -42,31 +42,21 @@ def dirs():
     
 
 def test_alignment_from_directory(dirs):
-    aligner = Aligner(output_dir=dirs['out'], tmp_dir=dirs['tmp'], verbose=0)
+    aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
     aligner.align_files(dirs['audio'], dirs['txt'])
     label_out = aligner.get_label_vecs_from_files(name=['test1'], dataf=[100], length=[dirs['duration']], befaft=[np.array([0,0])])
     assert isinstance(label_out, OutStruct)
-    assert label_out['phn_labels'][0].shape[0] == dirs['duration']
+    for field in label_out.fields:
+        for trial in label_out[field]:
+            if isinstance(trial, np.ndarray):
+                assert trial.shape[0] == dirs['duration']
 
 
 def test_alignment_from_outstruct(dirs):
-    aligner = Aligner(output_dir=dirs['out'], tmp_dir=dirs['tmp'], verbose=0)
+    aligner = Aligner(output_dir=dirs['out']+'2', tmp_dir=dirs['tmp']+'2', verbose=0)
     aligner.align(outstruct=dirs['outstruct'])
     label_out = aligner.get_label_vecs_from_files(outstruct=dirs['outstruct'])
-    assert label_out['wrd_labels'][0].shape[0] == dirs['outstruct']['resp'][0].shape[0]
-
-def test_alignment_from_outstruct_matches_from_directory(dirs):
-    aligner = Aligner(output_dir=dirs['out'], tmp_dir=dirs['tmp'], verbose=0)
-    aligner.align(outstruct=dirs['outstruct'])
-    label_outstruct = aligner.get_label_vecs_from_files(outstruct=dirs['outstruct'])
-
-    aligner2 = Aligner(output_dir=dirs['out'], tmp_dir=dirs['tmp'], verbose=0)
-    aligner2.align_files(dirs['audio'], dirs['txt'])
-    label_dir = aligner2.get_label_vecs_from_files(name=['test1'], dataf=[100], length=[dirs['duration']], befaft=[np.array([0,0])])
-
-    for field in label_outstruct.fields:
-        for trial_outstruct, trial_dir in zip(label_outstruct[field], label_dir[field]):
-            if isinstance(trial_outstruct, np.ndarray):
-                print(field)
-                print(trial_outstruct[100:-100] - trial_dir)
-                assert np.allclose(trial_outstruct[100:-100], trial_dir)
+    for field in label_out.fields:
+        for trial in label_out[field]:
+            if isinstance(trial, np.ndarray):
+                assert trial.shape[0] == dirs['outstruct']['resp'][0].shape[0]
