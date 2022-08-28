@@ -117,3 +117,39 @@ def test_single_label_segment_transitions_bigpostchange(outstruct):
     assert np.array_equal(segments, expected)
     assert np.array_equal(labels, np.array([1]))
     assert np.array_equal(prior_labels, np.array([0]))
+
+def test_single_label_segment_transitions_withlags(outstruct):
+    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=outstruct['labels1'],
+                                                                      prechange_samples=3,
+                                                                      postchange_samples=1,
+                                                                      elec_lag=np.array([1,2]))
+    expected = np.array([[[ 6,  9],
+                          [ 8, 11],
+                          [10, 13],
+                          [12, 15]],
+                         [[ 2,  5],
+                          [ 4,  7],
+                          [ 6,  9],
+                          [ 8, 11]]])
+    assert np.array_equal(segments, expected)
+    assert np.array_equal(labels, np.array([3,0]))
+    assert np.array_equal(prior_labels, np.array([1,2]))
+
+def test_single_label_segment_transitions_withlags_multiplelabels(outstruct):
+    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=(outstruct['labels1'], outstruct['labels2']),
+                                                                      prechange_samples=3,
+                                                                      postchange_samples=1,
+                                                                      elec_lag=np.array([1,2]))
+    expected = np.array([[[ 6,  9],
+                          [ 8, 11],
+                          [10, 13],
+                          [12, 15]],
+                         [[ 2,  5],
+                          [ 4,  7],
+                          [ 6,  9],
+                          [ 8, 11]]])
+    labs2_ex = np.array([[3, 4, 5, 6,], [8, 7, 6, 6]])
+    assert np.array_equal(segments, expected)
+    assert np.array_equal(labels[0], np.array([3,0]))
+    assert np.array_equal(labels[1], labs2_ex)
+    assert np.array_equal(prior_labels, np.array([1,2]))
