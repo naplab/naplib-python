@@ -43,9 +43,6 @@ def test_errorplot_error_region_std_withnan_propogate():
     fig, ax = plt.subplots(1,1)
     shadederrorplot(x, y, ax=ax, err_method='std', nan_policy='propogate')
 
-    print(ax.lines[0].get_data()[1])
-    print(y_mean)
-
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     nan_mask = np.isnan(y_mean)
     assert np.allclose(ax.lines[0].get_data()[1][~nan_mask], y_mean[~nan_mask], atol=1e-10)
