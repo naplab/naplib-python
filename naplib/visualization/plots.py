@@ -120,7 +120,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_ax=False):
     '''
     Plot STRF weights as image. Colormap is automatically centered at 0 so
     that 0 corresponds to white, positive values are red, and negative values
@@ -141,6 +141,13 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
     smooth : bool, default=True
         Whether or not to smooth the STRF image. Smoothing is
         done with 'gouraud' shading in plt.pcolormesh().
+    return_ax : bool, default=False
+        Whether or not to return axes as well.
+
+    Returns
+    -------
+    ax : matplotlib Axes
+        Axes where STRF coef is plotted. Only returned if ``return_ax`` is True.
     '''
     
     if ax is None:
@@ -171,3 +178,6 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         yticks = ax.get_yticks()
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
+
+    if return_ax:
+        return ax
