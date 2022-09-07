@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
+import copy
 
-from naplib import OutStruct
+from naplib import OutStruct, join_fields
 
 @pytest.fixture(scope='module')
 def data():
@@ -21,6 +22,32 @@ def test_bracket_indexing(data):
     outstruct = data['out']
     assert np.array_equal(outstruct[-1]['resp'], data['x'][-1])
     assert np.array_equal(outstruct['resp'][-1], data['x'][-1])
+
+def test_create_outstruct_from_list():
+    data = [{'x': np.array([1,2]), 'y': 'y0'}, {'x': np.array([3,4]), 'y': 'y1'}]
+    outstruct = OutStruct(data)
+    assert np.array_equal(outstruct['x'][0], np.array([1,2]))
+    assert np.array_equal(outstruct['x'][1], np.array([3,4]))
+    assert outstruct['y'][0] == 'y0'
+    assert outstruct['y'][1] == 'y1'
+
+def test_create_outstruct_from_dict():
+    data = {'x': [np.array([1,2]), np.array([3,4])], 'y': ['y0', 'y1']}
+    outstruct = OutStruct(data)
+    assert np.array_equal(outstruct['x'][0], np.array([1,2]))
+    assert np.array_equal(outstruct['x'][1], np.array([3,4]))
+    assert outstruct['y'][0] == 'y0'
+    assert outstruct['y'][1] == 'y1'
+
+def test_create_outstruct_from_dict_different_lengths():
+    data = {'x': [np.array([1,2]), np.array([3,4])], 'y': ['y0', 'y1', 'y2']}
+    with pytest.raises(ValueError):
+        outstruct = OutStruct(data)
+
+def test_create_outstruct_from_dict_not_lists_inside():
+    data = {'x': [np.array([1,2]), np.array([3,4])], 'y': 'not a list'}
+    with pytest.raises(TypeError):
+        outstruct = OutStruct(data)
 
 def test_iterating_over_outstruct(data):
     outstruct = data['out']
@@ -45,8 +72,52 @@ def test_get_string_representation(data):
     expected = "OutStruct of 3 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
     assert expected == tmp
 
+def test_get_string_representation_2trials(data):
+    tmp = data['out'][:2].__repr__()
+    expected = "OutStruct of 2 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
+    assert expected == tmp
+
+def test_get_string_representation_4trials(data):
+    out_tmp = copy.copy(data['out'])
+    out_tmp.append(data['out'][-1])
+    print(len(out_tmp))
+    tmp = out_tmp.__repr__()
+    print(tmp)
+    expected = "OutStruct of 4 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n\n...\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
+    print(len(tmp))
+    print(len(expected))
+    assert expected == tmp
+
 def test_slicing_outstruct(data):
     outstruct = data['out']
     for trial, x in zip(outstruct[1:], data['x'][1:]):
         assert np.array_equal(trial['resp'], x)
         assert trial['dataf'] == 100
+
+def test_join_fields_axis0(data):
+    outstruct = data['out']
+    second_out = copy.copy(outstruct)
+    joined_resp = join_fields([outstruct, second_out], fieldname='resp', axis=0)
+    assert np.array_equal(joined_resp[0], np.concatenate([data['x'][0], data['x'][0]], axis=0))
+    assert np.array_equal(joined_resp[1], np.concatenate([data['x'][1], data['x'][1]], axis=0))
+    assert np.array_equal(joined_resp[2], np.concatenate([data['x'][2], data['x'][2]], axis=0))
+
+def test_join_fields_axis1(data):
+    outstruct = data['out']
+    second_out = copy.copy(outstruct)
+    joined_resp = join_fields([outstruct, second_out], fieldname='resp', axis=1)
+    assert np.array_equal(joined_resp[0], np.concatenate([data['x'][0], data['x'][0]], axis=1))
+    assert np.array_equal(joined_resp[1], np.concatenate([data['x'][1], data['x'][1]], axis=1))
+    assert np.array_equal(joined_resp[2], np.concatenate([data['x'][2], data['x'][2]], axis=1))
+
+def test_join_fields_not_outstruct(data):
+    outstruct = data['out']
+    with pytest.raises(TypeError):
+        joined_resp = join_fields([outstruct, data['x']], fieldname='resp', axis=0)
+
+def test_join_fields_not_nparray(data):
+    outstruct = data['out']
+    second_out = copy.copy(outstruct)
+    with pytest.raises(TypeError):
+        joined_resp = join_fields([outstruct, second_out], fieldname='name', axis=0)
+
