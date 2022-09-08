@@ -20,8 +20,8 @@ def normalize(outstruct=None, data='resp', axis=0, method='zscore'):
         indicates the trial/instances which will be concatenated over to compute
         normalization statistics.
     
-    axis : int, default=-1
-        Axis of the array to normalize over.
+    axis : int, default=0
+        Axis of the array to concatenate over before normalizing.
     
     method : string, default='zscore'
         Method of normalization. Must be one of ['zscore','center'].

@@ -83,9 +83,14 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         output from scipy.cluster.hierarchy.dendrogram
     cluster_labels : np.ndarray
         cluster labels from sklearn.cluster.AgglomerativeClustering, shape=(n_samples,)
+    fig : matplotlib figure
+        Figure where data was plotted. Only returned if axes were not passed in.
+    axes : array of Axes
+        Axes where data was plotted. Only returned if axes were not passed in.
     '''
     if axes is None:
-        _, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2.5,1]})
+        return_axes = True
+        fig, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2.5,1]})
         
     dend = shc.dendrogram(shc.linkage(data, method='ward'), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
 
@@ -108,14 +113,14 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         axes[1].set_yticklabels(varnames, fontsize=8)
 
     axes[1].set_xticks([])
-
-    plt.tight_layout()
-    plt.show()
     
+    if return_axes:
+        return dend, cluster_labels, fig, axes
+
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_ax=False):
     '''
     Plot STRF weights as image. Colormap is automatically centered at 0 so
     that 0 corresponds to white, positive values are red, and negative values
@@ -136,6 +141,13 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
     smooth : bool, default=True
         Whether or not to smooth the STRF image. Smoothing is
         done with 'gouraud' shading in plt.pcolormesh().
+    return_ax : bool, default=False
+        Whether or not to return axes as well.
+
+    Returns
+    -------
+    ax : matplotlib Axes
+        Axes where STRF coef is plotted. Only returned if ``return_ax`` is True.
     '''
     
     if ax is None:
@@ -166,3 +178,6 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         yticks = ax.get_yticks()
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
+
+    if return_ax:
+        return ax

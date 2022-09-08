@@ -1,8 +1,11 @@
 from collections.abc import Iterable, Sequence
+from itertools import groupby
 import numpy as np
 from mne import Info
 
+
 STRICT_FIELDS_REQUIRED = set(['name','sound','soundf','resp','dataf'])
+
 
 class OutStruct(Iterable):
     '''
@@ -17,8 +20,11 @@ class OutStruct(Iterable):
     Parameters
     ----------
     data : dict or list of dictionaries
-        The Nth ictionary defines the Nth trial data, typically for the Nth stimulus.
-        Each dictionary must contain the same keys if passed in a list of multiple trials.
+        If a list of dicts, then the Nth dictionary defines the Nth trial data, typically
+        corresponding to the Nth stimulus. Each dictionary must contain the same keys if
+        passed in as a list of multiple trials. If a single dict, then the keys specify the
+        field names and the values specify the data across trials, and each value must be
+        a list of length num_trials.
     strict : bool, default=False
         If True, requires strict adherance to the following standards:
         1) Each trial must contain at least the following fields:
@@ -36,12 +42,23 @@ class OutStruct(Iterable):
         Extra info (not trial-specific) that a user wants to store
         using outstruct.set_info or outstruct.update_info
 
+
+
     
     '''
     def __init__(self, data, strict=False):
         
         if isinstance(data, dict):
-            data = [data]
+            lengths = []
+            for k, v in data.items():
+                if not isinstance(v, list):
+                    raise TypeError(f'When creating an OutStruct from a dict, each value in the '
+                                     'dict must be a list, but for key "{k}" got type {type(v)}')
+                lengths.append(len(v))
+            if not _all_equal_list(lengths):
+                raise ValueError(f'When creating an OutStruct from a dict, each value in the '
+                                  'dict must be a list of the same length, but got different lengths: {lengths}')
+            data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
         elif isinstance(data, list):
             self._data = data
@@ -322,7 +339,7 @@ class OutStruct(Iterable):
                 to_return += f'"{fieldname}": {type(self[-1][fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
-            to_return += '}]'
+            to_return += '}]\n'
         return to_return
     
     def _validate_new_out_data(self, input_data, strict=True):
@@ -415,4 +432,6 @@ def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
         return OutStruct([dict([(fieldname, x)]) for x in to_return], strict=False)
     return to_return
         
-    
+def _all_equal_list(iterable):
+    g = groupby(iterable)
+    return next(g, True) and not next(g, False)
