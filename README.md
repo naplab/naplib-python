@@ -26,12 +26,12 @@ pip install --upgrade naplib
 
 ## API
 
-The basic data structure for storing neural recording data is the OutStruct, which contains neural recordings and other variables associated with different trials/stimuli. Examples of loading and using this data structure can be found in the documentation and the docs/examples/ folder.
+The basic data structure for storing neural recording data is the ``Data`` object, which contains neural recordings and other variables associated with different trials such as stimuli and other metadata. Examples of loading and using this data structure can be found in the documentation and the docs/examples/ folder.
 
-### OutStruct Data Structure Schematic
+### ``Data`` Structure Schematic
 
 <p align="center">
-  <img width=650 src="docs/figures/naplib-python-outstruct-figure.png" />
+  <img width=650 src="docs/figures/naplib-python-data-figure.png" />
 </p>
 
 ## Contributions

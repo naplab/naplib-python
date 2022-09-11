@@ -5,12 +5,12 @@ from sklearn.model_selection._split import _BaseKFold
 from sklearn.utils.validation import indexable
 from sklearn.utils import _safe_indexing, check_random_state
 
-from ..out_struct import OutStruct
+from ..data import Data
 
 
 class KFold(_BaseKFold):
     '''
-    KFold splitter which works on an OutStruct or a list.
+    KFold splitter which works on a naplib.Data object or a list-like sequence.
     
     Parameters
     ----------
@@ -28,10 +28,10 @@ class KFold(_BaseKFold):
     Examples
     --------
     >>> from naplib.model_selection import KFold
-    >>> data = [1,2,3] # this could be a field of an OutStruct, like out['resp']
-    >>> data2 = [5,6,7] # this could be another field of an OutStruct, like out['aud']
+    >>> list1 = [1,2,3] # this could be a field of a Data object, like data['resp']
+    >>> list2 = [5,6,7] # this could be another field of a Data object, like data['aud']
     >>> kfold = KFold(3)
-    >>> for train_data, test_data, train_data2, test_data2 in kfold.split(data, data2):
+    >>> for train_data, test_data, train_data2, test_data2 in kfold.split(list1, list2):
     >>>    print(train_data, test_data, train_data2, test_data2)
     [2, 3] [1] [6, 7] [5]
     [1, 3] [2] [5, 7] [6]
@@ -61,14 +61,14 @@ class KFold(_BaseKFold):
 
         Parameters
         ----------
-        *args : OutStructs or lists
+        *args : Data or list-like objects
             Sets of data which will be split into train and test groups.
 
         Yields
         ------
-        train : OutStruct or list
+        train : Data or list-like objects
             The training set for that split.
-        test : OutStruct or list
+        test : Data or list-like objects
             The testing set for that split.
         """
         data = indexable(*args)
@@ -88,9 +88,9 @@ class KFold(_BaseKFold):
                     )
                 )
             for i, d in enumerate(data):
-                if isinstance(d, OutStruct):
-                    tmp[2*i] = OutStruct(tmp[2*i], strict=False)
-                    tmp[2*i+1] = OutStruct(tmp[2*i+1], strict=False)
+                if isinstance(d, Data):
+                    tmp[2*i] = Data(tmp[2*i], strict=False)
+                    tmp[2*i+1] = Data(tmp[2*i+1], strict=False)
             yield tmp
                     
     

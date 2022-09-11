@@ -16,7 +16,7 @@ The following examples show some of the basics of setting up python, Jupyter not
       
    matlab_to_python_tutorial
 
-.. _working with outstructs:
+.. _working with data:
 
 OutStructs and Array Operations in naplib-python
 ================================================

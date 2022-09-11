@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 
-from naplib.io import save, load, import_outstruct
+from naplib.io import save, load, import_out_struct
 
 def test_save_dict():
     data = {'x': np.array([1,2,3]), 'string': 'message'}

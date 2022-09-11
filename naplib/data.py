@@ -7,15 +7,15 @@ from mne import Info
 STRICT_FIELDS_REQUIRED = set(['name','sound','soundf','resp','dataf'])
 
 
-class OutStruct(Iterable):
+class Data(Iterable):
     '''
     Class for storing electrode response data along with
     task- and electrode-related variables. Under the hood, it consists
     of a list of dictionaries where each dictionary contains all the data
     for one trial.
 
-    Please see the :ref:`example notebooks <working with outstructs>` for more detailed
-    tutorials which demonstrate using the OutStruct object in different types of analysis.
+    Please see the :ref:`example notebooks <working with data>` for more detailed
+    tutorials which demonstrate using the Data object in different types of analysis.
     
     Parameters
     ----------
@@ -37,10 +37,10 @@ class OutStruct(Iterable):
         Field names in the data.
     mne_info : mne.Info instance
         Measurement info object containing things like electrode locations
-        (only if OutStruct is created from reading a file format like BIDS).
+        (only if Data is created from reading a file format like BIDS).
     info : dict
         Extra info (not trial-specific) that a user wants to store
-        using outstruct.set_info or outstruct.update_info
+        using Data.set_info or Data.update_info
 
 
 
@@ -52,18 +52,18 @@ class OutStruct(Iterable):
             lengths = []
             for k, v in data.items():
                 if not isinstance(v, list):
-                    raise TypeError(f'When creating an OutStruct from a dict, each value in the '
+                    raise TypeError(f'When creating an Data from a dict, each value in the '
                                      'dict must be a list, but for key "{k}" got type {type(v)}')
                 lengths.append(len(v))
             if not _all_equal_list(lengths):
-                raise ValueError(f'When creating an OutStruct from a dict, each value in the '
+                raise ValueError(f'When creating an Data from a dict, each value in the '
                                   'dict must be a list of the same length, but got different lengths: {lengths}')
             data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
         elif isinstance(data, list):
             self._data = data
         else:
-            raise TypeError(f'Can only create OutStruct from a dict or a list '
+            raise TypeError(f'Can only create Data from a dict or a list '
                             f'of dicts, but found type {type(data)}')
         self._strict = strict
         self._validate_new_out_data(data, strict=strict)
@@ -73,19 +73,21 @@ class OutStruct(Iterable):
                 
     def set_field(self, fielddata, fieldname):
         '''
+        Set the information in a single field with a new list of data.
+
         Parameters
         ----------
         fielddata : list
             List containing data to add to each trial for this field. Must 
             be same length as this object
         fieldname : string
-            Name of field to add. If this field already exists in the OutStruct
+            Name of field to add. If this field already exists in the Data
             then the current field will be overwritten.
         '''
         if not isinstance(fielddata, list):
             raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
         if len(fielddata) != len(self):
-            raise Exception('Length of field is not equal to length of this OutStruct')
+            raise Exception('Length of field is not equal to length of this Data')
         for i in range(len(self.data)):
             self.data[i][fieldname] = fielddata[i]
             
@@ -119,50 +121,50 @@ class OutStruct(Iterable):
 
         Returns
         -------
-        data : dict, list, or OutStruct
+        data : dict, list, or Data
             If index is an integer, returns the corresponding trial as a dict. If index
             is a string, returns the corresponding field, and if it is a list of strings,
-            returns those fields together in a new OutStruct object.
+            returns those fields together in a new Data object.
 
         Examples
         --------
         >>> # Get a specific trial based on its index, which returns a dict
-        >>> from naplib import OutStruct
+        >>> from naplib import Data
         >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
         ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
-        >>> out = OutStruct(trial_data, strict=False)
-        >>> out[0]
+        >>> data = Data(trial_data, strict=False)
+        >>> data[0]
         {'name': 'Zero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get a slice of trials, which returns an OutStruct object
+        >>> # Get a slice of trials, which returns an Data object
         >>> out[:2]
-        OutStruct of 2 trials containing 3 fields
+        Data object of 2 trials containing 3 fields
         [{"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}
         {"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}]
 
         >>> # Get a list of trial data from a single field
-        >>> out['name']
+        >>> data['name']
         ['TrialZero', 'TrialOne']
-        >>> out[0]
+        >>> data[0]
         {'name': 'TrialZero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get multiple fields using a list of fieldnames, which returns an OutStruct containing that subset of fields
-        >>> out[['resp','trial']]
-        OutStruct of 2 trials containing 2 fields
+        >>> # Get multiple fields using a list of fieldnames, which returns an Data containing that subset of fields
+        >>> data[['resp','trial']]
+        Data object of 2 trials containing 2 fields
         [{"resp": <class 'list'>, "trial": <class 'int'>}
         {"resp": <class 'list'>, "trial": <class 'int'>}]
         '''
         if isinstance(index, slice):
-            return OutStruct(self.data[index], strict=self._strict)
+            return Data(self.data[index], strict=self._strict)
         if isinstance(index, str):
             return self.get_field(index)
         if isinstance(index, list) or isinstance(index, np.ndarray):
             if isinstance(index[0], str):
-                return OutStruct([dict([(field, x[field]) for field in index]) for x in self], strict=False)
+                return Data([dict([(field, x[field]) for field in index]) for x in self], strict=False)
             else:
-                return OutStruct([self.data[i] for i in index], strict=False)
+                return Data([self.data[i] for i in index], strict=False)
         try:
-            # TODO: change this to return a type OutStruct if you do slicing - problem with trying to
+            # TODO: change this to return a type Data if you do slicing - problem with trying to
             # print because it says KeyError for self.data[0] for key 0
             return self.data[index]
         except IndexError:
@@ -178,27 +180,27 @@ class OutStruct(Iterable):
         ----------
         index : int or string
             Which trial to set, or which field to set. If an integer, must be <= the
-            length of the OutStruct, since you can only set a currently existing trial
+            length of the Data, since you can only set a currently existing trial
             or append to the end, but you cannot set a trial that is beyond that. 
         data : dict or list of data
             Either trial data to add or field data to add. If index is an
             integer, dictionary should contain all the same fields as
-            current OutStruct object.
+            current Data object.
 
         Examples
         --------
-        >>> # Set a field of an OutStruct
-        >>> from naplib import OutStruct
+        >>> # Set a field of an Data
+        >>> from naplib import Data
         >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
         ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
-        >>> out = OutStruct(trial_data)
-        >>> out[0] = {'name': 'New', 'trial': 10, 'resp': [[0,-1],[-2,-3]]}
-        >>> out[0]r 
+        >>> data = Data(trial_data)
+        >>> data[0] = {'name': 'New', 'trial': 10, 'resp': [[0,-1],[-2,-3]]}
+        >>> data[0]
         {'name': 'New', 'trial': 10, 'resp': [[0, -1], [-2, -3]]}
 
         >>> # We can also set all values of a field across trials
-        >>> out['name'] = ['TrialZero','TrialOne']
-        >>> out['name']
+        >>> data['name'] = ['TrialZero','TrialOne']
+        >>> data['name']
         ['TrialZero', 'TrialOne']
         '''
         if isinstance(index, str):
@@ -207,7 +209,7 @@ class OutStruct(Iterable):
             if index > len(self):
                 raise IndexError((f'Index is too large. Current data is length {len(self)} '
                     'but tried to set index {index}. If you want to add to the end of the list '
-                    'of trials, use the OutStruct.append() method.'))
+                    'of trials, use the Data.append() method.'))
             elif index == len(self):
                 self.append(data)
             else:
@@ -215,16 +217,16 @@ class OutStruct(Iterable):
      
     def append(self, trial_data, strict=None):
         '''
-        Append a single trial of data to the end of an OutStruct.
+        Append a single trial of data to the end of an Data.
         
         Parameters
         ----------
         trial_data : dict
-            Dictionary containing all the same fields as current OutStruct object.
+            Dictionary containing all the same fields as current Data object.
         strict : bool, default=self._strict
             If true, enforces that new data contains the exact same set of fields as
-            the current OutStruct. Default value is self._strict, which is set based
-            on the input when creating a new OutStruct from scratch with __init__()
+            the current Data. Default value is self._strict, which is set based
+            on the input when creating a new Data from scratch with __init__()
 
         Raises
         ------
@@ -232,18 +234,18 @@ class OutStruct(Iterable):
             If input data is not a dict.
         ValueError
             If strict is `True` and the fields contained in the trial_data do
-            not match the fields currently stored in the OutStruct.
+            not match the fields currently stored in the Data.
 
         Examples
         --------
-        >>> # Set a field of an OutStruct
-        >>> from naplib import OutStruct
+        >>> # Set a field of an Data
+        >>> from naplib import Data
         >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
         ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
-        >>> out = OutStruct(trial_data)
+        >>> data = Data(trial_data)
         >>> new_trial_data = {'name': 'Two', 'trial': 2, 'resp': [[8,9],[10,11]]}
-        >>> out.append(new_trial_data)
-        >>> len(out)
+        >>> data.append(new_trial_data)
+        >>> len(data)
         3
         '''
         if strict is None:
@@ -253,13 +255,13 @@ class OutStruct(Iterable):
         
     def set_info(self, info):
         '''
-        Set the info dict for this OutStruct. If there is already data in the
+        Set the info dict for this Data. If there is already data in the
         `info` attribute, it is replaced with this.
         
         Parameters
         ----------
         info : dict
-            Dictionary containing info to store in the OutStruct's `info` attribute.
+            Dictionary containing info to store in the Data's `info` attribute.
             
         '''
         if not isinstance(info, dict):
@@ -275,7 +277,7 @@ class OutStruct(Iterable):
         Parameters
         ----------
         info : dict
-            Dictionary containing info to add to the OutStruct's `info` attribute.
+            Dictionary containing info to add to the Data's `info` attribute.
         '''
         self._info.update(info)
         
@@ -297,15 +299,15 @@ class OutStruct(Iterable):
 
     def __len__(self):
         '''
-        Get the number of trials in the OutStruct with ``len(outstruct)``.
+        Get the number of trials in the Data object with ``len(Data)``.
 
         Examples
         --------
-        >>> from naplib import OutStruct
+        >>> from naplib import Data
         >>> trial_data = [{'trial': 0, 'resp': [[0,1],[2,3]]},
                           {'trial': 1, 'resp': [[4,5],[6,7]]}]
-        >>> out = OutStruct(trial_data, strict=False)
-        >>> len(out)
+        >>> data = Data(trial_data, strict=False)
+        >>> len(data)
         2
         '''
         return len(self.data)
@@ -314,7 +316,7 @@ class OutStruct(Iterable):
         return self.__str__() # until we can think of a better __repr__
     
     def __str__(self):
-        to_return = f'OutStruct of {len(self)} trials containing {len(self.fields)} fields\n['
+        to_return = f'Data object of {len(self)} trials containing {len(self.fields)} fields\n['
         
         to_print = 2 if len(self) > 3 else 3
         for trial_idx, trial in enumerate(self[:to_print]):
@@ -354,11 +356,11 @@ class OutStruct(Iterable):
             if strict:
                 for required_field in STRICT_FIELDS_REQUIRED:
                     if required_field not in trial_fields:
-                        raise ValueError(f'For a "strict" OutStruct, the data does not contain the required field {required_field}.')
+                        raise ValueError(f'For a "strict" Data object, the data does not contain the required field {required_field}.')
     
     @property
     def fields(self):
-        '''List of strings containing names of all fields in this OutStruct.'''
+        '''List of strings containing names of all fields in this Data.'''
         return [k for k, _ in self._data[0].items()]
     
     @property
@@ -382,45 +384,45 @@ class OutStruct(Iterable):
         by a function like `naplib.io.read_bids`.
         '''
         if self._mne_info is None:
-            raise ValueError('No mne_info is available for this OutStruct. This must '
-                             'be read in from external data or added manually to the OutStruct.')
+            raise ValueError('No mne_info is available for this Data. This must '
+                             'be read in from external data or added manually to the Data.')
         return self._mne_info
     
-def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
+def join_fields(data_list, fieldname='resp', axis=-1, return_as_data=False):
     '''
-    Join trials from a field of multiple OutStruct objects by zipping them
+    Join trials from a field in multiple Data objects by zipping them
     together and concatenating each trial together. The field must be of type
     np.ndarray and concatenation is done with np.concatenate().
     
     Parameters
     ----------
-    outstructs : sequence of OutStructs
-        Sequence containing the different outstructs to join
+    data : sequence of Data instances
+        Sequence containing the different Data objects to join.
     fieldname : string, default='resp'
-        Name of the field to concatenate from each OutStruct. For each trial in
-        each outstruct, this field must be of type np.ndarray or something which
+        Name of the field to concatenate from each Data object. For each trial in
+        each Data instance, this field must be of type np.ndarray or something which
         can be input to np.concatenate().
     axis : int, default = -1
         Axis along which to concatenate each trial's data. The default corresponds
-        to the channel dimension of the conventional 'resp' field of an OutStruct.
-    return_outstruct : bool, default=False
-        If True, returns data as an OutStruct with a single field named fieldname.
+        to the channel dimension of the conventional 'resp' field of a Data object.
+    return_as_data : bool, default=False
+        If True, returns data as a Data object with a single field named fieldname.
 
     Returns
     -------
-    joined_data : list of np.ndarrays, or OutStruct
-        Joined data of same length as each of the outstructs containing concatenated data
+    joined_data : list of np.ndarrays, or Data instance
+        Joined data of same length as each of the Data objects containing concatenated data
         for each trial.
     '''
     
-    for out in outstructs:
-        if not isinstance(out, OutStruct):
-            raise TypeError(f'All inputs must be an OutStruct but found {type(out)}')
+    for out in data_list:
+        if not isinstance(out, Data):
+            raise TypeError(f'All inputs to data_list must be Data instance but found {type(out)}')
         field = out.get_field(fieldname)
         if not isinstance(field[0], np.ndarray):
             raise TypeError(f'Can only concatenate np.ndarrays, but found {type(field[0])} in this field')
 
-    starting_fields = [out.get_field(fieldname) for out in outstructs] # each one should be a list of np.arrays
+    starting_fields = [out.get_field(fieldname) for out in data_list] # each one should be a list of np.arrays
     
     to_return = []
     
@@ -428,8 +430,8 @@ def join_fields(outstructs, fieldname='resp', axis=-1, return_outstruct=False):
     for i, field_set in enumerate(zipped_fields):
         to_return.append(np.concatenate(field_set, axis=axis))
         
-    if return_outstruct:
-        return OutStruct([dict([(fieldname, x)]) for x in to_return], strict=False)
+    if return_as_data:
+        return Data([dict([(fieldname, x)]) for x in to_return], strict=False)
     return to_return
         
 def _all_equal_list(iterable):

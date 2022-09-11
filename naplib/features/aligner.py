@@ -9,7 +9,7 @@ from scipy.io.wavfile import write as write_wavfile
 
 from .alignment import create_wrd_dict, get_phoneme_label_vector, get_word_label_vector
 from ..utils import _parse_outstruct_args
-from ..out_struct import OutStruct
+from ..data import Data
 
 
 class Aligner():
@@ -99,12 +99,12 @@ class Aligner():
         ascii_file = open(os.path.join(new_folder, new_name), 'wb')
         ascii_file.write(ascii_data)
 
-    def align(self, outstruct=None, name='name', sound='sound',
+    def align(self, data=None, name='name', sound='sound',
               soundf='soundf', transcript='transcript',
               dataf='dataf', length='length'):
         '''
         Perform alignment across a set of paired audio-text files stored
-        in fields of an OutStruct. This function will create a set of
+        in fields of a Data object. This function will create a set of
         .TextGrid files, as well as corresponding .phn and .wrd
         files in the output_dir which describe the timing of phonemes and
         words within each audio. These files can be used in conjunction
@@ -114,7 +114,7 @@ class Aligner():
         use ``naplib.alignment.get_phoneme_label_vector`` and
         ``naplib.alignment.get_word_label_vector`` to produce phoneme and
         word label vectors for each stimulus which can be placed into the
-        OutStruct and further analyzed.
+        Data object and further analyzed.
 
         This function is essentially equivalent to storing audio and text
         in directories and using ``Aligner.align_files`` followed by
@@ -122,65 +122,65 @@ class Aligner():
 
         Parameters
         ----------
-        outstruct : OutStruct
-            OutStruct containing the data to align. It must contain the
+        data : Data instance
+            Data object containing the data to align. It must contain the
             following fields. 
         name : string or list of strings, default='name'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the name for each trial. Otherwise, a list of strings specifies
             the name for each trial.
         sound : string or list of np.ndarrays, default='sound'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the sound waveform for each trial. Otherwise, a list of np.ndarrays
             specifies the waveform for each trial.
         soundf : string, integer, or list of integers, default='soundf'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the sampling rate for each trial. Otherwise, a list of integers
             specifies the sampling rate for each trial, or a single integer gives the
             sampling rate for all trials.
         transcript : string or list of strings, default='transcript'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the transcript text for each trial. Otherwise, a list of strings
             specifies the transcript text for each trial.
         dataf : string, integer, or list of integers, default='dataf'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the desired sampling rate of the output. Otherwise, a list of integers
             specifies the Desired sampling rate of the output for each trial, or
             a single integer gives the desired sampling rate of the output
             for all trials.
         length : string or list of integers, default='length'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the desired output length (in samples) for each trial. Otherwise,
             a list of integers specifies the desired output length (in samples)
             for each trial.
 
         Returns
         -------
-        alignment_outstruct: OutStruct
-            OutStruct containing all alignment information, with all the fields
+        alignment_data: Data instance
+            Data object containing all alignment information, with all the fields
             described by the return values below. 
         phn_labels : list of np.ndarrays
-            Phoneme label vector for each trial. alignment_outstruct['phn_labels'][i]
+            Phoneme label vector for each trial. alignment_data['phn_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         manner_labels : list of np.ndarrays
             Manner of articulation label vector for each trial.
-            alignment_outstruct['manner_labels'][i]
+            alignment_data['manner_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         wrd_labels : list of np.ndarrays
-            Word label vector for each trial. alignment_outstruct['wrd_labels'][i]
+            Word label vector for each trial. alignment_data['wrd_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         phn_label_list : list of lists of strings
             Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
-            so alignment_outstruct['phn_label_list'][i] is a list of phonemes, where the
+            so alignment_data['phn_label_list'][i] is a list of phonemes, where the
             index of a given phoneme in the list encodes that phoneme's label in ``phn_labels``.
         manner_label_list : list of lists of strings
             Manner of articulation label list returned by ``naplib.alignment.get_phoneme_label_vector``,
-            so alignment_outstruct['manner_label_list'][i] is a list of manners, where the
+            so alignment_data['manner_label_list'][i] is a list of manners, where the
             index of a given manner in the list encodes that manner's label in ``manner_labels``.
         wrd_dict : dict
             Dictionary of word:int (key:value) pairs for all the words in the corpus
             of files in the directory, created by ``naplib.alignment.create_wrd_dict``
-            So, alignment_outstruct['wrd_dict'][i] is a dictionary
+            So, alignment_data['wrd_dict'][i] is a dictionary
             which maps a word to its integer value as it is represented in ``wrd_labels``.
 
         Note
@@ -198,7 +198,7 @@ class Aligner():
         | │   └── trial2.TextGrid
         '''
 
-        names, sounds, soundf, transcripts, dataf, lengths = _parse_outstruct_args(outstruct,
+        names, sounds, soundf, transcripts, dataf, lengths = _parse_outstruct_args(data,
                                                                                    name,
                                                                                    sound,
                                                                                    soundf,
@@ -223,7 +223,7 @@ class Aligner():
         self.align_files(audio_dir, text_dir)
 
         # Get the label vectors from the alignment files
-        return self.get_label_vecs_from_files(outstruct=outstruct, name=names,
+        return self.get_label_vecs_from_files(data=data, name=names,
                                   dataf=dataf, length=lengths,
                                   befaft=np.array([0, 0]))
 
@@ -354,33 +354,33 @@ class Aligner():
         if self.verbose >= 1:
             print('Finished creating alignment files.')
 
-    def get_label_vecs_from_files(self, outstruct=None, name='name',
+    def get_label_vecs_from_files(self, data=None, name='name',
                                   dataf='dataf', length='length',
                                   befaft='befaft'):
         '''
 
         Parameters
         ----------
-        outstruct : OutStruct
-            OutStruct containing the data to align. It must contain the
+        data : Data instance
+            Data object containing the data to align. It must contain the
             following fields. 
         name : string or list of strings, default='name'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the name for each trial. Otherwise, a list of strings specifies
             the name for each trial.
         dataf : string, integer, or list of integers, default='dataf'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the desired sampling rate of the output. Otherwise, a list of integers
             specifies the Desired sampling rate of the output for each trial, or
             a single integer gives the desired sampling rate of the output
             for all trials.
         length : string or list of integers, default='length'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the desired output length (in samples) for each trial. Otherwise,
             a list of integers specifies the desired output length (in samples)
             for each trial.
         befaft : string or list of np.ndarrays, or a single np.ndarray, default='befaft'
-            If a string, specifies a field of the outstruct which contains
+            If a string, specifies a field of the Data which contains
             the before and after time (in sec) for each trial. Otherwise,
             a list should contain the befaft period for each trial, and a single
             np.ndarray of length 2 specifies the befaft period for all trials. For
@@ -391,31 +391,31 @@ class Aligner():
 
         Returns
         -------
-        alignment_outstruct: OutStruct
-            OutStruct containing all alignment information, with all the fields
+        alignment_data: Data instance
+            Data object containing all alignment information, with all the fields
             described by the return values below. 
         phn_labels : list of np.ndarrays
-            Phoneme label vector for each trial. alignment_outstruct['phn_labels'][i]
+            Phoneme label vector for each trial. alignment_data['phn_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         manner_labels : list of np.ndarrays
             Manner of articulation label vector for each trial.
-            alignment_outstruct['manner_labels'][i]
+            alignment_data['manner_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         wrd_labels : list of np.ndarrays
-            Word label vector for each trial. alignment_outstruct['wrd_labels'][i]
+            Word label vector for each trial. alignment_data['wrd_labels'][i]
             is a np.ndarray of shape (time,) and sampling rate dataf[i].
         phn_label_list : list of lists of strings
             Phoneme label list returned by ``naplib.alignment.get_phoneme_label_vector``,
-            so alignment_outstruct['phn_label_list'][i] is a list of phonemes, where the
+            so alignment_data['phn_label_list'][i] is a list of phonemes, where the
             index of a given phoneme in the list encodes that phoneme's label in ``phn_labels``.
         manner_label_list : list of lists of strings
             Manner of articulation label list returned by ``naplib.alignment.get_phoneme_label_vector``,
-            so alignment_outstruct['manner_label_list'][i] is a list of manners, where the
+            so alignment_data['manner_label_list'][i] is a list of manners, where the
             index of a given manner in the list encodes that manner's label in ``manner_labels``.
         wrd_dict : dict
             Dictionary of word:int (key:value) pairs for all the words in the corpus
             of files in the directory, created by ``naplib.alignment.create_wrd_dict``
-            So, alignment_outstruct['wrd_dict'][i] is a dictionary
+            So, alignment_data['wrd_dict'][i] is a dictionary
             which maps a word to its integer value as it is represented in ``wrd_labels``.
 
         Note
@@ -433,7 +433,7 @@ class Aligner():
         | │   └── trial2.TextGrid
         '''
 
-        names, dataf, lengths, befafts = _parse_outstruct_args(outstruct, name, dataf, length, befaft, allow_strings_without_outstruct=False)
+        names, dataf, lengths, befafts = _parse_outstruct_args(data, name, dataf, length, befaft, allow_strings_without_outstruct=False)
 
         for len_ in lengths:
             if not isinstance(len_, int):
@@ -460,7 +460,7 @@ class Aligner():
             # sampling rate of our data
             fs = dataf[n]
             
-            # before-after period for our data is 0 since we are using an outstruct where the
+            # before-after period for our data is 0 since we are using a Data object where the
             # durations of sound and output should already be matched
             befaft = befafts[n]
             
@@ -478,7 +478,7 @@ class Aligner():
 
             alignment_results.append(this_trial_result)
             
-        # Add the computed label vectors to the outstruct
-        return OutStruct(alignment_results, strict=False)
+        # Add the computed label vectors to the Data
+        return Data(alignment_results, strict=False)
 
 
