@@ -42,8 +42,19 @@ class Data(Iterable):
         Extra info (not trial-specific) that a user wants to store
         using Data.set_info or Data.update_info
 
+    Notes
+    -----
+    .. figure:: /figures/naplib-python-data-figure.png
+        :width: 500px
+        :alt: Data object layout
+        :align: center
 
-
+    The above is a depiction of the type of data that might be stored in an
+    instance of the Data class. Any number of trials can be stored with any
+    number and type of fields. Responses and information do not need to be
+    aligned or the same length/shape across trials. Information can be retrieved
+    from the Data instance by trial, by field, or by a combination of the two,
+    using bracket indexing and slicing, as described below.
     
     '''
     def __init__(self, data, strict=False):

@@ -1,12 +1,12 @@
-OutStruct
-=========
+Data object
+===========
 
 .. currentmodule:: naplib
 
-OutStruct
----------
+Data object
+-----------
 
-.. autoclass:: OutStruct
+.. autoclass:: Data
     :members:
     :special-members: __getitem__, __setitem__, __len__
     :exclude-members: set_field, get_field
