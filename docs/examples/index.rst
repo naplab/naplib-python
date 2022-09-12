@@ -4,18 +4,6 @@ Examples
 
 Example notebooks are split into the following groups based on the processing and analyses they illustrate.
 
-.. _matlab to python:
-
-Python Basics from a Matlab Background
-======================================
-
-The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
-
-.. toctree::
-   :maxdepth: 1
-      
-   matlab_to_python_tutorial
-
 .. _working with data:
 
 OutStructs and Array Operations in naplib-python
@@ -80,7 +68,7 @@ The following examples demonstrate how to align text and audio to get precise ph
 
    phoneme_and_word_alignment
    
-.. _visualization examples
+.. _visualization examples:
 
 Integrating naplib-python with Other Toolkits 
 =============================================
@@ -89,7 +77,8 @@ The following tutorials show different ways naplib-python can be integrated with
 
 .. toctree::
    :maxdepth: 1
-    
+   
+   fitting_nems_models
    plot_eeg_topomap
 
 .. _stats examples:
@@ -103,3 +92,15 @@ The following examples demonstrate the use of some of the statistical tools in n
    :maxdepth: 1
 
    mixed_effects_models
+
+.. _matlab to python:
+
+Python Basics from a Matlab Background
+======================================
+
+The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
+
+.. toctree::
+   :maxdepth: 1
+      
+   matlab_to_python_tutorial
