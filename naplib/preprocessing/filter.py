@@ -55,7 +55,7 @@ def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='da
         
         filters.append((b, a))
         
-        filtered_data.append(sig.filtfilt(b, a, trial_data))
+        filtered_data.append(sig.filtfilt(b, a, trial_data, axis=0))
         
     if return_filters:
         return filtered_data, filters
