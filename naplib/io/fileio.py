@@ -8,10 +8,11 @@ from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_out_struct(filepath, strict=True):
+def import_outstruct(filepath, strict=True):
     '''
-    Import out struct from matlab (.mat) format. Transpose 'resp' field
-    so that it is shape (time, channels).
+    Import out struct from matlab (.mat) format. This will
+    automatically transpose the 'resp' and 'aud' fields
+    so that they are shape (time, channels) for each trial.
 
     Parameters
     ----------

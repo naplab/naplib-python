@@ -1,7 +1,10 @@
+import warnings
 import numpy as np
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
+from scipy import signal as sig
+
 
 def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args={}, nan_policy='omit'):
     '''
@@ -181,3 +184,45 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_
 
     if return_ax:
         return ax
+
+
+def freq_response(ba, fs, ax=None, units='Hz'):
+    '''
+    Plot frequency response of a digital filter.
+    
+    Parameters
+    ----------
+    ba : tuple of length 2
+        Tuple containing (b, a), the filter numerator and denominator polynomials.
+    fs : int
+        Sampling rate in Hz.
+    ax : plt.Axes instance, optional
+        Axes to use. If not specified, will use current axes.
+    units : string
+        One of {'Hz', 'rad/s'} specifying whether to plot frequencies in Hz or
+        radians per second.
+    '''
+    if units not in ['Hz','rad/s']:
+        raise ValueError(f'units must be one of ["Hz", "rad/s"] but got {units}')
+        
+    if ax is None:
+        ax = plt.gca()
+        
+    if units == 'Hz':
+        w, h = sig.freqz(ba[0], ba[1], fs=fs)
+    else:
+        w, h = sig.freqs(ba[0], ba[1])
+        
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="divide by zero encountered in log10")
+        ax.semilogx(w, 20 * np.log10(abs(h)))
+        
+    ax.set_title('Butterworth filter frequency response')
+    if units == 'Hz':
+        ax.set_xlabel('Frequency (Hz)')
+    else:
+        ax.set_xlabel('Frequency (radians / second)')
+    ax.set_ylabel('Amplitude (dB)')
+    ax.margins(0, 0.1)
+    ax.grid(which='both', axis='both')
+    

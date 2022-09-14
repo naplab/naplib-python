@@ -6,16 +6,17 @@ Example notebooks are split into the following groups based on the processing an
 
 .. _working with data:
 
-OutStructs and Array Operations in naplib-python
-================================================
+Data Manipulation and Preprocessing
+===================================
 
-The following examples demonstrate ways to use the OutStruct class and other naplib functionality to make processing neural data easy.
+The following examples demonstrate working with the Data object, which stores trial/stimulus data, including how to easily manipulate and preprocess it.
 
 .. toctree::
    :maxdepth: 1
       
    data_object_manipulation
    array_ops_examples
+   preprocessing_examples
    
 .. _import data examples:
 
