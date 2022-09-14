@@ -3,7 +3,7 @@ import numpy as np
 from scipy.signal import convolve
 
 from naplib.encoding import TRF
-from naplib import OutStruct
+from naplib import Data
 
 @pytest.fixture(scope='module')
 def data():
@@ -12,20 +12,20 @@ def data():
     coef = np.array([[1.],[-0.5]])
     y1 = convolve(x, coef, mode='same')
     x_zeros = np.concatenate([x, np.zeros_like(x)], axis=1)
-    outstruct = OutStruct([{'resp': y1, 'stim': x}])
+    outstruct = Data([{'resp': y1, 'stim': x}])
     return {'coef': coef,'X1': [x], 'X2': [np.concatenate((x,x), axis=1)],
             'X3': [x_zeros], 'y1': [y1], 'y2': [np.concatenate((y1,y1), axis=1)],
             'outstruct': outstruct}
 
-def test_1D_input_1D_output_trf_on_outstruct(data):
+def test_1D_input_1D_output_trf_on_Data(data):
     model = TRF(tmin=0, tmax=0.02, sfreq=100, alpha=[0])
-    model.fit(outstruct=data['outstruct'], X='stim', y='resp')
+    model.fit(data=data['outstruct'], X='stim', y='resp')
     assert np.allclose(data['coef'].reshape(1,1,2), model.coef_, rtol=1e-3)
 
-    pred = model.predict(outstruct=data['outstruct'], X='stim')
+    pred = model.predict(data=data['outstruct'], X='stim')
     assert np.allclose(pred[0][200:300], data['outstruct'][0]['resp'][200:300], rtol=5e-2)
 
-    score = model.score(outstruct=data['outstruct'], X='stim', y='resp')
+    score = model.score(data=data['outstruct'], X='stim', y='resp')
     assert score > 0.99
 
 def test_1D_input_1D_output_trf(data):

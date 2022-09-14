@@ -13,7 +13,7 @@ from mne.decoding import TimeDelayingRidge, ReceptiveField
 from mne.decoding.time_delaying_ridge import _fit_corrs, _compute_reg_neighbors, _edge_correct
 from mne.decoding.receptive_field import _reshape_for_est, _delays_to_slice, _times_to_delays, _delay_time_series, _corr_score, _r2_score
 
-from ..out_struct import OutStruct
+from ..data import Data
 from ..utils import _parse_outstruct_args
 
 from mne.cuda import _setup_cuda_fft_multiply_repeated
@@ -238,27 +238,27 @@ class TRF(BaseEstimator):
                 y = y.reshape(-1, y.shape[-1], order='F')
         return X, y
 
-    def fit(self, outstruct=None, X='aud', y='resp'):
+    def fit(self, data=None, X='aud', y='resp'):
         '''
         Fit a multi-output model to the data in X and y, which contain multiple trials.
         
         Parameters
         ----------
-        outstruct : naplib.OutStruct object, optional
-            OutStruct containing data to be normalized in one of the field.
+        data : naplib.Data instance, optional
+            Data object containing data to be normalized in one of the field.
             If not given, must give the X and y data directly as the ``X``
             and ``y`` arguments. 
         X : str | list of np.ndarrays or a multidimensional np.ndarray
             Data to be used as predictor in the regression. Once arranged,
             should be of shape (time, num_features).
-            If a string, it must specify one of the fields of the outstruct
+            If a string, it must specify one of the fields of the Data
             provided in the first argument. If a multidimensional array, first dimension
             indicates the trial/instances which will be concatenated over to compute
             normalization statistics.
         y : str | list of np.ndarrays or a multidimensional np.ndarray
             Data to be used as target(s) in the regression. Once arranged,
             should be of shape (time, num_targets[, num_features_y]).
-            If a string, it must specify one of the fields of the outstruct
+            If a string, it must specify one of the fields of the Data
             provided in the first argument. If a multidimensional array, first dimension
             indicates the trial/instances.
         
@@ -269,7 +269,7 @@ class TRF(BaseEstimator):
         
         '''
         
-        X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))
+        X_, y_ = _parse_outstruct_args(data, copy.deepcopy(X), copy.deepcopy(y))
 
         X_ = np.concatenate(X_, axis=0)
 
@@ -442,18 +442,18 @@ class TRF(BaseEstimator):
                             fit_intercept=self.fit_intercept, scoring=self.scoring, n_jobs=self.n_jobs, verbose=verbose)
         return rf
     
-    def predict(self, outstruct=None, X='aud'):
+    def predict(self, data=None, X='aud'):
         '''
         Parameters
         ----------
-        outstruct : naplib.OutStruct object, optional
-            OutStruct containing data to be normalized in one of the field.
+        data : naplib.Data object, optional
+            Data object containing data to be normalized in one of the field.
             If not given, must give the X and y data directly as the ``X``
             and ``y`` arguments. 
         X : str | list of np.ndarrays or a multidimensional np.ndarray
             Data to be used as predictor in the regression. Once arranged,
             should be of shape (time, num_features).
-            If a string, it must specify one of the fields of the outstruct
+            If a string, it must specify one of the fields of the Data
             provided in the first argument. If a multidimensional array, first dimension
             indicates the trial/instances which will be concatenated over to compute
             normalization statistics.
@@ -467,7 +467,7 @@ class TRF(BaseEstimator):
         if not hasattr(self, 'models_'):
             raise ValueError(f'Must call .fit() before can call .predict()')
         
-        X = _parse_outstruct_args(outstruct, X)
+        X = _parse_outstruct_args(data, X)
         
         y_pred = [[] for _ in X]
         for ii, x_trial in enumerate(X):
@@ -483,27 +483,27 @@ class TRF(BaseEstimator):
         
         return y_pred
     
-    def score(self, outstruct=None, X='aud', y='resp', weight_trial_duration=True):
+    def score(self, data=None, X='aud', y='resp', weight_trial_duration=True):
         '''
         Get scores from predictions of the model.
         
         Parameters
         ----------
-        outstruct : naplib.OutStruct object, optional
-            OutStruct containing data to be normalized in one of the field.
+        data : naplib.Data object, optional
+            Data object containing data to be normalized in one of the field.
             If not given, must give the X and y data directly as the ``X``
             and ``y`` arguments. 
         X : str | list of np.ndarrays or a multidimensional np.ndarray
             Data to be used as predictor in the regression. Once arranged,
             should be of shape (time, num_features).
-            If a string, it must specify one of the fields of the outstruct
+            If a string, it must specify one of the fields of the Data
             provided in the first argument. If a multidimensional array, first dimension
             indicates the trial/instances which will be concatenated over to compute
             normalization statistics.
         y : str | list of np.ndarrays or a multidimensional np.ndarray
             Data to be used as target(s) in the regression. Once arranged,
             should be of shape (time, num_targets[, num_features_y]).
-            If a string, it must specify one of the fields of the outstruct
+            If a string, it must specify one of the fields of the Data
             provided in the first argument. If a multidimensional array, first dimension
             indicates the trial/instances which will be concatenated over to compute
             normalization statistics.
@@ -522,7 +522,7 @@ class TRF(BaseEstimator):
         if not hasattr(self, 'models_'):
             raise ValueError(f'Must call .fit() before can call .score()')
         
-        X_, y_ = _parse_outstruct_args(outstruct, copy.deepcopy(X), copy.deepcopy(y))    
+        X_, y_ = _parse_outstruct_args(data, copy.deepcopy(X), copy.deepcopy(y))    
 
         for i in range(len(y_)):
             if y_[i].ndim==1:

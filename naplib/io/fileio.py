@@ -4,14 +4,15 @@ import numpy as np
 from tqdm import tqdm
 from hdf5storage import loadmat
 
-from ..out_struct import OutStruct
+from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
 def import_outstruct(filepath, strict=True):
     '''
-    Import outstruct from matlab (.mat) format. Transpose 'resp' field
-    so that it is shape (time, channels).
+    Import out struct from matlab (.mat) format. This will
+    automatically transpose the 'resp' and 'aud' fields
+    so that they are shape (time, channels) for each trial.
 
     Parameters
     ----------
@@ -25,11 +26,11 @@ def import_outstruct(filepath, strict=True):
 
     Returns
     -------
-    out : naplib.OutStruct object
+    out : naplib.Data object
     
     Notes
     -----
-    Given the highly-specific nature of the OutStruct matlab format, this
+    Given the highly-specific nature of the Out struct Matlab format, this
     function is mostly used internally by Neural Acoustic Processing
     Lab members.
     '''
@@ -60,12 +61,12 @@ def import_outstruct(filepath, strict=True):
         if strict and r not in fieldnames:
             raise ValueError(f'Missing required field: {r}')
     
-    out = OutStruct(data=data, strict=strict)
+    out = Data(data=data, strict=strict)
     return out
 
 def load(filename):
     '''
-    Load OutStruct or other object from saved file.
+    Load object from saved file.
     
     Parameters
     ----------
@@ -75,7 +76,7 @@ def load(filename):
     
     Returns
     -------
-    output : naplib.OutStruct or other object
+    output : Object
         Loaded object.
     
     Raises
@@ -96,14 +97,14 @@ def load(filename):
 
 def save(filename, obj):
     '''
-    Save OutStruct or other object with pickle.
+    Save object with pickle.
     
     Parameters
     ----------
     filename : string
         File to load. If doesn't end with .pkl this will be added
         automatically.
-    obj : OutStruct or other object
+    obj : Object
         Data to save.
 
     '''
@@ -127,11 +128,11 @@ def read_bids(root,
               resp_channels=None):
     '''
     Read data from the `BIDS file structure <https://bids.neuroimaging.io/>`_ [1]
-    to create an OutStruct object. The BIDS file structure is a commonly used structure
+    to create a Data object. The BIDS file structure is a commonly used structure
     for storing neural recordings such as EEG, MEG, or iEEG.
     
     The channels in the BIDS files are either stored in the 'resp' field of the
-    OutStruct or the 'stim' field, depending on whether the `channel_type` is 'stim'.
+    Data object or the 'stim' field, depending on whether the `channel_type` is 'stim'.
     
     Please see the :ref:`Importing Data <import data examples>` for more detailed
     tutorials which show how to import external data.
@@ -150,8 +151,8 @@ def read_bids(root,
         Session name.
     befaft : list or array-like or length 2, default=[0, 0]
         Amount of time (in sec.) before and after each trial's true duration to include
-        in the trial for the OutStruct. For example, if befaft=[1,1] then if each trial's
-        recording is 10 seconds long, each trial in the resulting OutStruct will contain
+        in the trial for the Data. For example, if befaft=[1,1] then if each trial's
+        recording is 10 seconds long, each trial in the resulting Data object will contain
         12 seconds of data, since 1 second of recording before the onset of the event
         and 1 second of data after the end of the event are included on either end.
     crop_by : string, default='onset'
@@ -169,17 +170,17 @@ def read_bids(root,
         the BIDS data.
     resp_channels : list, default=None
         List of channel names to select as response channels to be put in the 'resp' field of
-        the OutStruct. By default, all channels which are not of type 'stim' will be included.
+        the Data object. By default, all channels which are not of type 'stim' will be included.
         Note, the order of these channels may not be conserved.
     
     Returns
     -------
-    out : OutStruct
-        Event/trial responses, stim, and other basic data in an OutStruct format.
+    out : Data
+        Event/trial responses, stim, and other basic data in naplib.Data format.
         
     Notes
     -----
-    The measurement information that is read-in by this function is stored in the outstruct.mne_info
+    The measurement information that is read-in by this function is stored in the Data.mne_info
     attribute. This info can be used in conjunction with
     `mne's visualization functions <https://mne.tools/stable/visualization.html>`_. 
     
@@ -229,8 +230,8 @@ def read_bids(root,
         else:
             raw_stims.append(None)
     
-    # build OutStruct
-    outstruct_data = []
+    # build Data
+    new_data = []
     for trial in tqdm(range(len(raws))):
         trial_data = {}
         trial_data['event_index'] = trial
@@ -246,11 +247,11 @@ def read_bids(root,
                 warnings.warn(f'info_include key "{info_key}" not found in raw info')
             else:
                 trial_data[info_key] = raw_responses[trial].info[info_key]
-        outstruct_data.append(trial_data)  
+        new_data.append(trial_data)  
 
-    outstruct = OutStruct(outstruct_data, strict=False)
-    outstruct.set_mne_info(raw_info)
-    return outstruct
+    data_ = Data(new_data, strict=False)
+    data_.set_mne_info(raw_info)
+    return data_
     
     
 def _crop_raw_bids(raw_instance, crop_by, befaft):
@@ -258,7 +259,7 @@ def _crop_raw_bids(raw_instance, crop_by, befaft):
     Crop the raw data to trials based on events in its annotations.
     
     Parameters
-    ----------
+    ----------  
     raw_instance : mne.io.Raw-like object
     
     crop_by : string, default='onset'

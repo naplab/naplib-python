@@ -4,7 +4,7 @@ import numpy as np
 from naplib.segmentation import get_label_change_points
 from naplib.segmentation import segment_around_label_transitions
 from naplib.segmentation import electrode_lags_fratio
-from naplib import OutStruct
+from naplib import Data
 
 @pytest.fixture(scope='module')
 def outstruct():
@@ -29,7 +29,7 @@ def outstruct():
     data_tmp = []
     for i in range(2):
         data_tmp.append({'resp': x[i], 'labels1': labels1[i], 'labels2': labels2[i]})
-    return OutStruct(data_tmp)
+    return Data(data_tmp)
 
 def test_label_change_points_simple():
     arr = np.array([0, 0, 0, 1, 1, 3, 3])
@@ -69,7 +69,7 @@ def test_label_change_points_2elem_array():
 # test segment_around_label_transitions
 
 def test_single_label_segment_transitions_0prechange(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=outstruct['labels1'],
+    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=outstruct['labels1'],
                                                                       prechange_samples=0,
                                                                       postchange_samples=2)
     expected = np.array([[[ 4,  5],
@@ -86,7 +86,7 @@ def test_single_label_segment_transitions_0prechange(outstruct):
     assert np.array_equal(prior_labels, np.array([0,1,-1,2]))
 
 def test_single_label_segment_transitions_bigprechange(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=outstruct['labels1'],
+    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=outstruct['labels1'],
                                                                       prechange_samples=3,
                                                                       postchange_samples=2)
     expected = np.array([[[ 4,  5],
@@ -104,7 +104,7 @@ def test_single_label_segment_transitions_bigprechange(outstruct):
     assert np.array_equal(prior_labels, np.array([1,2]))
 
 def test_single_label_segment_transitions_bigpostchange(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=outstruct['labels1'],
+    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=outstruct['labels1'],
                                                                       prechange_samples=0,
                                                                       postchange_samples=6)
     expected = np.array([[[ 4,  5],
@@ -119,7 +119,7 @@ def test_single_label_segment_transitions_bigpostchange(outstruct):
     assert np.array_equal(prior_labels, np.array([0]))
 
 def test_single_label_segment_transitions_withlags(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=outstruct['labels1'],
+    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=outstruct['labels1'],
                                                                       prechange_samples=3,
                                                                       postchange_samples=1,
                                                                       elec_lag=np.array([1,2]))
@@ -136,7 +136,7 @@ def test_single_label_segment_transitions_withlags(outstruct):
     assert np.array_equal(prior_labels, np.array([1,2]))
 
 def test_single_label_segment_transitions_withlags_multiplelabels(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(data=outstruct['resp'], labels=(outstruct['labels1'], outstruct['labels2']),
+    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=(outstruct['labels1'], outstruct['labels2']),
                                                                       prechange_samples=3,
                                                                       postchange_samples=1,
                                                                       elec_lag=np.array([1,2]))

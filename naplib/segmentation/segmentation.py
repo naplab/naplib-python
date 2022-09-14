@@ -1,13 +1,9 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
-try:
-    import torch
-except:
-    pass # soft requirement, since may not be needed 
 
 from ..stats import fratio
 from ..utils import _parse_outstruct_args
-from ..out_struct import OutStruct
+from ..data import Data
 
 def get_label_change_points(x):
     '''
@@ -38,18 +34,19 @@ def get_label_change_points(x):
     labels_prior = x[locs-1]
     return locs, labels, labels_prior
 
-def segment_around_label_transitions(outstruct=None, data=None, labels=None, prechange_samples=50, postchange_samples=300, elec_lag=None):
+def segment_around_label_transitions(data=None, field=None, labels=None, prechange_samples=50, postchange_samples=300, elec_lag=None):
     '''
     Cut x around the transition points given by the changes in the labels.
     
     Parameters
     ----------
-    outstruct : OutStruct, optional
-        OutStruct containing data to be normalized in one of the field. If not given, must give
+    data : Data, optional
+        Data object containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` argument. 
-    data : list or array-like, or a string specifying a field of the outstruct
-        Data to be segmented based on the data[i] is shape (time, electrode, *, ...)
-    labels : string, or list of np.ndarrays or array-like with the same length as data, or a tuple of lists or array-likes each the same length as data
+    field : list or array-like, or a string specifying a field of the Data object
+        If a string, must specify a field of the Data object passed to the ``data`` parameter.
+        Field to be segmented based on the labels. field[i] is shape (time, electrode, *, ...)
+    labels : string, or list of np.ndarrays or array-like with the same length as field, or a tuple of lists or array-likes each the same length as field
         If a string, specifies a field of the oustruct containing labels to use for
         segmenting. If a single list or np.ndarray (not a tuple), then labels[i]
         is shape (time, ) giving integer label of each trial.
@@ -73,7 +70,6 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
         If input labels is just a list, then is of shape (n_segments,) providing new label after transition point
         If input labels is a tuple of lists, then this is a tuple of array-likes, where the first is the
         same as described above, and the others are arrays of shape (n_segments, time)
-            
     prior_labels : array-like, shape (n_segments,)
         Gives label that came before the transition in the main labels array used for segmentation
 
@@ -97,7 +93,7 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
     >>> # use a label of categorical values to segment the array based on
     >>> # transitions in the categorical label
     >>> label = np.array([0,0,1,1,1,0,0,3,3,3])
-    >>> segments, labels, prior_labels = segment_around_label_transitions(data=[arr], labels=[label],
+    >>> segments, labels, prior_labels = segment_around_label_transitions(field=[arr], labels=[label],
     ...                                                                   prechange_samples=0,
     ...                                                                   postchange_samples=3)
     >>> segments
@@ -118,7 +114,7 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
     >>> # that we want to be segmented as the 2nd through nth value in a tuple of labels
     >>> label2 = np.array([0,1,2,3,4,5,6,7,8,9]) # another set of labels of interest
     >>> label_tuple = ([label], [label], [label2])
-    >>> segments, labels, prior_labels = segment_around_label_transitions(data=[arr], labels=label_tuple, prechange_samples=0, postchange_samples=3)
+    >>> segments, labels, prior_labels = segment_around_label_transitions(field=[arr], labels=label_tuple, prechange_samples=0, postchange_samples=3)
     >>> labels # this time we get a tuple of 3 labels. The first is the same as before, and the others are fully segmented 
     (array([1, 0, 3]),
      array([[1, 1, 1],
@@ -128,10 +124,9 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
             [5, 6, 7],
             [7, 8, 9]]))
 
-
     '''
     
-    x, labels = _parse_outstruct_args(outstruct, data, labels)
+    x, labels = _parse_outstruct_args(data, field, labels)
     
     if isinstance(labels, tuple):
         labels, other_labels = labels[0], labels[1:]
@@ -146,8 +141,6 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
     other_labels_to_return = [[] for _ in range(len(other_labels))]
     for i, tmp_unpack in enumerate(zip(x, labels, *other_labels)):
         x_i, labels_i, other_labels_i = tmp_unpack[0], tmp_unpack[1], tmp_unpack[2:]
-        if not isinstance(x_i, np.ndarray) and isinstance(x_i, torch.Tensor): # only check if a torch Tensor if not np array
-            x_i = x_i.numpy()
         label_changepoints, labels_at_changepoints, labels_before_changepoints = get_label_change_points(labels_i)
         
         label_changepoints = label_changepoints.astype('int')
@@ -171,7 +164,7 @@ def segment_around_label_transitions(outstruct=None, data=None, labels=None, pre
     else:
         return np.array(segments), np.array(new_labels), np.array(prior_labels)
     
-def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, return_fratios=False):
+def electrode_lags_fratio(data=None, field=None, labels=None, max_lag=20, return_fratios=False):
     '''
     Compute lags of each electrode based on peak of f-ratio to a given label, such as phoneme labels.
     The data is segmented around onset transitions in the labels, and an electrode's lag is defined
@@ -179,17 +172,17 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
     
     Parameters
     ----------
-    outstruct : OutStruct, optional
-        OutStruct containing data to be normalized in one of the field. If not given, must give
+    data : Data, optional
+        Data containing data to be normalized in one of the field. If not given, must give
         the data to be normalized directly as the ``data`` parameter. 
-    data : string, or list or array-like
+    field : string, or list or array-like
         Electrode data to use to compute lags with the fratio.
-        If a string, must specify a field of the ``outstruct`` parameter. If a list or array-like,
-        data[i] is shape (time, n_electrodes, *, ...)
+        If a string, must specify a field of the Data object passed to the ``data`` parameter.
+        If a list or array-like, field[i] is shape (time, n_electrodes, *, ...)
     labels : string, or list or array-like
         Labels over time for each trial. The onset changes of these labels will
         be used to segment the data and compute the f-ratio after the transition.
-        If a string, must specify a field of the outstruct. If a list or array-like, then
+        If a string, must specify a field of the Data object. If a list or array-like, then
         labels[i] is of shape (time,)
     max_lag : int, default=20
         Maximum lag to look for in the f-ratio (in samples).
@@ -205,7 +198,7 @@ def electrode_lags_fratio(outstruct=None, data=None, labels=None, max_lag=20, re
         Only returned if ``return_fratios=True``
     '''
         
-    segments, labels, _ = segment_around_label_transitions(outstruct=outstruct, data=data, labels=labels, prechange_samples=0, postchange_samples=max_lag)
+    segments, labels, _ = segment_around_label_transitions(data=data, field=field, labels=labels, prechange_samples=0, postchange_samples=max_lag)
     
     fratios_lags = fratio(segments.transpose((2,1,0)), labels, elec_mode='individual')
     

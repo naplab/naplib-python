@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 
 from naplib.stats import responsive_ttest
-from naplib import OutStruct
+from naplib import Data
 
 @pytest.fixture(scope='module')
 def outstruct():
@@ -16,17 +16,17 @@ def outstruct():
     data_tmp = []
     for xx in [x,x2,x3]:
         data_tmp.append({'resp': xx, 'dataf': 100, 'befaft': np.array([1.,1.])})
-    return OutStruct(data_tmp)
+    return Data(data_tmp)
 
 def test_responsive_ttest_picks_correct_electrode_from_outstruct(outstruct):
-    new_out, stats = responsive_ttest(outstruct=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
+    new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
     assert new_out[0]['resp'].shape[1] == 1
     assert np.array_equal(stats['significant'], np.array([0,1,0,0]).astype('bool'))
     assert np.allclose(stats['stat'], np.array([ -0.14351689, -43.20687375, 0.08349735, -0.96249784]), atol=1e-7)
 
 def test_responsive_ttest_picks_correct_electrode_pass_args_individually_vs_outstruct_same(outstruct):
     new_resp, stats_resp = responsive_ttest(resp=outstruct['resp'], sfreq=100, befaft=np.array([1.,1.]), random_state=2)
-    new_out, stats_out = responsive_ttest(outstruct=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
+    new_out, stats_out = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
 
     assert np.array_equal(new_resp[0], new_out[0]['resp'])
     assert np.array_equal(new_resp[1], new_out[1]['resp'])

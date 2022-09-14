@@ -5,7 +5,7 @@ import wave
 import contextlib
 
 from naplib.features import Aligner
-from naplib import OutStruct
+from naplib import Data
 
 @pytest.fixture(scope='module')
 def dirs():
@@ -27,7 +27,7 @@ def dirs():
         max_int16 = 2**15
         sound_normalized = sound_float32 / max_int16
 
-    outstruct = OutStruct([{'name': 'test1', 'sound': sound_normalized,
+    outstruct = Data([{'name': 'test1', 'sound': sound_normalized,
                             'soundf': rate, 'resp': np.random.rand(int(100*duration+200),5),
                             'dataf': 100, 'befaft': np.array([1.,1.]),
                             'length': int(100*duration+200),
@@ -45,7 +45,7 @@ def test_alignment_from_directory(dirs):
     aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
     aligner.align_files(dirs['audio'], dirs['txt'])
     label_out = aligner.get_label_vecs_from_files(name=['test1'], dataf=[100], length=[dirs['duration']], befaft=[np.array([0,0])])
-    assert isinstance(label_out, OutStruct)
+    assert isinstance(label_out, Data)
     for field in label_out.fields:
         for trial in label_out[field]:
             if isinstance(trial, np.ndarray):
@@ -54,8 +54,8 @@ def test_alignment_from_directory(dirs):
 
 def test_alignment_from_outstruct(dirs):
     aligner = Aligner(output_dir=dirs['out']+'2', tmp_dir=dirs['tmp']+'2', verbose=0)
-    aligner.align(outstruct=dirs['outstruct'])
-    label_out = aligner.get_label_vecs_from_files(outstruct=dirs['outstruct'])
+    aligner.align(data=dirs['outstruct'])
+    label_out = aligner.get_label_vecs_from_files(data=dirs['outstruct'])
     for field in label_out.fields:
         for trial in label_out[field]:
             if isinstance(trial, np.ndarray):
