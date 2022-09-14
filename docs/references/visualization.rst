@@ -17,3 +17,8 @@ imSTRF
 ------
 
 .. autofunction:: imSTRF
+
+Frequency Response
+------------------
+
+.. autofunction:: freq_response

@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import copy
 
-from naplib import OutStruct, join_fields
+from naplib import Data, join_fields
 
 @pytest.fixture(scope='module')
 def data():
@@ -16,7 +16,7 @@ def data():
     data_tmp = []
     for i, xx in enumerate([x,x2,x3]):
         data_tmp.append({'name': i, 'sound': 0, 'soundf': 100, 'resp': xx, 'dataf': 100, 'befaft': np.array([1.,1.])})
-    return {'out': OutStruct(data_tmp), 'x': [x,x2,x3]}
+    return {'out': Data(data_tmp), 'x': [x,x2,x3]}
 
 def test_bracket_indexing(data):
     outstruct = data['out']
@@ -25,7 +25,7 @@ def test_bracket_indexing(data):
 
 def test_create_outstruct_from_list():
     data = [{'x': np.array([1,2]), 'y': 'y0'}, {'x': np.array([3,4]), 'y': 'y1'}]
-    outstruct = OutStruct(data)
+    outstruct = Data(data)
     assert np.array_equal(outstruct['x'][0], np.array([1,2]))
     assert np.array_equal(outstruct['x'][1], np.array([3,4]))
     assert outstruct['y'][0] == 'y0'
@@ -33,7 +33,7 @@ def test_create_outstruct_from_list():
 
 def test_create_outstruct_from_dict():
     data = {'x': [np.array([1,2]), np.array([3,4])], 'y': ['y0', 'y1']}
-    outstruct = OutStruct(data)
+    outstruct = Data(data)
     assert np.array_equal(outstruct['x'][0], np.array([1,2]))
     assert np.array_equal(outstruct['x'][1], np.array([3,4]))
     assert outstruct['y'][0] == 'y0'
@@ -42,12 +42,12 @@ def test_create_outstruct_from_dict():
 def test_create_outstruct_from_dict_different_lengths():
     data = {'x': [np.array([1,2]), np.array([3,4])], 'y': ['y0', 'y1', 'y2']}
     with pytest.raises(ValueError):
-        outstruct = OutStruct(data)
+        outstruct = Data(data)
 
 def test_create_outstruct_from_dict_not_lists_inside():
     data = {'x': [np.array([1,2]), np.array([3,4])], 'y': 'not a list'}
     with pytest.raises(TypeError):
-        outstruct = OutStruct(data)
+        outstruct = Data(data)
 
 def test_iterating_over_outstruct(data):
     outstruct = data['out']
@@ -69,12 +69,12 @@ def test_append_trial_with_different_fields_strict(data):
 
 def test_get_string_representation(data):
     tmp = data['out'].__repr__()
-    expected = "OutStruct of 3 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
+    expected = "Data object of 3 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
     assert expected == tmp
 
 def test_get_string_representation_2trials(data):
     tmp = data['out'][:2].__repr__()
-    expected = "OutStruct of 2 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
+    expected = "Data object of 2 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
     assert expected == tmp
 
 def test_get_string_representation_4trials(data):
@@ -83,7 +83,7 @@ def test_get_string_representation_4trials(data):
     print(len(out_tmp))
     tmp = out_tmp.__repr__()
     print(tmp)
-    expected = "OutStruct of 4 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n\n...\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
+    expected = "Data object of 4 trials containing 6 fields\n[{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}\n\n...\n{\"name\": <class 'int'>, \"sound\": <class 'int'>, \"soundf\": <class 'int'>, \"resp\": <class 'numpy.ndarray'>, \"dataf\": <class 'int'>, \"befaft\": <class 'numpy.ndarray'>}]\n"
     print(len(tmp))
     print(len(expected))
     assert expected == tmp

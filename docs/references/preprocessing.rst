@@ -8,3 +8,7 @@ Normalize
 
 .. autofunction:: normalize
 
+Filtering
+---------
+
+.. autofunction:: filter_butter
