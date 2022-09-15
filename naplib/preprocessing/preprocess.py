@@ -20,8 +20,10 @@ def normalize(data=None, field='resp', axis=0, method='zscore'):
         indicates the trial/instances which will be concatenated over to compute
         normalization statistics. If a list, all arrays will be concatenated over ``axis``.
     
-    axis : int, default=0
+    axis : int or None, default=0
         Axis of the array to concatenate over before normalizing over this same axis.
+        If None, computes statistics over all dimensions jointly, thus normalizing over
+        the global statistics.
     
     method : string, default='zscore'
         Method of normalization. Must be one of ['zscore','center'].
@@ -44,9 +46,13 @@ def normalize(data=None, field='resp', axis=0, method='zscore'):
     elif not isinstance(data_, list) or not isinstance(data_[0], np.ndarray):
         raise TypeError(f'data found is not either np.ndarray, or list or arrays, but found {type(data_)}')
 
-    concat_data = np.concatenate(data_, axis=axis)
+    if axis is None:
+        concat_data = np.concatenate(data_, axis=0)
+        center_val = np.mean(concat_data, axis=axis, keepdims=False)
+    else:
+        concat_data = np.concatenate(data_, axis=axis)
+        center_val = np.mean(concat_data, axis=axis, keepdims=True)
     
-    center_val = np.mean(concat_data, axis=axis, keepdims=True)
     if method=='zscore':
         std_val = np.std(concat_data, axis=axis, keepdims=True)
     
