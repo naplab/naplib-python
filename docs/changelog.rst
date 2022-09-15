@@ -29,6 +29,12 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
+In Development
+--------------
+
+- |Fix| : Changed ``preprocessing.normalize`` function to properly allow ``axis=None`` to specify normalizing by global statistics, and updated the documentation accordingly.
+
+
 Version 0.1.1
 -------------
 
