@@ -29,6 +29,11 @@ def check_python_version():
     if sys.version_info < MINIMUM_PYTHON_VERSION:
         sys.exit("Python {}.{}+ is required.".format(*MINIMUM_PYTHON_VERSION))
 
+non_python_files = ['features/*.mat',
+                    'features/eng.*',
+                    'features/resample.sh',
+                    'features/prosodylab_aligner/LICENSE'
+                    ]
 
 check_python_version()
 
@@ -58,5 +63,6 @@ setup(
         "Programming Language :: Python :: 3.10"
     ],
     packages=find_packages(),
+    package_data={'naplib': non_python_files},
     include_package_data=True,
 )
