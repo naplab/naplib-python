@@ -10,4 +10,4 @@ import naplib.model_selection
 import naplib.utils
 from .data import Data, join_fields
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
