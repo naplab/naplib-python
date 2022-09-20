@@ -29,6 +29,21 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
+Version 0.1.2
+-------------
+
+- |Fix| : Fixed issue where data files required to properly use ``features.auditory_spectrogram`` and ``features.Aligner`` were not being included in the pip-installable package.
+- |Fix| : Changed ``preprocessing.normalize`` function to properly allow ``axis=None`` to specify normalizing by global statistics, and updated the documentation accordingly.
+
+
+Version 0.1.1
+-------------
+
+- |Feature| : Added Butterworth filtering to the ``preprocessing`` module as ``filter_butter``.
+- |Feature| : Added frequency response plotting to the ``visualization`` module as ``freq_response``, which complements the Butterworth filter method by allowing a user to plot the filter used by that function.
+- |API| : Changed the name of the OutStruct data structure to be called ``Data``, since this more accurately reflects what is stored in it, and OutStruct was a name created for internal use previously. This changes the API for all functions that previously took an OutStruct, since they now use the keyword argument ``data=data`` to input a Data object, and the field to be extracted is typically specified with ``field=field``.
+
+
 Version 0.1.0
 -------------
 
