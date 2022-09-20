@@ -74,6 +74,9 @@ verbosity_group.add_argument("-V", "--extra-verbose", action="store_true",
                              help="Even more verbose output")
 args = argparser.parse_args()
 
+
+#####
+
 # hack to allow proper override of default dictionary
 if not args.dictionary:
     args.dictionary = [DICTIONARY]

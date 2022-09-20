@@ -3,6 +3,7 @@ from os.path import isfile, join, isdir, dirname
 import sys
 import unicodedata
 import string
+import shutil
 
 import numpy as np
 from scipy.io.wavfile import write as write_wavfile
@@ -199,18 +200,18 @@ class Aligner():
         '''
 
         names, sounds, soundf, transcripts, dataf, lengths = _parse_outstruct_args(data,
-                                                                                   name,
-                                                                                   sound,
-                                                                                   soundf,
-                                                                                   transcript,
-                                                                                   dataf,
-                                                                                   length)
+                                                                                            name,
+                                                                                            sound,
+                                                                                            soundf,
+                                                                                            transcript,
+                                                                                            dataf,
+                                                                                            length, allow_strings_without_outstruct=False)
 
         # Write sounds to wav files in tmp folder and text to .txt files
         audio_dir = join(self.tmp_dir, 'tmp_sounds')
-        os.makedirs(audio_dir, exist_ok=True)
+        os.makedirs(audio_dir, exist_ok=False)
         text_dir = join(self.tmp_dir, 'tmp_text')
-        os.makedirs(text_dir, exist_ok=True)
+        os.makedirs(text_dir, exist_ok=False)
         for name, soundwave, soundf_, script in zip(names, sounds, soundf, transcripts):
             fname_wav = join(audio_dir, f'{name}.wav')
             write_wavfile(fname_wav, int(soundf_), soundwave)
@@ -220,7 +221,10 @@ class Aligner():
                 text_file.close()
 
         # Align text and audio from files
-        self.align_files(audio_dir, text_dir)
+        self.align_files(audio_dir, text_dir, names=names)
+        
+        shutil.rmtree(audio_dir, ignore_errors=True)
+        shutil.rmtree(text_dir, ignore_errors=True)
 
         # Get the label vectors from the alignment files
         return self.get_label_vecs_from_files(data=data, name=names,
@@ -228,7 +232,7 @@ class Aligner():
                                   befaft=np.array([0, 0]))
 
 
-    def align_files(self, audio_dir, text_dir):
+    def align_files(self, audio_dir, text_dir, names=None):
         '''
         Perform alignment across a set of paired audio-text files stored
         in directories. This function will create a set of .TextGrid files,
@@ -246,6 +250,9 @@ class Aligner():
         text_dir : string, path-like
             Directory containing text files (.txt) with matching names
             to the files in ``audio_dir``.
+        names : list of strings, optional
+            List of names (without file-type) which specify a subset of files within
+            .the audio_dir and text_dir to process.
 
         Note
         ----
@@ -314,9 +321,7 @@ class Aligner():
         # Convert textgrid files to .phn and .wrd files in output_dir
         for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
             for name in files:
-                if '.TextGrid' in name:
-
-                    # print(f'looking at {os.path.join(root, name)}')
+                if '.TextGrid' in name and name.split('.TextGrid')[0] in names:
 
                     # copy TextGrid file to output_dir so they are saved
                     os.system(f'cp {join(root, name)} {join(self.output_dir, name)}')
@@ -432,7 +437,6 @@ class Aligner():
         | │   └── trial2.wrd
         | │   └── trial2.TextGrid
         '''
-
         names, dataf, lengths, befafts = _parse_outstruct_args(data, name, dataf, length, befaft, allow_strings_without_outstruct=False)
 
         for len_ in lengths:
@@ -463,6 +467,7 @@ class Aligner():
             # before-after period for our data is 0 since we are using a Data object where the
             # durations of sound and output should already be matched
             befaft = befafts[n]
+            
             
             # compute label vectors for phonemes, manner of articulation, and words, for this trial
             label_vec_phn, phn_label_list = get_phoneme_label_vector(filename_phn, length, fs, befaft, return_label_lists=True)
