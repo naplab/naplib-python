@@ -27,7 +27,7 @@ Python
 
 Python is a powerful programming language that allows concise expressions of network
 algorithms.  Python has a vibrant and growing ecosystem of packages that
-mvlearn uses to provide more features such as numerical linear algebra. In order to make the most out of mvlearn you will want to know how
+naplib-python uses to provide more features such as numerical linear algebra. In order to use all the capabilities of naplib-python, you will want to know how
 to write basic programs in Python.  Among the many guides to Python, we
 recommend the `Python documentation <https://docs.python.org/3/>`_.
 
