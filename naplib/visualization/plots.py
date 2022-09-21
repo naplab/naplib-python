@@ -1,20 +1,27 @@
+import warnings
 import numpy as np
 import scipy.cluster.hierarchy as shc
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
+from scipy import signal as sig
+
 
 def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Parameters
     ----------
     x : shape (time,)
+        Values to use as x-index
     y : shape (time, n_samples)
-    ax : plt axes to use
+        Data to plot. The average over the n_samples will be plotted on the main
+        line, surrounded by a shaded region determined by the ``err_method`` parameter.
+    ax : plt.Axes instance, optional
+        Axes to use. If not specified, will use current axes.
     err_method : string, default='stderr
         One of ['stderr','std'], the method to use to calculate error bars.
-    plt_args : dict
+    plt_args : dict, default={}
         Args to be passed to plt.plot(). e.g. 'color','linewidth',...
-    shade_args : dict
+    shade_args : dict, default={}
         Args to be passed to plt.fill_between(). e.g. 'color','alpha',...
     nan_policy : string, default='omit'
         One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
@@ -61,8 +68,11 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     Parameters
     ----------
     data : shape (n_samples, n_features)
-    axes : array of length 2 containing matplotlib axes (optional)
-        axes[0] will be for the dendrogram and axes[1] will be for the data
+        Data to cluster and display. 
+    axes : list of plt.Axes, length 2, optional
+        array of length 2 containing matplotlib axes to plot on.
+        axes[0] will be for the dendrogram and axes[1] will be for the data. If not
+        specified, will create new axes in subplots.
     varnames : list of strings, length must = n_features, default=None
         variable names which will be printed as yticklabels on the data plot
     cmap : string, default='bwr'
@@ -72,12 +82,18 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     
     Returns
     -------
-    cluster_dict : dict output from scipy.cluster.hierarchy.dendrogram
-    cluster_labels : np.array
-        cluster labels from sklearn.cluster.AgglomerativeClustering
+    cluster_dict : dict
+        output from scipy.cluster.hierarchy.dendrogram
+    cluster_labels : np.ndarray
+        cluster labels from sklearn.cluster.AgglomerativeClustering, shape=(n_samples,)
+    fig : matplotlib figure
+        Figure where data was plotted. Only returned if axes were not passed in.
+    axes : array of Axes
+        Axes where data was plotted. Only returned if axes were not passed in.
     '''
     if axes is None:
-        _, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2.5,1]})
+        return_axes = True
+        fig, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2.5,1]})
         
     dend = shc.dendrogram(shc.linkage(data, method='ward'), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
 
@@ -100,33 +116,41 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         axes[1].set_yticklabels(varnames, fontsize=8)
 
     axes[1].set_xticks([])
-
-    plt.tight_layout()
-    plt.show()
     
+    if return_axes:
+        return dend, cluster_labels, fig, axes
+
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_ax=False):
     '''
-    Plot STRF weights as image. Weights are automatically centered at 0
-    so the center of the colormap is 0.
+    Plot STRF weights as image. Colormap is automatically centered at 0 so
+    that 0 corresponds to white, positive values are red, and negative values
+    are blue.
     
     Parameters
     ----------
     coef : np.array, shape (freq, lag)
         STRF weights.
     tmin : float, optional
-        Time of first lag (first column)
+        Time of first lag (first column in coef)
     tmax : float, optional
-        Time of final lag (last column)
+        Time of final lag (last column in coef)
     freqs : list or array-like, length=2, optional
         Frequency of lowest and highest frequency bin in STRF.
     ax : plt.Axes, optional
-        Axes to plot on.
+        Axes to plot on. If not specified, will use current axes.
     smooth : bool, default=True
         Whether or not to smooth the STRF image. Smoothing is
         done with 'gouraud' shading in plt.pcolormesh().
+    return_ax : bool, default=False
+        Whether or not to return axes as well.
+
+    Returns
+    -------
+    ax : matplotlib Axes
+        Axes where STRF coef is plotted. Only returned if ``return_ax`` is True.
     '''
     
     if ax is None:
@@ -157,3 +181,48 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True):
         yticks = ax.get_yticks()
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
+
+    if return_ax:
+        return ax
+
+
+def freq_response(ba, fs, ax=None, units='Hz'):
+    '''
+    Plot frequency response of a digital filter.
+    
+    Parameters
+    ----------
+    ba : tuple of length 2
+        Tuple containing (b, a), the filter numerator and denominator polynomials.
+    fs : int
+        Sampling rate in Hz.
+    ax : plt.Axes instance, optional
+        Axes to use. If not specified, will use current axes.
+    units : string
+        One of {'Hz', 'rad/s'} specifying whether to plot frequencies in Hz or
+        radians per second.
+    '''
+    if units not in ['Hz','rad/s']:
+        raise ValueError(f'units must be one of ["Hz", "rad/s"] but got {units}')
+        
+    if ax is None:
+        ax = plt.gca()
+        
+    if units == 'Hz':
+        w, h = sig.freqz(ba[0], ba[1], fs=fs)
+    else:
+        w, h = sig.freqs(ba[0], ba[1])
+        
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="divide by zero encountered in log10")
+        ax.semilogx(w, 20 * np.log10(abs(h)))
+        
+    ax.set_title('Butterworth filter frequency response')
+    if units == 'Hz':
+        ax.set_xlabel('Frequency (Hz)')
+    else:
+        ax.set_xlabel('Frequency (radians / second)')
+    ax.set_ylabel('Amplitude (dB)')
+    ax.margins(0, 0.1)
+    ax.grid(which='both', axis='both')
+    

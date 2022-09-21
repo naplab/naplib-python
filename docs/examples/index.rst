@@ -4,30 +4,19 @@ Examples
 
 Example notebooks are split into the following groups based on the processing and analyses they illustrate.
 
-.. _matlab to python:
+.. _working with data:
 
-Python Basics from a Matlab Background
-======================================
+Data Manipulation and Preprocessing
+===================================
 
-The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
-
-.. toctree::
-   :maxdepth: 1
-      
-   matlab_to_python_tutorial
-
-.. _working with outstructs:
-
-OutStructs and Array Operations in naplib-python
-================================================
-
-The following examples demonstrate ways to use the OutStruct class and other naplib functionality to make processing neural data easy.
+The following examples demonstrate working with the Data object, which stores trial/stimulus data, including how to easily manipulate and preprocess it.
 
 .. toctree::
    :maxdepth: 1
       
-   out_structure_manipulation
+   data_object_manipulation
    array_ops_examples
+   preprocessing_examples
    
 .. _import data examples:
 
@@ -40,7 +29,7 @@ The following examples demonstrate ways to import neural data from various file 
    :maxdepth: 1
     
    import_bids_data
-   out_structure_manipulation
+   data_object_manipulation
 
 .. _STRF examples:
 
@@ -80,16 +69,17 @@ The following examples demonstrate how to align text and audio to get precise ph
 
    phoneme_and_word_alignment
    
-.. _visualization examples
+.. _visualization examples:
 
-Visualizing Neural Data
-=======================
+Integrating naplib-python with Other Toolkits 
+=============================================
 
-The following tutorials show ways to visualize neural data using naplib-python. Some visualization tools are built directly into naplib, while others make use of external toolkits like MNE.
+The following tutorials show different ways naplib-python can be integrated with other tools and packages, such as for advanced visualizations and model-fitting.
 
 .. toctree::
    :maxdepth: 1
-    
+   
+   fitting_nems_models
    plot_eeg_topomap
 
 .. _stats examples:
@@ -103,3 +93,15 @@ The following examples demonstrate the use of some of the statistical tools in n
    :maxdepth: 1
 
    mixed_effects_models
+
+.. _matlab to python:
+
+Python Basics from a Matlab Background
+======================================
+
+The following examples show some of the basics of setting up python, Jupyter notebooks, and running code for python beginners and people coming from a Matlab background.
+
+.. toctree::
+   :maxdepth: 1
+      
+   matlab_to_python_tutorial

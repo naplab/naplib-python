@@ -4,10 +4,10 @@ from scipy.stats import ttest_ind
 from mne.stats import fdr_correction
 
 from ..utils import _parse_outstruct_args
-from ..out_struct import OutStruct
+from ..data import Data
 
 
-def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf', alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True, random_state=None):
+def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True, random_state=None):
     '''
     Identify responsive electrodes by performing a t-test between response
     values during silence (before stimulus) compared to during speech/sound
@@ -18,8 +18,8 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
 
     Parameters
     ----------
-    outstruct : OutStruct instance, optional
-        OutStruct containing data to be normalized in one of the field.
+    data : naplib.Data instance, optional
+        Data object containing data to be normalized in one of the field.
         If not given, must give the X and y data directly as the ``X``
         and ``y`` arguments. 
     resp : str | list of np.ndarrays or a multidimensional np.ndarray
@@ -27,22 +27,24 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
         beginning which is the response to silence before the start
         of the stimulus. Once arranged, each trial should be of
         shape (time, num_channels).
-        If a string, it must specify one of the fields of the outstruct
+        If a string, it must specify one of the fields of the Data
         provided in the first argument. If a multidimensional array,
         first dimension indicates the trial/epochs.
     befaft : str | list of np.ndarrays or a single np.ndarray, default='befaft'
-        If a string, specifies a field of the outstruct which contains
+        If a string, specifies a field of the Data which contains
         the before and after time (in sec) for each trial. Otherwise,
         a list should contain the befaft period for each trial, and a single
         np.ndarray of length 2 specifies the befaft period for all trials. For
         example, befaft=np.array([0.5, 0.5]) indicates that for each trial,
         the first half second of the `resp` is the responses before the onset
         of the stimulus, and also the final half second is responses for half
-        a second after the stimulus ended. If no outstruct is provided, this
-        cannot be a string.
+        a second after the stimulus ended. If no Data is provided, this
+        cannot be a string. Note: if this is a list it must be of same length
+        as the resp, so to specify the same befaft for all trials, use a np.ndarray
+        of length 2.
     sfreq : str | int, default='dataf'
         The sampling frequency of the responses. If a string, specifies field of
-        the outstruct containing the sampling frequency.
+        the Data containing the sampling frequency.
     alpha : float, default=0.05
         Error rate.
     fdr_method : str, {'indep', 'negcorr', None}, default='indep'
@@ -67,9 +69,9 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
 
     Returns
     -------
-    out : OutStruct | list of np.arrays, same as `resp` input type
-        If outstruct was given as input, this is a copy of that
-        outstruct with the `resp` field replaced by only the responsive
+    out : naplib.Data | list of np.arrays, same as `resp` input type
+        If Data object was given as input, this is a copy of that
+        Data with the `resp` field replaced by only the responsive
         electrode data. If `resp` input was given as a list of arrays
         or a 3D array, then this is a list of numpy arrays, each of shape
         (time, new_num_channels)
@@ -97,19 +99,20 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
     if alternative not in ['two-sided', 'less', 'greater']:
         raise ValueError(f"alternative must be one of ['two-sided', 'less', 'greater'] but got {alternative}")
 
-    if isinstance(outstruct, OutStruct):
-        return_outstruct = True
-        outstruct_copy = deepcopy(outstruct)
+    if isinstance(data, Data):
+        return_as_data = True
+        data_copy = deepcopy(data)
         if isinstance(resp, str):
             resp_fieldname = deepcopy(resp) # if this is a string, need to save the name now
         else:
             resp_fieldname = 'resp'
     else:
-        return_outstruct = False
+        return_as_data = False
 
-    resp, befaft, sfreq = _parse_outstruct_args(outstruct, deepcopy(resp), befaft, sfreq,
+    resp, befaft, sfreq = _parse_outstruct_args(data, deepcopy(resp), befaft, sfreq,
                                          allow_different_lengths=True,
                                          allow_strings_without_outstruct=False)
+
 
     if isinstance(resp, np.ndarray):
         resp = [r for r in resp]
@@ -160,11 +163,11 @@ def responsive_ttest(outstruct=None, resp='resp', befaft='befaft', sfreq='dataf'
 
     stats = {'pval': pval, 'stat': statistics, 'significant': reject, 'alpha': alpha}
 
-    if return_outstruct:
-        outstruct_copy[resp_fieldname] = resp_corrected
-        return outstruct_copy, stats
+    if return_as_data:
+        data_copy[resp_fieldname] = resp_corrected
+        return data_copy, stats
 
-    return resp, stats
+    return resp_corrected, stats
 
 
     
