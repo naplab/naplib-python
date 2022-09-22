@@ -43,7 +43,6 @@ The following examples illustrate various training and using spectro-temporal re
       
    STRF_fitting_basics
    STRF_crossvalidation
-   STRF_vs_STRFLab
 
 .. _stimulus reconstruction examples:
 
