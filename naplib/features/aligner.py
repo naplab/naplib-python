@@ -289,6 +289,9 @@ class Aligner():
         '''
         import textgrid
 
+        if names is not None and not isinstance(names, list):
+            raise TypeError(f'names argument must be a list, or None, but got {type(names)}')
+
         if self.verbose >= 1:
             print(f'Resampling audio and putting in {self.tmp_dir} directory...')
 
@@ -321,7 +324,10 @@ class Aligner():
         # Convert textgrid files to .phn and .wrd files in output_dir
         for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
             for name in files:
-                if '.TextGrid' in name and name.split('.TextGrid')[0] in names:
+                if '.TextGrid' in name:
+
+                    if names is not None and name.split('.TextGrid')[0] not in names:
+                        continue
 
                     # copy TextGrid file to output_dir so they are saved
                     os.system(f'cp {join(root, name)} {join(self.output_dir, name)}')

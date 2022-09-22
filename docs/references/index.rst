@@ -1,7 +1,7 @@
 .. _reference:
 
-Reference
-*********
+API Reference
+*************
 
 The package is split up into submodules.
 
