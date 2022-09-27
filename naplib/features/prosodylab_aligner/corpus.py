@@ -33,9 +33,9 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from subprocess import check_call
 
-from wavfile import WavFile
-from prondict import PronDict
-from utilities import splitname, mkdir_p, opts2cfg, \
+from .wavfile import WavFile
+from .prondict import PronDict
+from .utilities import splitname, mkdir_p, opts2cfg, \
                        MISSING, OOV, SIL, SP, TEMP
 
 
@@ -66,7 +66,7 @@ class Corpus(object):
             if not match(VALID_PHONE, phone):
                 logging.error("Phone '{}': not /{}/.".format(phone,
                                                       VALID_PHONE))
-                exit(1)
+                raise RuntimeError("Phone '{}': not /{}/.".format(phone, VALID_PHONE))
         # dictionaries
         self.dictionary = []
         if "dictionary" in opts and opts["dictionary"]:
@@ -104,10 +104,10 @@ class Corpus(object):
         labelfiles = glob(os.path.join(dirname, "*.lab"))
         if not audiofiles:
             logging.error("No .wav files in '{}'.".format(dirname))
-            exit(1)
+            raise RuntimeError("No .wav files in '{}'. There may be an issue with sox or audio resampling.".format(dirname))
         elif not labelfiles:
             logging.error("No .lab files in '{}'.".format(dirname))
-            exit(1)
+            raise RuntimeError("No .lab files in '{}'. There may be a TextGrid issue.".format(dirname))
         audiobasenames = frozenset(splitname(audiofile)[1] for
                                    audiofile in audiofiles)
         labelbasenames = frozenset(splitname(labelfile)[1] for
@@ -122,7 +122,6 @@ class Corpus(object):
                 for filename in missing:
                     print(os.path.join(dirname, filename), file=sink)
             logging.error("Missing data files: see '{}'.".format(MISSING))
-            exit(1)
         return (audiofiles, labelfiles)
 
     def _prepare_label(self, labelfiles):
@@ -164,7 +163,7 @@ class Corpus(object):
             with open(OOV, "w") as oov:
                 print("\n".join(sorted(self.thedict.oov)), file=oov)
             logging.error("OOV word(s): see '{}'.".format(OOV))
-            exit(1)
+            raise RuntimeError(f'Certain words in the transcripts were not present in the dictionary file. See {OOV} for the words which must be added to the dictionary file.')
         # make words
         with open(self.words, "w") as words:
             print("\n".join(found_words), file=words)

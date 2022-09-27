@@ -3,13 +3,17 @@ from os.path import isfile, join, isdir, dirname
 import sys
 import unicodedata
 import string
+import subprocess
 
 import numpy as np
 from scipy.io.wavfile import write as write_wavfile
+from scipy.io.wavfile import read as read_wavfile
+from scipy.signal import resample as scipy_resample
 
-from .alignment import create_wrd_dict, get_phoneme_label_vector, get_word_label_vector
+from .alignment_extras import create_wrd_dict, get_phoneme_label_vector, get_word_label_vector
 from ..utils import _parse_outstruct_args
 from ..data import Data
+from .prosodylab_aligner import run_aligner
 
 
 class Aligner():
@@ -64,7 +68,7 @@ class Aligner():
         self.tmp_dir = tmp_dir
         self.filedir_ = dirname(__file__)
         if dictionary_file is None:
-            dictionary_file = join(self.filedir_, 'eng.dict')
+            dictionary_file = join(self.filedir_, 'prosodylab_aligner', 'eng.dict')
         self.dictionary_file = dictionary_file
         self.verbose = verbose
 
@@ -280,6 +284,11 @@ class Aligner():
         | │   └── file2.wrd
         | │   └── file2.TextGrid
         '''
+        try: # see if we have HTK
+            subprocess.run('HDMan', check = True, capture_output=True)
+        except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
+            raise RuntimeError('HTK may not be installed. Please install HTK first.')
+        
         import textgrid
 
         if self.verbose >= 1:
@@ -288,7 +297,22 @@ class Aligner():
         resample_path = join(self.filedir_, 'resample.sh')
 
         # resample the audios to 16000 and put them in the tmp data folder
-        os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
+        # if sox is installed use that, otherwise use scipy
+        try:
+            wavefilepath_ = join(self.filedir_, 'test.wav')
+            subprocess.run(['sox', wavefilepath_, wavefilepath_], check=True, capture_output=True)
+            os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
+        except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
+            # don't have sox, so use scipy instead
+            wavfiles = [fname_ for fname_ in os.listdir(audio_dir) if fname_.endswith(".wav")]
+            for wavfile_ in wavfiles:
+                old_fs, wavdata = read_wavfile(join(audio_dir, wavfile_))
+                if old_fs == 16000:
+                    write_wavfile(join(self.tmp_dir, wavfile_), 16000, wavdata)
+                else:
+                    wavdata = scipy_resample(wavdata, int(16000. / old_fs))
+                    write_wavfile(join(self.tmp_dir, wavfile_), 16000, wavdata)
+            
 
         if self.verbose >= 1:
             print(f'Converting text files to ascii in {self.tmp_dir} directory...')
@@ -302,11 +326,8 @@ class Aligner():
             print('Performing alignment...')
 
         # perform alignment using ProsodyLab-Aligner
-        sys.path.insert(1, self.filedir_)
-        prosodylab_main_file = join(self.filedir_, 'prosodylab_aligner/__main__.py')
-        eng_zip_file = join(self.filedir_, 'eng.zip')
-        os.system(f'python3 {prosodylab_main_file} -a {self.tmp_dir} -d {self.dictionary_file} -r {eng_zip_file}')
-        sys.path.remove(self.filedir_)
+        eng_zip_file = join(self.filedir_, 'prosodylab_aligner', 'eng.zip')
+        run_aligner(align=self.tmp_dir, dictionary=[self.dictionary_file], read=eng_zip_file)
 
         if self.verbose >= 1:
             print(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')

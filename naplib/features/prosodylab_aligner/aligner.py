@@ -31,7 +31,7 @@ from tempfile import mkdtemp
 from shutil import copyfile, rmtree
 from subprocess import check_call, Popen, CalledProcessError, PIPE
 
-from utilities import opts2cfg, mkdir_p, \
+from .utilities import opts2cfg, mkdir_p, \
                        HMMDEFS, MACROS, PROTO, SP, SIL, TEMP, VFLOORS
 
 

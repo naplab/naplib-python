@@ -31,7 +31,9 @@ def check_python_version():
 
 non_python_files = ['features/*.mat',
                     'features/eng.*',
+                    'features/prosodylab_aligner/eng.*',
                     'features/resample.sh',
+                    'features/test.wav',
                     'features/prosodylab_aligner/LICENSE'
                     ]
 
