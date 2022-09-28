@@ -18,10 +18,10 @@ item []:
 				text = "sil"
 			intervals [2]:
 				xmin = 0.07
-				xmax = 0.19
+				xmax = 0.18
 				text = "S"
 			intervals [3]:
-				xmin = 0.19
+				xmin = 0.18
 				xmax = 0.24
 				text = "T"
 			intervals [4]:
@@ -38,10 +38,10 @@ item []:
 				text = "AH0"
 			intervals [7]:
 				xmin = 0.54
-				xmax = 0.71
+				xmax = 0.72
 				text = "K"
 			intervals [8]:
-				xmin = 0.71
+				xmin = 0.72
 				xmax = 1.37
 				text = ""
 			intervals [9]:
@@ -62,10 +62,10 @@ item []:
 				text = "D"
 			intervals [13]:
 				xmin = 1.87
-				xmax = 2.15
+				xmax = 2.16
 				text = "ER0"
 			intervals [14]:
-				xmin = 2.15
+				xmin = 2.16
 				xmax = 2.87
 				text = ""
 			intervals [15]:
@@ -120,18 +120,18 @@ item []:
 				text = "sil"
 			intervals [2]:
 				xmin = 0.07
-				xmax = 0.71
+				xmax = 0.72
 				text = "STOMACH"
 			intervals [3]:
-				xmin = 0.71
+				xmin = 0.72
 				xmax = 1.37
 				text = "sp"
 			intervals [4]:
 				xmin = 1.37
-				xmax = 2.15
+				xmax = 2.16
 				text = "SHOULDER"
 			intervals [5]:
-				xmin = 2.15
+				xmin = 2.16
 				xmax = 2.87
 				text = "sp"
 			intervals [6]:
