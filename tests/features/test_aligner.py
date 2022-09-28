@@ -61,6 +61,7 @@ def test_HTK_installation_check(dirs):
     except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError, FileNotFoundError):
         # HTK is not installed
         with pytest.raises(RuntimeError) as exc:
+            aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
             aligner.align(data=dirs['outstruct'])
         assert 'HTK may not be installed' in exc.value.message
 
