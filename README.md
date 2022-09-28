@@ -43,7 +43,7 @@ naplib-python is built by the [Neural Acoustic Processing Lab](http://naplab.ee.
 The following items are ToDo items on the backlog:
 
 - Look into data parallelization methods for the Data object and associated methods
-- Consider making the Data object a [dataclass])(https://docs.python.org/3/library/dataclasses.html)
+- Consider making the Data object a [dataclass](https://docs.python.org/3/library/dataclasses.html)
 - Implement functionality to write Data objects to MATLAB formats (possibly EEGLab formats)
 - Add support for other regularization methods for the TRF class, such as L1 or even mixtures of L1 and L2 together (L1 over features, L2 over time)
 - Add general fitter object which allows easy fitting (and cross-val) for ML models of the user's specification
