@@ -31,6 +31,7 @@ from re import match
 from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
+import subprocess
 from subprocess import check_call
 
 from .wavfile import WavFile
