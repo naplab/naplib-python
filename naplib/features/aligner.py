@@ -284,10 +284,10 @@ class Aligner():
         | │   └── file2.wrd
         | │   └── file2.TextGrid
         '''
-        try: # see if we have HTK
-            subprocess.run('HDMan', check = True, capture_output=True)
-        except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
-            raise RuntimeError('HTK may not be installed. Please install HTK first.')
+#         try: # see if we have HTK
+#             subprocess.run('HDMan', check = True, capture_output=True)
+#         except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
+#             raise RuntimeError('HTK may not be installed. Please install HTK first.')
         
         import textgrid
 
