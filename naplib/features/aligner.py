@@ -4,6 +4,7 @@ import sys
 import unicodedata
 import string
 import subprocess
+import warnings
 
 import numpy as np
 from scipy.io.wavfile import write as write_wavfile
@@ -298,6 +299,7 @@ class Aligner():
             subprocess.run(['sox', wavefilepath_, wavefilepath_], check=True, capture_output=True)
             os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
         except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
+            warnings.warn('Could not find sox. Using scipy to resample and save .wav files instead')
             # don't have sox, so use scipy instead
             wavfiles = [fname_ for fname_ in os.listdir(audio_dir) if fname_.endswith(".wav")]
             for wavfile_ in wavfiles:

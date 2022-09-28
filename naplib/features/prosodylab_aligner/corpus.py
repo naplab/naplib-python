@@ -32,6 +32,7 @@ from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
 import subprocess
+import warnings
 from subprocess import check_call
 
 from .wavfile import WavFile
@@ -182,7 +183,7 @@ class Corpus(object):
                              self.taskdict] +
                    self.dictionary)
         except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError, FileNotFoundError):
-            raise RuntimeError('HTK may not be installed. Please install HTK first.')
+            warnings.warn('HTK may not be installed. Please install HTK first.')
         
         # add SIL to phone list
         with open(self.phons, "a") as phons:
