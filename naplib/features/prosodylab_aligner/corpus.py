@@ -173,12 +173,16 @@ class Corpus(object):
         with open(temp, "w") as ded:
             print("""AS {0}\nMP {1} {1} {0}
 """.format(SP, SIL), file=ded)
-        check_call(["HDMan", "-m",
+        try: # see if we have HTK
+            check_call(["HDMan", "-m",
                              "-g", temp,
                              "-w", self.words,
                              "-n", self.phons,
                              self.taskdict] +
                    self.dictionary)
+        except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError, FileNotFoundError):
+            raise RuntimeError('HTK may not be installed. Please install HTK first.')
+        
         # add SIL to phone list
         with open(self.phons, "a") as phons:
             print(SIL, file=phons)
