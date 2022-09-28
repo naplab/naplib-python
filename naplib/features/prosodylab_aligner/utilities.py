@@ -63,27 +63,29 @@ def splitname(fullname):
     return (dirname, basename, ext)
 
 
-def resolve_opts(args):
-    if args.configuration is None:
-        logging.error("Configuration (-c) file not specified.")
+def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate=False,
+                 epochs=False, read=False, train=False, align=False,
+                 write=False, verbose=False, extra_verbose=False):
+    if configuration is None:
+        logging.error("Configuration file not specified.")
         exit(1)
-    with open(args.configuration, "r") as source:
+    with open(configuration, "r") as source:
         try:
             opts = yaml.load(source, Loader=yaml.FullLoader)
         except yaml.YAMLError as err:
             logging.error("Error in configuration file: %s", err)
             exit(1)
     # command line only
-    if not args.dictionary:
-        logging.error("Dictionary (-d) not specified.")
+    if not dictionary:
+        logging.error("Dictionary not specified.")
         exit(1)
-    opts["dictionary"] = args.dictionary
-    if not args.epochs:
-        args.epochs = EPOCHS
-    opts["epochs"] = args.epochs
+    opts["dictionary"] = dictionary
+    if not epochs:
+        epochs = EPOCHS
+    opts["epochs"] = epochs
     # could be either, and the command line takes precedent.
     try:
-        sr = args.samplerate if args.samplerate else opts["samplerate"]
+        sr = samplerate if samplerate else opts["samplerate"]
     except KeyError:
         logging.error("Samplerate (-s) not specified.")
         exit(1)

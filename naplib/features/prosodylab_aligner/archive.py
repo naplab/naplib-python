@@ -28,7 +28,7 @@ import os
 from tempfile import mkdtemp
 from shutil import copy, rmtree, make_archive, unpack_archive
 
-from utilities import mkdir_p
+from .utilities import mkdir_p
 
 
 # default format for output
