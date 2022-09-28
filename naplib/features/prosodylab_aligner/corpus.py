@@ -183,7 +183,7 @@ class Corpus(object):
                              self.taskdict] +
                    self.dictionary)
         except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError, FileNotFoundError):
-            warnings.warn('HTK may not be installed. Please install HTK first.')
+            raise RuntimeError('HTK may not be installed. Please install HTK first.')
         
         # add SIL to phone list
         with open(self.phons, "a") as phons:

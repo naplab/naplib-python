@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import wave
 import contextlib
+import subprocess
 
 from naplib.features import Aligner
 from naplib import Data
@@ -43,7 +44,6 @@ def dirs():
 
 def test_alignment_from_directory(dirs):
     aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
-    aligner.align_files(dirs['audio'], dirs['txt'])
     label_out = aligner.get_label_vecs_from_files(name=['test1'], dataf=[100], length=[dirs['duration']], befaft=[np.array([0,0])])
     assert isinstance(label_out, Data)
     for field in label_out.fields:
@@ -51,10 +51,21 @@ def test_alignment_from_directory(dirs):
             if isinstance(trial, np.ndarray):
                 assert trial.shape[0] == dirs['duration']
 
+def test_HTK_installation_check(dirs):
+    try:
+        subprocess.run('HLEd', check=True, capture_output=True)
+        # HTK is installed, so do alignment and make sure it doesn't raise errors
+        aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
+        aligner.align(data=dirs['outstruct'])
+        assert True
+    except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError, FileNotFoundError):
+        # HTK is not installed
+        with pytest.raises(RuntimeError) as exc:
+            aligner.align(data=dirs['outstruct'])
+        assert 'HTK may not be installed' in exc.value.message
 
 def test_alignment_from_outstruct(dirs):
     aligner = Aligner(output_dir=dirs['out']+'2', tmp_dir=dirs['tmp']+'2', verbose=0)
-    aligner.align(data=dirs['outstruct'])
     label_out = aligner.get_label_vecs_from_files(data=dirs['outstruct'])
     for field in label_out.fields:
         for trial in label_out[field]:
