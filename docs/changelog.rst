@@ -28,6 +28,11 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+In Development - Version 0.1.3
+------------------------------
+
+- |Feature| : Added a sample dataset which can be loaded with ``io.load_speech_task_data()``. This dataset contains simulated intracranial EEG recordings from a speech-listening task. The example notebooks on the documentation now utilize this dataset for all iEEG analysis.
+
 
 Version 0.1.2
 -------------
