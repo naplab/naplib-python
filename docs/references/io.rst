@@ -23,7 +23,7 @@ Read BIDS
 
 .. autofunction:: read_bids
 
-Load Speech Task Sample
------------------------
+Load Sample Speech Task Dataset
+-------------------------------
 
 .. autofunction:: load_speech_task_data

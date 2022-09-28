@@ -6,7 +6,7 @@ from ..data import Data
 def load_speech_task_data():
     '''
     Load a sample Data object containing simulated intracranial EEG data
-    from a speech task where a human subject listened to audiobook exerpts. The data
+    from a speech task where a human subject listened to audiobook excerpts. The data
     contains 10 trials, each with a single-channel audio waveform, 10 simulated
     channels of electrodes, a transcript of the speech in the audio, and a
     128-channel auditory spectrogram.
