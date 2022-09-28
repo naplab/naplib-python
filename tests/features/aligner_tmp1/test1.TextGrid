@@ -62,10 +62,10 @@ item []:
 				text = "D"
 			intervals [13]:
 				xmin = 1.87
-				xmax = 2.15
+				xmax = 2.16
 				text = "ER0"
 			intervals [14]:
-				xmin = 2.15
+				xmin = 2.16
 				xmax = 2.87
 				text = ""
 			intervals [15]:
@@ -128,10 +128,10 @@ item []:
 				text = "sp"
 			intervals [4]:
 				xmin = 1.37
-				xmax = 2.15
+				xmax = 2.16
 				text = "SHOULDER"
 			intervals [5]:
-				xmin = 2.15
+				xmin = 2.16
 				xmax = 2.87
 				text = "sp"
 			intervals [6]:

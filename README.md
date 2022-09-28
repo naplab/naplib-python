@@ -8,7 +8,7 @@ Tools and functions for neural acoustic data processing and analysis in python. 
 
 - [**Documentation**](https://naplib-python.readthedocs.io/en/latest/index.html)
 - [**Examples**](https://naplib-python.readthedocs.io/en/latest/examples/index.html)
-- [**License**](https://naplib-python.readthedocs.io/en/latest/license.html)
+- [**Changelog**](https://naplib-python.readthedocs.io/en/latest/changelog.html)
 
 ## Installation
 
@@ -37,3 +37,14 @@ The basic data structure for storing neural recording data is the ``Data`` objec
 ## Contributions
 
 naplib-python is built by the [Neural Acoustic Processing Lab](http://naplab.ee.columbia.edu/) at Columbia University. We primarily use it for processing neural data coming from electrocorticography (ECoG) and electroencephalography (EEG) along with paired audio stimuli in order to study the auditory cortex. You are free to use the software according to its license, and we welcome contributions if you would like to propose changes, additions, or fixes. See our [**contribution guide**](https://naplib-python.readthedocs.io/en/latest/contributing.html) for more details.
+
+## Backlog
+
+The following items are ToDo items on the backlog:
+
+- Look into data parallelization methods for the Data object and associated methods
+- Consider making the Data object a [dataclass](https://docs.python.org/3/library/dataclasses.html)
+- Implement functionality to write Data objects to MATLAB formats (possibly EEGLab formats)
+- Add support for other regularization methods for the TRF class, such as L1 or even mixtures of L1 and L2 together (L1 over features, L2 over time)
+- Add general fitter object which allows easy fitting (and cross-val) for ML models of the user's specification
+
