@@ -28,7 +28,7 @@ import logging
 
 from collections import defaultdict
 
-from utilities import SIL, SP
+from .utilities import SIL, SP
 
 
 class PronDict(object):
