@@ -63,7 +63,7 @@ def test_HTK_installation_check(dirs):
         with pytest.raises(RuntimeError) as exc:
             aligner = Aligner(output_dir=dirs['out']+'1', tmp_dir=dirs['tmp']+'1', verbose=0)
             aligner.align(data=dirs['outstruct'])
-        assert 'HTK may not be installed' in exc.value.message
+        assert 'HTK may not be installed' in str(exc.value)
 
 def test_alignment_from_outstruct(dirs):
     aligner = Aligner(output_dir=dirs['out']+'2', tmp_dir=dirs['tmp']+'2', verbose=0)
