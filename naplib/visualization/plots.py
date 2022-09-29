@@ -93,7 +93,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     '''
     if axes is None:
         return_axes = True
-        fig, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [2,1]})
+        fig, axes = plt.subplots(2,1,figsize=(10, 7), gridspec_kw={'height_ratios': [1,2]})
     else:
         return_axes = False
         
