@@ -2,7 +2,8 @@ import pickle
 import warnings
 import numpy as np
 from tqdm import tqdm
-from hdf5storage import loadmat, savemat
+from hdf5storage import savemat
+import h5py
 
 from ..data import Data
 
@@ -34,29 +35,26 @@ def import_outstruct(filepath, strict=True):
     function is mostly used internally by Neural Acoustic Processing
     Lab members.
     '''
-    loaded = loadmat(filepath)
-    loaded = loaded['out'].squeeze()
-    fieldnames = loaded[0].dtype.names
+    f = h5py.File(filepath)
+    fieldnames = list(f['out'].keys())
+    n_trial = f['out'][fieldnames[0]].shape[0]
     
     req = ['name','sound','soundf','resp','dataf']
     
     
     data = []
-    for trial in loaded:
+    for trial in range(n_trial):
         trial_dict = {}
-        for f, t in zip(fieldnames, trial):
-            tmp_t = t.squeeze()
+        for f in fieldnames:
+            tmp = np.array(f[f['out'][fld][trl][0]])
+            if np.prod(tmp.shape) == 1:
+                tmp = tmp[0,0]
             if f == 'resp' or f == 'aud':
-                if tmp_t.ndim > 1:
-                    tmp_t = tmp_t.transpose(1,0,*[i for i in range(2, tmp_t.ndim)]) # only switch the first 2 dimensions if there are more than 2
-            try:
-                tmp_t = tmp_t.item()
-            except:
-                pass
-            trial_dict[f] = tmp_t
+                if tmp.ndim > 1:
+                    tmp = tmp.transpose(1,0,*[i for i in range(2, tmp.ndim)]) # only switch the first 2 dimensions if there are more than 2
+            trial_dict[f] = tmp
         data.append(trial_dict)
     
-    fieldnames = set(data[0].keys())
     for r in req:
         if strict and r not in fieldnames:
             raise ValueError(f'Missing required field: {r}')
