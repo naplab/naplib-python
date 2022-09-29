@@ -2,7 +2,7 @@ import pickle
 import warnings
 import numpy as np
 from tqdm import tqdm
-from hdf5storage import loadmat
+from hdf5storage import loadmat, savemat
 
 from ..data import Data
 
@@ -63,6 +63,76 @@ def import_outstruct(filepath, strict=True):
     
     out = Data(data=data, strict=strict)
     return out
+
+def export_outstruct(filepath, data, file_format='7.3'):
+    '''
+    Export a naplib.Data instance to the MATLAB-compatible
+    equivalent (.mat file), referred to as an out struct.
+    Import out struct from matlab (.mat) format. This will
+    automatically transpose the 'resp' and 'aud' fields for
+    each trial in the .mat file, thus undoing the actions of
+    import_outstruct.
+
+    Parameters
+    ----------
+    filepath : string
+        Filename or path-like specifying where to save the file.
+    data : Data instance
+        Data to export.
+    file_format : str, default='7.3'
+        MATLAB file format. Options are {'7.3','7','6'}
+    
+    '''
+    if not filepath.endswith('.mat'):
+        warnings.warn(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
+    
+    FORMAT_OPTIONS = ['7.3','7','6']
+    if file_format not in FORMAT_OPTIONS:
+        raise ValueError(f"format must be one of ['7.3','7','6'] but got {file_format}")
+    if not isinstance(data, Data):
+        raise TypeError(f'data must be a naplib.Data instance but got {type(data)}')
+    
+    fieldnames = data.fields
+
+    dt = np.dtype([(field, 'O') for field in data.fields])
+    
+    # construct a numpy void array which contains multiple dtypes
+    void_data = []
+    for trial in data:
+        trial_data = []
+        for field in fieldnames:
+            trial_tmp = trial[field]
+
+            expand_dimension = 0
+            if isinstance(trial_tmp, np.ndarray):
+                expand_dims = False if trial_tmp.ndim > 1 else True
+                if trial_tmp.ndim == 1:
+                    expand_dimension = 1 # column vec for matlab
+                if (field == 'resp' or field == 'aud') and trial_tmp.ndim > 1:
+                        trial_tmp = trial_tmp.transpose(1,0,*[i for i in range(2, trial_tmp.ndim)])
+            else:
+                expand_dims = True
+            
+                # check for other object types
+                if isinstance(trial_tmp, str):
+                    trial_tmp = np.array(trial_tmp, dtype='str')
+                elif isinstance(trial_tmp, list):
+                    trial_tmp = np.array(trial_tmp)
+                    expand_dimension = 0
+                elif isinstance(trial_tmp, int):
+                    trial_tmp = np.array(trial_tmp, dtype='float').reshape((1,))
+                else:
+                    trial_tmp = np.array(trial_tmp)
+
+            if expand_dims:
+                trial_tmp = np.expand_dims(trial_tmp, expand_dimension)
+
+            trial_data.append(trial_tmp)
+        void_data.append(tuple(trial_data))
+    void_data = np.array(void_data, dtype=dt).reshape(1,-1)
+    
+    savemat(filepath, {'out': void_data}, appendmat=False, format=file_format)
+
 
 def load(filename):
     '''
