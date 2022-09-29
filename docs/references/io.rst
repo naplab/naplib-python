@@ -3,11 +3,6 @@ IO
 
 .. currentmodule:: naplib.io
 
-Import OutStruct
-----------------
-
-.. autofunction:: import_outstruct
-
 Save
 ----
 
@@ -17,6 +12,16 @@ Load
 ----
 
 .. autofunction:: load
+
+Import OutStruct
+----------------
+
+.. autofunction:: import_outstruct
+
+Export OutStruct
+----------------
+
+.. autofunction:: export_outstruct
 
 Read BIDS
 ---------
