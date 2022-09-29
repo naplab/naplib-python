@@ -45,14 +45,14 @@ def import_outstruct(filepath, strict=True):
     data = []
     for trial in range(n_trial):
         trial_dict = {}
-        for f in fieldnames:
-            tmp = np.array(f[f['out'][fld][trl][0]])
+        for fld in fieldnames:
+            tmp = np.array(f[f['out'][fld][trial][0]])
             if np.prod(tmp.shape) == 1:
                 tmp = tmp[0,0]
             if f == 'resp' or f == 'aud':
                 if tmp.ndim > 1:
                     tmp = tmp.transpose(1,0,*[i for i in range(2, tmp.ndim)]) # only switch the first 2 dimensions if there are more than 2
-            trial_dict[f] = tmp
+            trial_dict[fld] = tmp
         data.append(trial_dict)
     
     for r in req:
