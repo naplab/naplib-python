@@ -49,22 +49,24 @@ def test_import_Data_fields():
     thisfile = os.path.dirname(__file__)
     fn = f'{thisfile}/../../naplib/io/sample_data/demo_data.mat'
     data = import_outstruct(fn)
-    assert all(x==y for x, y in zip(data.fields, ['name','sound','soundf','dataf','duration','befaft','resp','aud','script']))
+    assert all(x==y for x, y in zip(data.fields, ['name','sound','soundf','dataf','duration','befaft','resp','aud','script','chname']))
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
     assert data[1]['aud'].shape == (5203, 128)
     assert np.allclose(data[1]['resp'][:5,2], np.array([0.17288463, 0.27798367, 0.42636263, 0.46837241, 0.42326083]))
     assert data[0]['script'][:5] == 'IT IS'
+    assert data[0]['chname'][2] == 'Fz'
     assert np.allclose(data[-1]['befaft'], np.array([1, 1], dtype='uint8'))
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
     data = import_outstruct(fn, useloadmat=False)
-    assert set(data.fields)==set(['name','sound','soundf','dataf','duration','befaft','resp','aud','script'])
+    assert set(data.fields)==set(['name','sound','soundf','dataf','duration','befaft','resp','aud','script','chname'])
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
     assert data[1]['aud'].shape == (5203, 128)
     assert np.allclose(data[1]['resp'][:5,2], np.array([0.17288463, 0.27798367, 0.42636263, 0.46837241, 0.42326083]))
     assert data[0]['script'][:5] == 'IT IS'
+    assert data[0]['chname'][2] == 'Fz'
     assert np.allclose(data[-1]['befaft'], np.array([1, 1], dtype='uint8'))
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
