@@ -41,7 +41,7 @@ def test_import_Data_works():
     thisfile = os.path.dirname(__file__)
     data = import_outstruct(f'{thisfile}/../../naplib/io/sample_data/demo_data.mat')
     assert isinstance(data, Data)
-    data = import_outstruct(f'{thisfile}/../../naplib/io/sample_data/demo_data.mat', useloadmat=False)
+    data = import_outstruct(f'{thisfile}/../../naplib/io/sample_data/demo_data_v73.mat', useloadmat=False)
     assert isinstance(data, Data)
 
 def test_import_Data_fields():
@@ -56,7 +56,7 @@ def test_import_Data_fields():
     assert np.allclose(data[-1]['befaft'], np.array([1, 1], dtype='uint8'))
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
-    data = import_outstruct(f'{thisfile}/../../naplib/io/sample_data/demo_data.mat', useloadmat=False)
+    data = import_outstruct(f'{thisfile}/../../naplib/io/sample_data/demo_data_v73.mat', useloadmat=False)
     assert all(x==y for x, y in zip(data.fields, ['name','sound','soundf','dataf','duration','befaft','resp','aud','script']))
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
