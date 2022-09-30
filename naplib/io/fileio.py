@@ -36,6 +36,7 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
     Lab members.
     '''
     req = ['name','sound','soundf','resp','dataf']
+    data = []
     if useloadmat:
         loaded = loadmat(filepath)
         loaded = loaded['out'].squeeze()
@@ -59,7 +60,6 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
         fieldnames = list(f['out'].keys())
         n_trial = f['out'][fieldnames[0]].shape[0]
     
-        data = []
         for trial in range(n_trial):
             trial_dict = {}
             for fld in fieldnames:
