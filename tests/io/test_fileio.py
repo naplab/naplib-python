@@ -59,7 +59,7 @@ def test_import_Data_fields():
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
     data = import_outstruct(fn, useloadmat=False)
-    assert all(x==y for x, y in zip(set(data.fields), set(['name','sound','soundf','dataf','duration','befaft','resp','aud','script'])))
+    assert set(data.fields==set(['name','sound','soundf','dataf','duration','befaft','resp','aud','script']))
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
     assert data[1]['aud'].shape == (5203, 128)
