@@ -24,6 +24,10 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
         1) Each trial must contain at least the following fields:
         ['name','sound','soundf','resp','dataf']
         2) Each trial must contain the exact same set of fields
+    useloadmat : boolean, default=True
+        If True, use hdf5storage.loadmat, else use custom h5py loader
+    verbose : boolean, default=False
+        If True, print trial number and field as it's loaded
 
     Returns
     -------
@@ -42,9 +46,10 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
         loaded = loaded['out'].squeeze()
         fieldnames = loaded[0].dtype.names
 
-        for trial in loaded:
+        for tt,trial in enumerate(loaded):
             trial_dict = {}
             for f, t in zip(fieldnames, trial):
+                if verbose: print(tt, f)
                 tmp_t = t.squeeze()
                 if f == 'resp' or f == 'aud':
                     if tmp_t.ndim > 1:
