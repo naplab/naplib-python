@@ -6,3 +6,4 @@ statsmodels>=0.13.0
 hdf5storage>=0.1.1
 scikit-learn
 mne
+h5py
