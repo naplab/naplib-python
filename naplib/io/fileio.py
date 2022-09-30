@@ -2,14 +2,14 @@ import pickle
 import warnings
 import numpy as np
 from tqdm import tqdm
-from hdf5storage import savemat
+from hdf5storage import loadmat, savemat
 import h5py
 
 from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_outstruct(filepath, strict=True, verbose=False):
+def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
     '''
     Import out struct from matlab (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
@@ -35,50 +35,67 @@ def import_outstruct(filepath, strict=True, verbose=False):
     function is mostly used internally by Neural Acoustic Processing
     Lab members.
     '''
-    f = h5py.File(filepath)
-    fieldnames = list(f['out'].keys())
-    n_trial = f['out'][fieldnames[0]].shape[0]
-    
     req = ['name','sound','soundf','resp','dataf']
-    
-    
-    data = []
-    for trial in range(n_trial):
-        trial_dict = {}
-        for fld in fieldnames:
-            if verbose: print(trial, fld)
-            tmp = np.array(f[f['out'][fld][trial][0]])
-            # Pull out scalars
-            if np.prod(tmp.shape) == 1:
-                tmp = tmp[0,0]
-            else:
-                try:
-                    tmp = ''.join([chr(c[0]) for c in tmp])
-                    print(fld, tmp)
-                except:
-                    # Read cell arrays within entries
-                    if isinstance(tmp[0,0], h5py.h5r.Reference):
-                        shp = tmp.shape
-                        tmp_flat = np.ravel(tmp)
-                        for tt in range(len(tmp_flat)):
-                            # Handle cell arrays containing strings
-                            try:
-                                tmp_flat[tt] = ''.join([chr(c[0]) for c in f[tmp_flat[tt]][:]])
-                            except:
-                                tmp_flat[tt] = f[tmp_flat[tt]][:]
-                        tmp = np.reshape(tmp_flat, shp)
-                        # Remove lists encapsulating single values
-                        try:
-                            while len(tmp) == 1:
-                                tmp = tmp[0]
-                        except:
-                            pass
+    if useloadmat:
+        loaded = loadmat(filepath)
+        loaded = loaded['out'].squeeze()
+        fieldnames = loaded[0].dtype.names
 
-            if f == 'resp' or f == 'aud':
-                if tmp.ndim > 1:
-                    tmp = tmp.transpose(1,0,*[i for i in range(2, tmp.ndim)]) # only switch the first 2 dimensions if there are more than 2
-            trial_dict[fld] = tmp
-        data.append(trial_dict)
+        for trial in loaded:
+            trial_dict = {}
+            for f, t in zip(fieldnames, trial):
+                tmp_t = t.squeeze()
+                if f == 'resp' or f == 'aud':
+                    if tmp_t.ndim > 1:
+                        tmp_t = tmp_t.transpose(1,0,*[i for i in range(2, tmp_t.ndim)]) # only switch the first 2 dimensions if there are more than 2
+                try:
+                    tmp_t = tmp_t.item()
+                except:
+                    pass
+                trial_dict[f] = tmp_t
+            data.append(trial_dict)
+    else:
+        f = h5py.File(filepath)
+        fieldnames = list(f['out'].keys())
+        n_trial = f['out'][fieldnames[0]].shape[0]
+    
+        data = []
+        for trial in range(n_trial):
+            trial_dict = {}
+            for fld in fieldnames:
+                if verbose: print(trial, fld)
+                tmp = np.array(f[f['out'][fld][trial][0]])
+                # Pull out scalars
+                if np.prod(tmp.shape) == 1:
+                    tmp = tmp[0,0]
+                else:
+                    try:
+                        tmp = ''.join([chr(c[0]) for c in tmp])
+                        print(fld, tmp)
+                    except:
+                        # Read cell arrays within entries
+                        if isinstance(tmp[0,0], h5py.h5r.Reference):
+                            shp = tmp.shape
+                            tmp_flat = np.ravel(tmp)
+                            for tt in range(len(tmp_flat)):
+                                # Handle cell arrays containing strings
+                                try:
+                                    tmp_flat[tt] = ''.join([chr(c[0]) for c in f[tmp_flat[tt]][:]])
+                                except:
+                                    tmp_flat[tt] = f[tmp_flat[tt]][:]
+                            tmp = np.reshape(tmp_flat, shp)
+                            # Remove lists with single item
+                            try:
+                                while len(tmp) == 1:
+                                    tmp = tmp[0]
+                            except:
+                                pass
+
+                if fld == 'resp' or fld == 'aud':
+                    if tmp.ndim > 1:
+                        tmp = tmp.transpose(1,0,*[i for i in range(2, tmp.ndim)]) # only switch the first 2 dimensions if there are more than 2
+                trial_dict[fld] = tmp
+            data.append(trial_dict)
     
     for r in req:
         if strict and r not in fieldnames:
