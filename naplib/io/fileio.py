@@ -87,7 +87,7 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                                     tmp_flat[tt] = ''.join([chr(c[0]) for c in f[tmp_flat[tt]][:]])
                                 except:
                                     tmp_flat[tt] = f[tmp_flat[tt]][:]
-                            tmp = np.squeeze(np.reshape(tmp_flat, shp))
+                            tmp = np.reshape(tmp_flat, shp)
                             # Remove lists with single item
                             try:
                                 while len(tmp) == 1:
@@ -95,7 +95,7 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                             except:
                                 pass
 
-                trial_dict[fld] = tmp
+                trial_dict[fld] = np.squeeze(tmp)
             data.append(trial_dict)
     
     for r in req:
