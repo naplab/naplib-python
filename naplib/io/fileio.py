@@ -76,7 +76,6 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                 else:
                     try:
                         tmp = ''.join([chr(c[0]) for c in tmp])
-                        print(fld, tmp)
                     except:
                         # Read cell arrays within entries
                         if isinstance(tmp[0,0], h5py.h5r.Reference):
