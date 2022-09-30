@@ -9,7 +9,7 @@ from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_outstruct(filepath, strict=True):
+def import_outstruct(filepath, strict=True, verbose=False):
     '''
     Import out struct from matlab (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
@@ -46,7 +46,7 @@ def import_outstruct(filepath, strict=True):
     for trial in range(n_trial):
         trial_dict = {}
         for fld in fieldnames:
-            print(trial, fld)
+            if verbose: print(trial, fld)
             tmp = np.array(f[f['out'][fld][trial][0]])
             # Pull out scalars
             if np.prod(tmp.shape) == 1:
