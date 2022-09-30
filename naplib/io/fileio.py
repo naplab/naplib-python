@@ -76,7 +76,6 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                 else:
                     try:
                         tmp = ''.join([chr(c[0]) for c in tmp])
-                        print(fld, tmp)
                     except:
                         # Read cell arrays within entries
                         if isinstance(tmp[0,0], h5py.h5r.Reference):
@@ -95,10 +94,8 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                                     tmp = tmp[0]
                             except:
                                 pass
+                        tmp = np.squeeze(tmp)
 
-                if fld == 'aud':
-                    if tmp.ndim > 1:
-                        tmp = tmp.transpose(1,0,*[i for i in range(2, tmp.ndim)]) # only switch the first 2 dimensions if there are more than 2
                 trial_dict[fld] = tmp
             data.append(trial_dict)
     
