@@ -94,8 +94,9 @@ def import_outstruct(filepath, strict=True, useloadmat=True, verbose=False):
                                     tmp = tmp[0]
                             except:
                                 pass
+                        tmp = np.squeeze(tmp)
 
-                trial_dict[fld] = np.squeeze(tmp)
+                trial_dict[fld] = tmp
             data.append(trial_dict)
     
     for r in req:
