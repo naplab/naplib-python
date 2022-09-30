@@ -52,23 +52,27 @@ def import_outstruct(filepath, strict=True, verbose=False):
             if np.prod(tmp.shape) == 1:
                 tmp = tmp[0,0]
             else:
-                # Read cell arrays within entries
-                if isinstance(tmp[0,0], h5py.h5r.Reference):
-                    shp = tmp.shape
-                    tmp_flat = np.ravel(tmp)
-                    for tt in range(len(tmp_flat)):
-                        # Handle cell arrays containing strings
+                try:
+                    tmp = ''.join([chr(c[0]) for c in tmp])
+                    print(fld, tmp)
+                except:
+                    # Read cell arrays within entries
+                    if isinstance(tmp[0,0], h5py.h5r.Reference):
+                        shp = tmp.shape
+                        tmp_flat = np.ravel(tmp)
+                        for tt in range(len(tmp_flat)):
+                            # Handle cell arrays containing strings
+                            try:
+                                tmp_flat[tt] = ''.join([chr(c[0]) for c in f[tmp_flat[tt]][:]])
+                            except:
+                                tmp_flat[tt] = f[tmp_flat[tt]][:]
+                        tmp = np.reshape(tmp_flat, shp)
+                        # Remove lists encapsulating single values
                         try:
-                            tmp_flat[tt] = ''.join([chr(c[0]) for c in f[tmp_flat[tt]][:]])
+                            while len(tmp) == 1:
+                                tmp = tmp[0]
                         except:
-                            tmp_flat[tt] = f[tmp_flat[tt]][:]
-                    tmp = np.reshape(tmp_flat, shp)
-                    # Remove lists encapsulating single values
-                    try:
-                        while len(tmp) == 1:
-                            tmp = tmp[0]
-                    except:
-                        pass
+                            pass
 
             if f == 'resp' or f == 'aud':
                 if tmp.ndim > 1:
