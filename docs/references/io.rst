@@ -13,15 +13,15 @@ Load
 
 .. autofunction:: load
 
-Import OutStruct
-----------------
+Import Data
+-----------
 
-.. autofunction:: import_outstruct
+.. autofunction:: import_data
 
-Export OutStruct
-----------------
+Export Data
+-----------
 
-.. autofunction:: export_outstruct
+.. autofunction:: export_data
 
 Read BIDS
 ---------
