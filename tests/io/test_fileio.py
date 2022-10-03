@@ -2,7 +2,7 @@ import os
 import pytest
 import numpy as np
 
-from naplib.io import save, load, import_outstruct, export_outstruct
+from naplib.io import save, load, import_data, export_data
 
 from naplib import Data
 
@@ -35,20 +35,20 @@ def test_load_no_file():
         load('no_file_with_this_name.pkl')
 
 
-# import_outstruct tests
+# import_data tests
 
 def test_import_Data_works():
     thisfile = os.path.dirname(__file__)
     fn = f'{thisfile}/../../naplib/io/sample_data/demo_data.mat'
-    data = import_outstruct(fn)
+    data = import_data(fn)
     assert isinstance(data, Data)
-    data = import_outstruct(fn, useloadmat=False)
+    data = import_data(fn, useloadmat=False)
     assert isinstance(data, Data)
 
 def test_import_Data_fields():
     thisfile = os.path.dirname(__file__)
     fn = f'{thisfile}/../../naplib/io/sample_data/demo_data.mat'
-    data = import_outstruct(fn)
+    data = import_data(fn)
     assert all(x==y for x, y in zip(data.fields, ['name','sound','soundf','dataf','duration','befaft','resp','aud','script','chname']))
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
@@ -59,7 +59,7 @@ def test_import_Data_fields():
     assert np.allclose(data[-1]['befaft'], np.array([1, 1], dtype='uint8'))
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
-    data = import_outstruct(fn, useloadmat=False)
+    data = import_data(fn, useloadmat=False)
     assert set(data.fields)==set(['name','sound','soundf','dataf','duration','befaft','resp','aud','script','chname'])
     assert data[1]['name'] == 'stim02'
     assert data[1]['resp'].shape == (5203, 10)
@@ -70,18 +70,16 @@ def test_import_Data_fields():
     assert np.allclose(data[-1]['befaft'], np.array([1, 1], dtype='uint8'))
     assert np.allclose(data['sound'][0][20000:20005], np.array([-0.04907227, -0.04403687, -0.03979492, -0.03573608, -0.03210449]))
 
-# export_outstruct tests
+# export_data tests
 
 def test_export_bad_format(data):
     with pytest.raises(TypeError):
-        export_outstruct('fname_out_test.mat', {'bad': 'data'})
+        export_data('fname_out_test.mat', {'bad': 'data'})
 
 def test_export_bad_format(data):
     with pytest.raises(ValueError):
-        export_outstruct('fname_out_test.mat', data, file_format='7.2')
+        export_data('fname_out_test.mat', data, fmt='7.2')
 
 def test_export_Data(data):
-    export_outstruct('fname_out_test.mat', data)
+    export_data('fname_out_test.mat', data)
     pass
-
-
