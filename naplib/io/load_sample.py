@@ -1,6 +1,6 @@
 from os.path import dirname, join
 
-from .fileio import import_outstruct
+from .fileio import import_data
 from ..data import Data
 
 def load_speech_task_data():
@@ -26,4 +26,4 @@ def load_speech_task_data():
     filedir = dirname(__file__)
     filepath = join(filedir, 'sample_data/demo_data.mat')
 
-    return import_outstruct(filepath, strict=False)
+    return import_data(filepath, strict=False)

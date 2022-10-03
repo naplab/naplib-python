@@ -31,7 +31,10 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 In Development - Version 0.1.3
 ------------------------------
 
-- |Feature| : Added a sample dataset which can be loaded with ``io.load_speech_task_data()``. This dataset contains simulated intracranial EEG recordings from a speech-listening task. The example notebooks on the documentation now utilize this dataset for all iEEG analysis.
+- |Feature| : Added a sample dataset which can be loaded with ``io.load_speech_task_data``. This dataset contains simulated intracranial EEG recordings from a speech-listening task. The example notebooks on the documentation now utilize this dataset for all iEEG analysis.
+- |API| : The ``import_outstruct`` function has been renamed ``import_data`` to better imply that a Data object is returned.
+- |Efficiency| : The ``import_data`` function can now optionally use h5py under the hood, rather than hdf5storage, which makes loading large Data objects from MATLAB significantly faster.
+- |Feature| : Added the ``export_data`` function which can be used to export Data objects as MATLAB-compatible (.mat) files, the same file structures which are read in by the ``import_data`` function.
 
 
 Version 0.1.2

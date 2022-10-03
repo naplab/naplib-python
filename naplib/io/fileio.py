@@ -8,16 +8,18 @@ from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_outstruct(filepath, strict=True):
+def import_data(filepath, strict=True):
     '''
-    Import out struct from matlab (.mat) format. This will
+    Import Data object from MATLAB (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
-    so that they are shape (time, channels) for each trial.
+    so that they are shape (time, channels) for each trial. The
+    Data object in MATLAB is a 1xN-shaped struct containing N trials
+    and any number of fields for each trial.
 
     Parameters
     ----------
     filepath : string
-        Path to .mat file with out structure.
+        Path to .mat file with Data object.
     strict : bool, default=True
         If True, requires strict adherance to the following standards:
         1) Each trial must contain at least the following fields:
@@ -26,11 +28,11 @@ def import_outstruct(filepath, strict=True):
 
     Returns
     -------
-    out : naplib.Data object
+    data : naplib.Data object
     
     Notes
     -----
-    Given the highly-specific nature of the Out struct Matlab format, this
+    Given the highly-specific nature of the Matlab Data format, this
     function is mostly used internally by Neural Acoustic Processing
     Lab members.
     '''
@@ -61,17 +63,17 @@ def import_outstruct(filepath, strict=True):
         if strict and r not in fieldnames:
             raise ValueError(f'Missing required field: {r}')
     
-    out = Data(data=data, strict=strict)
-    return out
+    data = Data(data=data, strict=strict)
+    return data
 
-def export_outstruct(filepath, data, file_format='7.3'):
+def export_data(filepath, data, fmt='7.3'):
     '''
     Export a naplib.Data instance to the MATLAB-compatible
-    equivalent (.mat file), referred to as an out struct.
-    Import out struct from matlab (.mat) format. This will
+    equivalent (.mat file). This will
     automatically transpose the 'resp' and 'aud' fields for
     each trial in the .mat file, thus undoing the actions of
-    import_outstruct.
+    import_data. The Data object in MATLAB is a 1xN-shaped
+    struct containing N trials and any number of fields for each trial.
 
     Parameters
     ----------
@@ -79,7 +81,7 @@ def export_outstruct(filepath, data, file_format='7.3'):
         Filename or path-like specifying where to save the file.
     data : Data instance
         Data to export.
-    file_format : str, default='7.3'
+    fmt : str, default='7.3'
         MATLAB file format. Options are {'7.3','7','6'}
     
     '''
@@ -87,8 +89,8 @@ def export_outstruct(filepath, data, file_format='7.3'):
         warnings.warn(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
     
     FORMAT_OPTIONS = ['7.3','7','6']
-    if file_format not in FORMAT_OPTIONS:
-        raise ValueError(f"format must be one of ['7.3','7','6'] but got {file_format}")
+    if fmt not in FORMAT_OPTIONS:
+        raise ValueError(f"format must be one of ['7.3','7','6'] but got {fmt}")
     if not isinstance(data, Data):
         raise TypeError(f'data must be a naplib.Data instance but got {type(data)}')
     
@@ -131,7 +133,7 @@ def export_outstruct(filepath, data, file_format='7.3'):
         void_data.append(tuple(trial_data))
     void_data = np.array(void_data, dtype=dt).reshape(1,-1)
     
-    savemat(filepath, {'out': void_data}, appendmat=False, format=file_format)
+    savemat(filepath, {'out': void_data}, appendmat=False, format=fmt)
 
 
 def load(filename):
