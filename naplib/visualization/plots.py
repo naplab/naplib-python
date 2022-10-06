@@ -10,9 +10,10 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
     '''
     Parameters
     ----------
-    x, y : array-like (time,), (time, n_samples)
-        Data to plot, providing the horixontal / vertical coordinates. *x* values
-        are optional and default to ``range(len(y))``. *y* values should be
+    x : array-like, shape (n_samples,), optional
+        *x* values are optional and default to ``range(len(y))``.
+    y : array-like, shape (n_samples, n_lines)
+        Data to plot, providing the vertical coordinates. *y* values should be
         two-dimensional, and statistics used to compute shaded region interval
         are computed over the second dimension.
     fmt : str, optional
