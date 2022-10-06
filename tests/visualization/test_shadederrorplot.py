@@ -4,8 +4,28 @@ import matplotlib.pyplot as plt
 
 from naplib.visualization import shadederrorplot
 
+def test_errorplot_bad_fmt_type_error():
+
+    fig, ax = plt.subplots(1,1)
+
+    with pytest.raises(TypeError):
+        shadederrorplot([0,1,2,3], np.random.rand(4,2), {'fmt': 'bad'}, ax=ax, err_method='stderr')
+
+def test_errorplot_no_args_error():
+
+    with pytest.raises(ValueError):
+        shadederrorplot()
+
+def test_errorplot_too_many_args_error():
+
+    fig, ax = plt.subplots(1,1)
+
+    with pytest.raises(ValueError):
+        shadederrorplot([0,1,2,3], np.random.rand(4,2), 'r--', 'bad_arg', ax=ax, err_method='stderr')
+
+
 def test_errorplot_error_region_stderr():
-    x = np.array([0,1,2,3,4])
+    x = np.array([-1,0,1,2,3])
     y = np.arange(1, 31).reshape((5,6)).astype('float')
     y[0,2] = 9
     y[4,1] = -0.5
@@ -17,7 +37,53 @@ def test_errorplot_error_region_stderr():
     fig, ax = plt.subplots(1,1)
     shadederrorplot(x, y, ax=ax, err_method='stderr')
 
+    assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
+    assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
+
+def test_errorplot_error_region_stderr_no_x_given():
+    y = np.arange(1, 31).reshape((5,6)).astype('float')
+    y[0,2] = 9
+    y[4,1] = -0.5
+    # y_std = y.std(1)
+    y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+    y_mean = y.mean(1)
+    y_region = [y_mean - y_err, y_mean+y_err]
+
+    fig, ax = plt.subplots(1,1)
+    shadederrorplot(y, ax=ax, err_method='stderr')
+
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
+    assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
+
+def test_errorplot_error_region_stderr_no_x_given_with_fmt_string():
+    y = np.arange(1, 31).reshape((5,6)).astype('float')
+    y[0,2] = 9
+    y[4,1] = -0.5
+    # y_std = y.std(1)
+    y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+    y_mean = y.mean(1)
+    y_region = [y_mean - y_err, y_mean+y_err]
+
+    fig, ax = plt.subplots(1,1)
+    shadederrorplot(y, 'r--*', ax=ax, err_method='stderr')
+
+    assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
+    assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
+
+def test_errorplot_error_region_stderr_with_fmt_string():
+    x = np.array([-1, 0,1,2,3])
+    y = np.arange(1, 31).reshape((5,6)).astype('float')
+    y[0,2] = 9
+    y[4,1] = -0.5
+    # y_std = y.std(1)
+    y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
+    y_mean = y.mean(1)
+    y_region = [y_mean - y_err, y_mean+y_err]
+
+    fig, ax = plt.subplots(1,1)
+    shadederrorplot(x, y, 'r--*', ax=ax, err_method='stderr')
+
+    assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
 
 def test_errorplot_error_region_std_withnan_omit():

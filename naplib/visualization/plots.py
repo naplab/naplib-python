@@ -56,13 +56,6 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
     ValueError
         if nan found in input and ``nan_policy`` is 'raise'.
     '''
-    if nan_policy not in ['omit','raise','propogate']:
-        raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
-    if nan_policy == 'raise':
-        if np.any(np.isnan(x)) or np.any(np.isnan(y)):
-            raise ValueError('Found nan in input')
-    if ax is None:
-        ax = plt.gca()
     
     if color is not None:
         plt_args['color'] = color
@@ -86,8 +79,6 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
     else:
         raise ValueError(f'Too many args passed. Expected at most 3 (x, y, fmt)')
     
-    if not isinstance(y, np.ndarray):
-        raise TypeError(f'y must be of type np.ndarray but got {type(y)}')
     if not isinstance(fmt, str):
         raise TypeError(f'fmt must be of type string but got {type(fmt)}')
     if x is None:
@@ -95,6 +86,15 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
     
     if y.ndim == 1:
         y = y[:,np.newaxis]
+
+    if nan_policy not in ['omit','raise','propogate']:
+        raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
+    if nan_policy == 'raise':
+        if np.any(np.isnan(x)) or np.any(np.isnan(y)):
+            raise ValueError('Found nan in input')
+
+    if ax is None:
+        ax = plt.gca()
             
     allowed_errors = ['stderr','std']
     if err_method not in allowed_errors:
