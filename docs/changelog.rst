@@ -35,6 +35,8 @@ In Development - Version 0.1.3
 - |API| : The ``import_outstruct`` function has been renamed ``import_data`` to better imply that a Data object is returned.
 - |Efficiency| : The ``import_data`` function can now optionally use h5py under the hood, rather than hdf5storage, which makes loading large Data objects from MATLAB significantly faster.
 - |Feature| : Added the ``export_data`` function which can be used to export Data objects as MATLAB-compatible (.mat) files, the same file structures which are read in by the ``import_data`` function.
+- |Enhancement| : Added the ability to pass format strings (such as 'r--' to indicate red, dashed lines) to ``visualization.shadederrorplot`` so that the API matches that of matplotlib's Axes.plot.
+
 
 
 Version 0.1.2

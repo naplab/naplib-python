@@ -6,43 +6,97 @@ import matplotlib.pyplot as plt
 from scipy import signal as sig
 
 
-def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args={}, nan_policy='omit'):
+def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Parameters
     ----------
-    x : shape (time,)
-        Values to use as x-index
-    y : shape (time, n_samples)
-        Data to plot. The average over the n_samples will be plotted on the main
-        line, surrounded by a shaded region determined by the ``err_method`` parameter.
+    x : array-like, shape (n_samples,), optional
+        *x* values are optional and default to ``range(len(y))``.
+    y : array-like, shape (n_samples, n_lines)
+        Data to plot, providing the vertical coordinates. *y* values should be
+        two-dimensional, and statistics used to compute shaded region interval
+        are computed over the second dimension.
+    fmt : str, optional
+        A format string, e.g. 'ro' for red circles. See the matplotlib
+        `Axes.plot <https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.plot.html>`_
+        Notes section for a full description of the format strings.
+        Format strings are just an abbreviation for quickly setting
+        basic line properties. All of these and more can also be
+        controlled by keyword arguments within color or plt_args.
+        This argument cannot be passed as keyword.
     ax : plt.Axes instance, optional
         Axes to use. If not specified, will use current axes.
+    color : str, default=None
+        Color to plot line and shaded region. Defaults to next color in color cycle.
+    alpha : float, default=0.4
+        Shading alpha. Value between 0 and 1.
     err_method : string, default='stderr
         One of ['stderr','std'], the method to use to calculate error bars.
     plt_args : dict, default={}
-        Args to be passed to plt.plot(). e.g. 'color','linewidth',...
+        Dict of args to be passed to plt.plot(). e.g. {'linewidth': 2}, etc.
     shade_args : dict, default={}
-        Args to be passed to plt.fill_between(). e.g. 'color','alpha',...
+        Dict of args to be passed to plt.fill_between(). e.g. {'alpha': 0.2}, etc.
     nan_policy : string, default='omit'
         One of ['omit','raise','propogate']. If 'omit', will ignore any nan in the
         inputs, if 'raise', will raise a ValueError if nan is found in input, if
         'propogate', do not do anything special with nan values.
-        
+    
+    Examples
+    --------
+    >>> from naplib.visualization import shadederrorplot as sep
+    >>> import matplotlib.pyplot as plt
+    >>> x, y = np.linspace(0, 1, 10), np.random.rand(10,5)
+    >>> fig, ax = plt.subplots()
+    >>> sep(y) # plot mean of y vs x, with shaded error regions
+    >>> sep(y, 'r--') # same plot but color is red and line is dashed
+    >>> sep(x, y) # same plot but against specific x values
+    >>> plt.show()
+    
     Raises
     ------
     ValueError
-        if nan found in input
+        if nan found in input and ``nan_policy`` is 'raise'.
     '''
+    
+    if color is not None:
+        plt_args['color'] = color
+
+    shade_args['alpha'] = alpha
+    
+    fmt = ''
+    x = None
+    y = None
+    if len(args) == 0:
+        raise ValueError('No data provided to plot.')
+    elif len(args) == 1:
+        y = args[0]
+    elif len(args) == 2:
+        if isinstance(args[1], str):
+            y, fmt = args
+        else:
+            x, y = args
+    elif len(args) == 3:
+        x, y, fmt = args
+    else:
+        raise ValueError(f'Too many args passed. Expected at most 3 (x, y, fmt)')
+    
+    if not isinstance(fmt, str):
+        raise TypeError(f'fmt must be of type string but got {type(fmt)}')
+    if x is None:
+        x = np.arange(len(y))
+    
+    if y.ndim == 1:
+        y = y[:,np.newaxis]
+
     if nan_policy not in ['omit','raise','propogate']:
         raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
     if nan_policy == 'raise':
         if np.any(np.isnan(x)) or np.any(np.isnan(y)):
             raise ValueError('Found nan in input')
+
     if ax is None:
         ax = plt.gca()
-    if 'alpha' not in shade_args:
-        shade_args['alpha'] = 0.5
-
+            
     allowed_errors = ['stderr','std']
     if err_method not in allowed_errors:
         raise ValueError(f'err_method must be one of {allowed_errors}, but found {err_method}')
@@ -59,7 +113,14 @@ def shadederrorplot(x, y, ax=None, err_method='stderr', plt_args={}, shade_args=
         elif err_method == 'std':
             y_err = y.std(1)
         
-    ax.plot(x, y_mean, **plt_args)
+    
+    if fmt == '':
+        line_, = ax.plot(x, y_mean, **plt_args)
+    else:
+        line_, = ax.plot(x, y_mean, fmt, **plt_args)
+                     
+    color = line_.get_color()
+    shade_args['color'] = color
     ax.fill_between(x, y_mean-y_err, y_mean+y_err, **shade_args)
     
 
