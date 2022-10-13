@@ -10,7 +10,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands.
     This is done by averaging over the envelopes and phases computed from the Hilbert Transform
-    of each filter output in a filterbank of bandpass filters [Edwards2009]_. 
+    of each filter output in a filterbank of bandpass filters [#1edwards]_. 
     
     Parameters
     ----------
@@ -45,13 +45,14 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
         there will be a field for phase and a field for amplitude of that band, each with
         shape (time, channels) for each trial.
     
+
     See Also
     --------
     filterbank_hilbert
-    
+
     References
     ----------
-    .. [Edwards2009] Edwards, Erik, et al. "Comparison of time–frequency responses
+    .. [#1edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
                and the event-related potential to auditory speech stimuli in
                human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
 
@@ -61,7 +62,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     
     Wn_ = np.asarray(Wn)
     if Wn_.ndim == 1:
-        Wn_ = Wn[np.newaxis,:]
+        Wn_ = Wn_[np.newaxis,:]
     
     max_f_overall = Wn_.max() + 1
     
@@ -96,6 +97,8 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
         for ii, freq_band in enumerate(Wn_):
             minf, maxf = freq_band
             band_locator = np.logical_and(center_freqs>=minf, center_freqs<=maxf)
+            if band_locator.sum() == 0:
+                raise ValueError(f'Frequency band {freq_band} is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
             # average over the filters in the frequency band
             phase_amplitude_data[freq_band_names[2*ii]].append(x_phase[:,:,band_locator].mean(-1))
             phase_amplitude_data[freq_band_names[2*ii+1]].append(x_amplitude[:,:,band_locator].mean(-1))
@@ -106,10 +109,10 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
 def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     '''
     Compute the phase and amplitude (envelope) of a signal over a range of frequencies,
-    as in [Edwards2009]_. This is done using a filter bank of gaussian shaped filters with
+    as in [#1edwards]_. This is done using a filter bank of gaussian shaped filters with
     center frequencies linearly spaced until 4Hz and then logarithmically spaced. The
     Hilbert Transform of each filter's output is computed and the real and imaginary parts
-    form the amplitude and phase, respectively. See [Edwards2009]_ for details on the filter
+    form the amplitude and phase, respectively. See [#1edwards]_ for details on the filter
     bank used.
     
     Parameters
@@ -132,10 +135,29 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
         Envelope of each frequency bin in the filter bank for each channel.
     center_freqs : np.ndarray, shape (frequency_bins,)
         Center frequencies for each frequency bin used in the filter bank.
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> from naplib.preprocessing import filterbank_hilbert as fb_hilb
+    >>> import numpy as np
+    >>> x = np.random.rand(1000,3) # 3 channels of signals
+    >>> fs = 500
+    >>> x_phase, x_envelope, freqs = fb_hilb(x, fs, Wn=[1, 150])
+    >>> # the outputs have the phase and envelope for each channel and each filter in the filterbank
+    >>> x_phase.shape  # 3rd dimension is one for each filter in filterbank
+    (1000, 3, 42)
+    >>> x_envelope.shape
+    (1000, 3, 42)
+    >>> freqs[0] # center frequency of first filter bank filter
+    1.21558792
+    >>> freqs[-1] # center frequency of last filter bank filter
+    143.97075186
+
     
     References
     ----------
-    .. [Edwards2009] Edwards, Erik, et al. "Comparison of time–frequency responses
+    .. [#1edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
                and the event-related potential to auditory speech stimuli in
                human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
     
@@ -146,6 +168,8 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     f0          = 0.018 
     octSpace    = 1./7 
     minf, maxf  = Wn
+    if minf >= maxf:
+        raise ValueError(f'Upper bound of frequency range must be greater than lower bound, but got lower bound of {minf} and upper bound of {maxf}')
     maxfo       = np.log2(maxf/f0)  # octave of max freq
     
     cfs         = [f0]
@@ -169,7 +193,11 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
         sigma_f = 10**(a[0]+a[1]*np.log10(cfs[-1]))
         
     cfs = np.array(cfs)
+    if np.logical_and(cfs>=minf, cfs<=maxf).sum() == 0:
+        raise ValueError(f'Frequency band is too narrow, so no filters in filterbank are placed inside. Try a wider frequency band.')
+    
     cfs = cfs[np.logical_and(cfs>=minf, cfs<=maxf)] # choose those that lie in the input freqRange
+
     
     exponent = np.concatenate((np.ones((len(cfs),1)), np.log10(cfs)[:,np.newaxis]), axis=1) @ a
     sigma_fs = 10**exponent

@@ -26,7 +26,7 @@ def data_hilbert():
 def test_set_bandnames(data_hilbert):
     data_tmp = data_hilbert['out']
 
-    phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[15,30],[70,100]], bandnames=['bandA','bandB','bandC'])
+    phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=np.array([[8,13],[15,30],[70,100]]), bandnames=['bandA','bandB','bandC'])
     assert phs_amp_data.fields == ['bandA phase', 'bandA amp', 'bandB phase', 'bandB amp', 'bandC phase', 'bandC amp']
 
 def test_set_bandnames_duplicates(data_hilbert):
@@ -41,14 +41,20 @@ def test_set_bands_duplicates(data_hilbert):
     with pytest.raises(ValueError):
         phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[8,13],[70,100]], bandnames=['bandA','bandB','bandC'])
 
+def test_frequency_range_too_narrow_extract(data_hilbert):
+    data_tmp = data_hilbert['out']
+
+    with pytest.raises(ValueError):
+        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandB'])
+
 
 def test_filter_multiple_bands_same_as_one(data_hilbert):
     data_tmp = data_hilbert['out']
 
-    phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[15,30],[70,100]])
+    phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=np.array([[8,13],[15,30],[70,100]]))
     assert len(phs_amp_data) == len(data_tmp)
 
-    phs_amp_data2 = phase_amplitude_extract(data_tmp, 'resp', Wn=[[70,100]])
+    phs_amp_data2 = phase_amplitude_extract(data_tmp, 'resp', Wn=[70,100])
     assert len(phs_amp_data2) == len(phs_amp_data)
 
     same_fields = phs_amp_data2.fields
@@ -74,6 +80,20 @@ def test_repeated_bands_error():
 
 
 # tests filterbank_hilbert
+
+def test_freq_range_inverted():
+    x = np.random.rand(1000, 5)
+    fs = 100
+
+    with pytest.raises(ValueError):
+        phs_amp_data = phase_amplitude_extract(x, fs, Wn=[13, 8])
+
+def test_no_filters_in_freq_range():
+    x = np.random.rand(10000, 5)
+    fs = 500
+
+    with pytest.raises(ValueError):
+        phs_amp_data = phase_amplitude_extract(x, fs, Wn=[40, 42])
 
 def test_center_freqs_and_output_shape():
     x = np.random.rand(1000, 5)
