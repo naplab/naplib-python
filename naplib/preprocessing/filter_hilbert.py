@@ -57,7 +57,6 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
                human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
 
     '''
-    
     field, fs = _parse_outstruct_args(data, field, fs, allow_different_lengths=True, allow_strings_without_outstruct=False)
     
     Wn_ = np.asarray(Wn)

@@ -44,9 +44,9 @@ def test_set_bands_duplicates(data_hilbert):
 def test_frequency_range_too_narrow_extract(data_hilbert):
     data_tmp = data_hilbert['out']
 
-    with pytest.raises(ValueError):
-        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandB'])
-
+    with pytest.raises(ValueError) as excinfo:
+        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandC'])
+    assert 'is too narrow and no filters ' in str(excinfo.value)
 
 def test_filter_multiple_bands_same_as_one(data_hilbert):
     data_tmp = data_hilbert['out']
@@ -71,13 +71,13 @@ def test_filter_multiple_bands_same_as_one(data_hilbert):
     assert np.allclose(phs_amp_data['[ 70 100] phase'][0][1000,:], np.array([-1.31277148, -1.37329027, -1.34475956, -1.36207981]))
 
 
-def test_repeated_bands_error():
+def test_bad_signal_shape():
     x = np.random.rand(1000, 5, 3)
     fs=100
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as excinfo:
         x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[1, 150])
-
+    assert 'Input signal must be 1- or 2-dimensional' in str(excinfo.value)
 
 # tests filterbank_hilbert
 
@@ -85,15 +85,17 @@ def test_freq_range_inverted():
     x = np.random.rand(1000, 5)
     fs = 100
 
-    with pytest.raises(ValueError):
-        phs_amp_data = phase_amplitude_extract(x, fs, Wn=[13, 8])
+    with pytest.raises(ValueError) as excinfo:
+        phs_amp_data = filterbank_hilbert(x, fs, Wn=[13, 8])
+    assert 'must be greater than lower bound' in str(excinfo.value)
 
 def test_no_filters_in_freq_range():
     x = np.random.rand(10000, 5)
     fs = 500
 
-    with pytest.raises(ValueError):
-        phs_amp_data = phase_amplitude_extract(x, fs, Wn=[40, 42])
+    with pytest.raises(ValueError) as excinfo:
+        phs_amp_data = filterbank_hilbert(x, fs, Wn=[40, 42])
+    assert 'is too narrow, so' in str(excinfo.value)
 
 def test_center_freqs_and_output_shape():
     x = np.random.rand(1000, 5)
@@ -115,6 +117,17 @@ def test_center_freqs_and_output_shape():
     assert x_phs.shape == (*x.shape, len(expected_cfs))
     assert x_amp.shape == (*x.shape, len(expected_cfs))
     assert np.allclose(cfs, expected_cfs)
+
+def test_oneD_signal_same_output():
+    x = np.random.rand(1000, 1)
+    fs = 100
+
+    x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[10, 20])
+    x_phs2, x_amp2, cfs2 = filterbank_hilbert(x.squeeze(), fs, Wn=[10, 20])
+
+    assert np.allclose(x_phs, x_phs2)
+    assert np.allclose(x_amp, x_amp2)
+    assert np.allclose(cfs, cfs2)
 
 def test_bad_x_shape():
     x = np.random.rand(1000, 5, 3)
