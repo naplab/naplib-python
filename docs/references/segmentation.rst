@@ -11,7 +11,7 @@ Get Label Change Points
 Segment Around Label Transitions
 --------------------------------
 
-.. autofunction:: segment_around_labeltransitions
+.. autofunction:: segment_around_label_transitions
 
 Electrode Lags from F-Ratio
 ---------------------------
