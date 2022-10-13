@@ -36,7 +36,9 @@ In Development - Version 0.1.3
 - |Efficiency| : The ``import_data`` function can now optionally use h5py under the hood, rather than hdf5storage, which makes loading large Data objects from MATLAB significantly faster.
 - |Feature| : Added the ``export_data`` function which can be used to export Data objects as MATLAB-compatible (.mat) files, the same file structures which are read in by the ``import_data`` function.
 - |Enhancement| : Added the ability to pass format strings (such as 'r--' to indicate red, dashed lines) to ``visualization.shadederrorplot`` so that the API matches that of matplotlib's Axes.plot.
-
+- |Feature| : Added the ``filter_line_noise`` function which performs notch filtering with a linear-phase filter.
+- |Feature| : Added the ``phase_amplitude_extract`` function uses the Hilbert Transform on a filterbank to extact phase and amplitude of broad frequency bands.
+- |Feature| : Added the ``filterbank_hilbert`` function uses the Hilbert Transform on a filterbank to extact phase and amplitude of each filterbank output.
 
 
 Version 0.1.2
