@@ -10,4 +10,4 @@ import naplib.model_selection
 import naplib.utils
 from .data import Data, join_fields, concat
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"

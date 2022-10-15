@@ -28,6 +28,12 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+
+In Development - Version 0.1.5
+------------------------------
+- |Feature| : Added a function ``naplib.concat`` for concatenating Data objects over trials or over fields.
+
+
 Version 0.1.4
 -------------
 
