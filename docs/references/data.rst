@@ -11,6 +11,12 @@ Data object
     :special-members: __getitem__, __setitem__, __len__
     :exclude-members: set_field, get_field
 
+concat
+------
+
+.. autofunction:: concat
+
+
 join_fields
 -----------
 

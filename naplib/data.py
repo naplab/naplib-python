@@ -1,5 +1,7 @@
 from collections.abc import Iterable, Sequence
 from itertools import groupby
+from copy import deepcopy
+from collections import OrderedDict
 import numpy as np
 from mne import Info
 
@@ -55,6 +57,41 @@ class Data(Iterable):
     aligned or the same length/shape across trials. Information can be retrieved
     from the Data instance by trial, by field, or by a combination of the two,
     using bracket indexing and slicing, as described below.
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> import numpy as np
+    >>> # Constructing Data from a dict, where keys give fields and values are lists of trial data
+    >>> names = ['trial1', 'trial2'] # trial names
+    >>> responses = [np.arange(6).reshape(3,2), np.arange(6,12).reshape(3,2)] # neural responses
+    >>> dataf = [100, 100] # sampling rate
+    >>> data = nl.Data({'name': names, 'resp': responses, 'dataf': dataf})
+    >>> data
+    Data object of 2 trials containing 3 fields
+    [{"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
+    {"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
+    >>> # Accessing a single field returns a list
+    >>> data['name']
+    ['trial1', 'trial2']
+    >>> # Accessing multiple fields returns a Data object
+    >>> data[['resp', 'dataf']]
+    Data object of 2 trials containing 2 fields
+    [{"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
+    {"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
+    >>> # Accessing a single trial returns a dict
+    >>> data[1]
+    {'name': 'trial2',
+     'resp': array([[ 6,  7],
+            [ 8,  9],
+            [10, 11]]),
+     'dataf': 100}
+    >>> # Accessing multiple trials returns a Data object
+    >>> data[:2]
+    Data object of 2 trials containing 3 fields
+    [{"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
+    {"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
+
     
     '''
     def __init__(self, data, strict=False):
@@ -398,6 +435,121 @@ class Data(Iterable):
             raise ValueError('No mne_info is available for this Data. This must '
                              'be read in from external data or added manually to the Data.')
         return self._mne_info
+
+
+def concat(data_list, axis=0, copy=True):
+    '''
+    Concatenate Data objects across either trials or fields.
+
+    This performs an inner join on the other dimension, meaning
+    non-shared fields will be lost if concatenating over trials,
+    and non-shared trials will be lost if concatenating over fields.
+    If concatenating over fields and there are shared fields, then
+    the field will only be taken from the first Data object in
+    the input sequence and the rest will be ignored.
+    
+    Note: anything stored in the .info or .mne_info attributes of the
+    objects will not be stored in the output.
+    
+    Parameters
+    ----------
+    data : sequence of Data instances
+        Sequence containing the different Data objects to concatenate.
+    axis : int, defualt=0
+        To concantate over trials (default), axis should be 0. To concatenate
+        over fields, axis should be 1.
+    copy : bool, default=True
+        Whether to deep copy each Data object before concatenating.
+
+    Returns
+    -------
+    data_merged : Data instance
+        A Data instance of the two merged objects.
+    
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> # First, try concatenating over trials from two different Data objects
+    >>> d1 = nl.Data({'name': ['t1','t2'], 'resp': [[1,2],[3,4,5]], 'extra': ['ex1','ex2']})
+    >>> d2 = nl.Data({'name': ['t3','t4'], 'resp': [[6,7],[9,10]], 'extra': ['ex3','ex4']})
+    >>> d_concat = nl.concat((d1, d2))
+    >>> len(d_concat)
+    4
+    >>> d_concat.fields
+    ['name', 'resp', 'extra']
+    >>> d_concat['name']
+    ['t1', 't2', 't3', 't4']
+    >>> d_concat['resp']
+    [[1, 2], [3, 4, 5], [6, 7], [9, 10]]
+    >>> d_concat['extra']
+    ['ex1', 'ex2', 'ex3', 'ex4']
+    >>> # We can also concatenate over fields if we have two Data objects for the same trials
+    >>> # Duplicate fields will only be kept from the first Data object that they appear in
+    >>> d3 = nl.Data({'name': ['t1-1','t2-1'], 'resp': [[1,2],[3,4,5]]})
+    >>> d4 = nl.Data({'name': ['t1-2','t2-2'], 'meta_data': ['meta1', 'meta2']})
+    >>> d_concat = nl.concat((d3, d4), axis=1)
+    >>> len(d_concat)
+    2
+    >>> d_concat.fields
+    ['name', 'resp', 'meta_data']
+    >>> d_concat['name']
+    ['t1-1', 't2-1']
+    >>> d_concat['resp']
+    [[1, 2], [3, 4, 5]]
+    >>> d_concat['meta_data']
+    ['meta1', 'meta2']
+
+    '''
+
+    for out in data_list:
+        if not isinstance(out, Data):
+            raise TypeError(f'All inputs to data_list must be a Data instance but found {type(out)}')
+
+    if len(data_list) == 1:
+        return data_list[0]
+    
+    if axis == 0:
+        field_set = OrderedDict({k: None for k in data_list[0].fields})
+        for data in data_list[1:]:
+            subset = set(field_set.keys()).intersection(set(data.fields))
+            for k in field_set:
+                if k not in subset:
+                    field_set.pop(k)
+        field_set = list(field_set.keys())
+        
+        if copy:
+            data_merged = deepcopy(data_list[0][field_set])
+        else:
+            data_merged = data_list[0][field_set]
+            
+        for data in data_list[1:]:
+            if copy:
+                copied_data = deepcopy(data[field_set])
+            else:
+                copied_data = data[field_set]
+            for trial in copied_data:
+                data_merged.append(trial, strict=False)
+        
+    elif axis == 1:
+        if not all([len(data_list[0])==len(d) for d in data_list]):
+            raise ValueError(f'All Data objects must be same length if concatenating over fields (axis=1).')
+            
+        if copy:
+            data_merged = deepcopy(data_list[0])
+        else:
+            data_merged = data_list[0]
+            
+        for data in data_list[1:]:
+            current_fields = data_merged.fields
+            for field in data.fields:
+                if field not in current_fields:
+                    data_merged[field] = data[field]
+
+    else:
+        raise ValueError(f'axis must be 0 or 1 but got {axis}')
+        
+    return data_merged
+
     
 def join_fields(data_list, fieldname='resp', axis=-1, return_as_data=False):
     '''
@@ -424,6 +576,43 @@ def join_fields(data_list, fieldname='resp', axis=-1, return_as_data=False):
     joined_data : list of np.ndarrays, or Data instance
         Joined data of same length as each of the Data objects containing concatenated data
         for each trial.
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> data1 = nl.Data({'resp': [np.array([0,1,2]).reshape(-1,1), np.array([3,4]).reshape(-1,1)]})
+    >>> data2 = nl.Data({'resp': [np.array([5,6,7]).reshape(-1,1), np.array([8,9]).reshape(-1,1)]})
+    >>> data1
+    [array([[0],
+            [1],
+            [2]]),
+     array([[3],
+            [4]])]
+    >>> data2
+    [array([[5],
+            [6],
+            [7]]),
+     array([[8],
+            [9]])]
+    >>> resp_joined = nl.join_fields((data1, data2))
+    >>> resp_joined
+    [array([[0, 5],
+            [1, 6],
+            [2, 7]]),
+     array([[3, 8],
+            [4, 9]])]
+    >>> resp_joined2 = nl.join_fields((data1, data2), axis=0)
+    >>> resp_joined2
+    [array([[0],
+            [1],
+            [2],
+            [5],
+            [6],
+            [7]]),
+     array([[3],
+            [4],
+            [8],
+            [9]])]
     '''
     
     for out in data_list:
