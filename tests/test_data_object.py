@@ -131,7 +131,7 @@ def test_concat_axis1_someshared_fields():
 
 def test_concat_single_Data_object():
     d3 = Data({'name': ['t1-1','t2-1'], 'resp': [[1,2],[3,4,5]]})
-    d_concat = concat((d3), axis=1)
+    d_concat = concat([d3], axis=1)
     assert d_concat.fields == ['name', 'resp']
 
 def test_concat_not_data_error():
