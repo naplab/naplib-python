@@ -156,9 +156,9 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
         if classes is not None:
             # independent 2-sample ttest
             assert 'classes' not in cat_feats_, 'the key name "classes" cannot be in the control dict'
-            if not np.array_equal(sorted(np.unique(classes)), np.array([0,1])):
+            if not np.array_equal(sorted(np.unique(np.asarray(classes))), np.array([0,1])):
                 raise ValueError(f'classes must be an array of only zeros and ones')
-            cat_feats_['classes'] = classes.astype('int')
+            cat_feats_['classes'] = np.asarray(classes).astype('int')
             test_type = "ind"
         else:
             test_type = "1_samp"
