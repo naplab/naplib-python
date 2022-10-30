@@ -8,6 +8,11 @@ T-Test Responsive Electrodes
 
 .. autofunction:: responsive_ttest
 
+T-Test with Feature Control
+---------------------------
+
+.. autofunction:: ttest
+
 DPrime
 ------
 
