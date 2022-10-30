@@ -36,7 +36,7 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
     y : array-like, shape (n_samples,), optional
         If provided, must be the same shape as *x* and a paired t-test is performed between
         *x* and *y*.
-    classes : np.ndarray, shape (n_samples,), optional
+    classes : array-like, shape (n_samples,), optional
         An array of 0's and 1's to separate the two classes to compare in an
         independent two-sample t-test if only *x* is provided without *y*.
     cat_feats : array-like, dict or DataFrame, optional
