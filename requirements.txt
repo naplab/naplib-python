@@ -10,3 +10,4 @@ scikit-learn
 joblib
 mne
 h5py
+patsy
