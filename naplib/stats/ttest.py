@@ -29,11 +29,11 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
  
     Parameters
     ----------
-    x : np.ndarray, shape (n_samples,)
+    x : array-like, shape (n_samples,)
         Data to test. All samples may come from a single class, in which case a one sample t-test
         is performed compared to a null hypothesis of mean=0, or from multiple classes if ``classes``
         is provided as well, in which case an independent two-sample t-test is performed.
-    y : np.ndarray, shape (n_samples,), optional
+    y : array-like, shape (n_samples,), optional
         If provided, must be the same shape as *x* and a paired t-test is performed between
         *x* and *y*.
     classes : np.ndarray, shape (n_samples,), optional
@@ -152,7 +152,7 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
     test_type = None
         
     if len(args) == 1:
-        y = args[0]
+        y = np.asarray(args[0])
         if classes is not None:
             # independent 2-sample ttest
             assert 'classes' not in cat_feats_, 'the key name "classes" cannot be in the control dict'
@@ -163,14 +163,12 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
         else:
             test_type = "1_samp"
     elif len(args) == 2:
+        x, y = np.asarray(args[0]), np.asarray(args[1])
         assert len(args[0]) == len(args[1]), 'x and y must be the same length'
         y = args[0] - args[1]
         test_type = 'rel'
     else:
         raise ValueError(f'Must provide either 1 or 2 positional arguments (x and y), but got {len(args)}')
-    
-    if not isinstance(y, np.ndarray):
-        raise TypeError(f'Input x and y must be of type np.ndarray but got {type(y)}')
     
     new_data = {}
     for k in cat_feats_.keys():

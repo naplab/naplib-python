@@ -101,6 +101,14 @@ def test_cat_feats_and_con_feats_1samp_ttest(data2):
     assert np.allclose(tval, -1.374171230793057)
     assert np.allclose(pval, 0.18723611138878798)
 
+def test_cat_feats_and_con_feats_overlap_names_error(data2):
+    x = data2['x']
+    groups = data2['groups']
+    behavior = data2['behavior']
+    with pytest.raises(ValueError) as err:
+        tval, pval = ttest(x, cat_feats={'groups': groups}, con_feats={'groups': np.concatenate([behavior, behavior], axis=0)})
+    assert 'cat_feats and con_feats have overlapping key names' in str(err)
+
 def test_result_same_with_dict_or_array_or_df_cat_feat(data2):
     x = data2['x']
     groups = data2['groups']
@@ -144,6 +152,21 @@ def test_bad_con_feats_type(data2):
         tval, pval = ttest(data2['x'], con_feats=1)
     assert 'con_feats must be a' in str(err)
 
+def test_classes_not_0_and_1(data2):
+    with pytest.raises(ValueError) as err:
+        tval, pval = ttest(data2['x'], classes=np.ones_like(data2['x']))
+    assert 'classes must be an array of only zeros and ones' in str(err)
+    with pytest.raises(ValueError) as err:
+        tval, pval = ttest(data2['x'], classes=-1*data2['groups'])
+    assert 'classes must be an array of only zeros and ones' in str(err)
+    groups = data2['groups']
+    groups[-1] = 2
+    with pytest.raises(ValueError) as err:
+        tval, pval = ttest(data2['x'], classes=groups)
+    assert 'classes must be an array of only zeros and ones' in str(err)
 
-
+def test_x_y_not_arrays(data2):
+    with pytest.raises(ValueError) as err:
+        tval, pval = ttest(data2['x'], classes=np.ones_like(data2['x']))
+    assert 'classes must be an array of only zeros and ones' in str(err)
 
