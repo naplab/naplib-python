@@ -54,4 +54,8 @@ Required Dependencies
 - hdf5storage>=0.1.1
 - scikit-learn
 - mne
+- joblib
+- pyyaml
+- TextGrid
+- h5py
 

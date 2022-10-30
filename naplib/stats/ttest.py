@@ -94,7 +94,7 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
     (-0.33532229593097984, 0.7412584236348754)
     
     If x1 and x2 are paired data, we can do a paired relative t-test.
-    This is equivalent to scipy.stats.ttest_resl(x2, x1)
+    This is equivalent to scipy.stats.ttest_rel(x2, x1)
     
     >>> ttest(x2, x1)
     (11.052116218441915, 1.5470048033033527e-06)

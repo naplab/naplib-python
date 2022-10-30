@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 import copy
 
-from naplib import Data, join_fields
+from naplib import Data, join_fields, concat
 
 @pytest.fixture(scope='module')
 def data():
@@ -93,6 +93,71 @@ def test_slicing_outstruct(data):
     for trial, x in zip(outstruct[1:], data['x'][1:]):
         assert np.array_equal(trial['resp'], x)
         assert trial['dataf'] == 100
+
+
+# concat tests
+
+def test_concat_axis0_nonshared_fields():
+    d1 = Data({'name': ['t1','t2'], 'resp': [[1,2],[3,4,5]], 'extra': ['ex1','ex2']})
+    d2 = Data({'name': ['t3','t4'], 'resp': [[6,7],[9,10]], 'extra': ['ex3','ex4']})
+    d3 = Data({'name': ['t5','t6'], 'resp': [[11,12,13],[14,15]]})
+
+    d_concat = concat((d1,d2,d3))
+    assert len(d_concat) == 6
+    assert d_concat['name'] == ['t1', 't2', 't3', 't4', 't5', 't6']
+    assert d_concat['resp'] == [[1, 2], [3, 4, 5], [6, 7], [9, 10], [11, 12, 13], [14, 15]]
+    assert d_concat.fields == ['name', 'resp']
+
+def test_concat_axis0_all_fields_matching():
+    d1 = Data({'name': ['t1','t2'], 'resp': [[1,2],[3,4,5]], 'extra': ['ex1','ex2']})
+    d2 = Data({'name': ['t3','t4'], 'resp': [[6,7],[9,10]], 'extra': ['ex3','ex4']})
+
+    d_concat = concat((d1,d2))
+    assert len(d_concat) == 4
+    assert d_concat['name'] == ['t1', 't2', 't3', 't4']
+    assert d_concat['resp'] == [[1, 2], [3, 4, 5], [6, 7], [9, 10]]
+    assert d_concat['extra'] == ['ex1', 'ex2', 'ex3', 'ex4']
+    assert d_concat.fields == ['name', 'resp', 'extra']
+
+def test_concat_axis1_someshared_fields():
+    d3 = Data({'name': ['t1-1','t2-1'], 'resp': [[1,2],[3,4,5]]})
+    d4 = Data({'name': ['t1-2','t2-2'], 'meta_data': ['meta1', 'meta2']})
+    d_concat = concat((d3, d4), axis=1)
+    assert d_concat.fields == ['name', 'resp', 'meta_data']
+    assert len(d_concat) == 2
+    assert d_concat['name'] == ['t1-1', 't2-1']
+    assert d_concat['resp'] == [[1,2],[3,4,5]]
+    assert d_concat['meta_data'] == ['meta1', 'meta2']
+
+def test_concat_single_Data_object():
+    d3 = Data({'name': ['t1-1','t2-1'], 'resp': [[1,2],[3,4,5]]})
+    d_concat = concat([d3], axis=1)
+    assert d_concat.fields == ['name', 'resp']
+
+def test_concat_not_data_error():
+    with pytest.raises(TypeError) as excinfo:
+        d_concat = concat(({'resp': [0,1]}, [2,3]))
+    assert 'must be a Data instance' in str(excinfo.value)
+
+def test_concat_axis1_not_all_same_length():
+    d3 = Data({'name': ['t1-1'], 'resp': [[1,2]]})
+    d4 = Data({'name': ['t1-2','t2-2'], 'meta_data': ['meta1', 'meta2']})
+    with pytest.raises(ValueError) as excinfo:
+        d_concat = concat((d3, d4), axis=1)
+    assert 'All Data objects must be same length' in str(excinfo.value)
+
+def test_concat_axis_not_0_or_1():
+    d3 = Data({'name': ['t1-1','t2-1'], 'resp': [[1,2],[3,4,5]]})
+    d4 = Data({'name': ['t1-2','t2-2'], 'meta_data': ['meta1', 'meta2']})
+    with pytest.raises(ValueError) as excinfo:
+        d_concat = concat((d3, d4), axis=2)
+    assert 'axis must be 0 or 1' in str(excinfo.value)
+
+    with pytest.raises(ValueError) as excinfo:
+        d_concat = concat((d3, d4), axis=None)
+    assert 'axis must be 0 or 1' in str(excinfo.value)
+
+# join_fields tests
 
 def test_join_fields_axis0(data):
     outstruct = data['out']
