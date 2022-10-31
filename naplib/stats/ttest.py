@@ -164,8 +164,8 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
             test_type = "1_samp"
     elif len(args) == 2:
         x, y = np.asarray(args[0]), np.asarray(args[1])
-        assert len(args[0]) == len(args[1]), 'x and y must be the same length'
-        y = args[0] - args[1]
+        assert len(x) == len(y), 'x and y must be the same length'
+        y = x - y
         test_type = 'rel'
     else:
         raise ValueError(f'Must provide either 1 or 2 positional arguments (x and y), but got {len(args)}')
