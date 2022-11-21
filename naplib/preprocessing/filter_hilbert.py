@@ -6,10 +6,11 @@ from ..data import Data
 from ..utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]], bandnames=None, n_jobs=-1):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, n_jobs=-1):
     '''
-    Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands.
-    This is done by averaging over the envelopes and phases computed from the Hilbert Transform
+    Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
+    at once.
+    Each band is computed by averaging over the envelopes and phases computed from the Hilbert Transform
     of each filter output in a filterbank of bandpass filters [#1edwards]_. 
     
     Parameters
@@ -25,9 +26,10 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     fs : string | int, default='dataf'
         Sampling rate of the data. Either a string specifying a field of the Data or an int
         giving the sampling rate for all trials.
-    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[70, 150]]
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
-        of [[70, 150]] extracts the phase and amplitude of the highgamma band only.
+        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
+        highgamma band.
     bandnames : list of strings, length=n_freq_bands, optional
         If provided, these are used to create the field names for each frequency band's amplitude
         and phase in the output Data. Should be the same length as the number of bands
@@ -107,7 +109,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     
 def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     '''
-    Compute the phase and amplitude (envelope) of a signal over a range of frequencies,
+    Compute the phase and amplitude (envelope) of a signal over for a single frequency band,
     as in [#1edwards]_. This is done using a filter bank of gaussian shaped filters with
     center frequencies linearly spaced until 4Hz and then logarithmically spaced. The
     Hilbert Transform of each filter's output is computed and the real and imaginary parts
