@@ -11,7 +11,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
     Each band is computed by averaging over the envelopes and phases computed from the Hilbert Transform
-    of each filter output in a filterbank of bandpass filters [#1edwards]_. 
+    of each filter output in a filterbank of bandpass filters [#edwards]_. 
     
     Parameters
     ----------
@@ -54,7 +54,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
 
     References
     ----------
-    .. [#1edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
+    .. [#edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
                and the event-related potential to auditory speech stimuli in
                human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
 
@@ -113,7 +113,7 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     as in [#1edwards]_. This is done using a filter bank of gaussian shaped filters with
     center frequencies linearly spaced until 4Hz and then logarithmically spaced. The
     Hilbert Transform of each filter's output is computed and the real and imaginary parts
-    form the amplitude and phase, respectively. See [#1edwards]_ for details on the filter
+    form the amplitude and phase, respectively. See [#edwards]_ for details on the filter
     bank used.
     
     Parameters
@@ -154,13 +154,6 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     1.21558792
     >>> freqs[-1] # center frequency of last filter bank filter
     143.97075186
-
-    
-    References
-    ----------
-    .. [#1edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
-               and the event-related potential to auditory speech stimuli in
-               human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
     
     '''
     
