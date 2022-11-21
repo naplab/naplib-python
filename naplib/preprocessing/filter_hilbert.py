@@ -110,7 +110,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
 def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     '''
     Compute the phase and amplitude (envelope) of a signal over for a single frequency band,
-    as in [#1edwards]_. This is done using a filter bank of gaussian shaped filters with
+    as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
     center frequencies linearly spaced until 4Hz and then logarithmically spaced. The
     Hilbert Transform of each filter's output is computed and the real and imaginary parts
     form the amplitude and phase, respectively. See [#edwards]_ for details on the filter
