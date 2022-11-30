@@ -136,19 +136,17 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         before_samples.append(resp[t][:bef])
         after_samples.append(resp[t][bef:3*bef])
 
-    before_samples = np.concatenate(before_samples, axis=0)
-    after_samples = np.concatenate(after_samples, axis=0)
-
-    N_retest = 20
+    N_retest = 10
     # do the test N_retest times and average the stats
-    for _ in range(N_retest):
-        before_samples_permuted = rng.permuted(before_samples, axis=0)
-        after_samples_permuted = rng.permuted(after_samples, axis=0)
-        N_test_samples = min([before_samples_permuted.shape[0]//2, after_samples_permuted.shape[0]//2])
-        stat, pval = ttest_ind(before_samples_permuted[:N_test_samples], after_samples_permuted[:N_test_samples], axis=0,
-                               equal_var=equal_var, alternative=alternative)
-        pvals.append(pval)
-        statistics.append(stat)
+    for trial_ in range(len(before_samples)):
+        for _ in range(N_retest):
+            before_samples_permuted = rng.permuted(before_samples[trial_], axis=0)
+            after_samples_permuted = rng.permuted(after_samples[trial_], axis=0)
+            N_test_samples = min([before_samples_permuted.shape[0]//2, after_samples_permuted.shape[0]//2])
+            stat, pval = ttest_ind(before_samples_permuted[:N_test_samples], after_samples_permuted[:N_test_samples], axis=0,
+                                   equal_var=equal_var, alternative=alternative)
+            pvals.append(pval)
+            statistics.append(stat)
 
     statistics = np.array(statistics).mean(0)
     pvals = np.array(pvals).mean(0)
@@ -168,14 +166,3 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         return data_copy, stats
 
     return resp_corrected, stats
-
-
-    
-
-
-
-
-
-
-
-
