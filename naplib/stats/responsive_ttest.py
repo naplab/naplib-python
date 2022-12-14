@@ -12,10 +12,8 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     Identify responsive electrodes by performing a t-test between response
     values during silence (before stimulus) compared to during speech/sound
     (after stimulus onset) [1]_.
-
     `scipy's ttest_ind <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html>`_
     is used to perform the t-test. Please see their documentation for more details.
-
     Parameters
     ----------
     data : naplib.Data instance, optional
@@ -31,14 +29,14 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         provided in the first argument. If a multidimensional array,
         first dimension indicates the trial/epochs.
     befaft : str | list of np.ndarrays or a single np.ndarray, default='befaft'
-        If a string, specifies a field of the Data which contains
-        the before and after time (in sec) for each trial. Otherwise,
+        If a string, specifies a field of the Data which contains the period
+        before and after sound onset (in sec) for each trial. Otherwise,
         a list should contain the befaft period for each trial, and a single
         np.ndarray of length 2 specifies the befaft period for all trials. For
         example, befaft=np.array([0.5, 0.5]) indicates that for each trial,
-        the first half second of the `resp` is the responses before the onset
-        of the stimulus, and also the final half second is responses for half
-        a second after the stimulus ended. If no Data is provided, this
+        the first half second of the responses come before the onset
+        of the stimulus, and they should be compared to the subsequent half second.
+        If no Data is provided, this
         cannot be a string. Note: if this is a list it must be of same length
         as the resp, so to specify the same befaft for all trials, use a np.ndarray
         of length 2.
@@ -66,7 +64,6 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         population variance [3]_.
     random_state : int, default=None
         Random seed which can be set for reproducibility.
-
     Returns
     -------
     out : naplib.Data | list of np.arrays, same as `resp` input type
@@ -82,15 +79,12 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         - 'stat' : test statistic, shape (num_channels,)
         - 'significant': True if null hypothesis was rejected (response is significantly different), False if not, shape (num_channels,)
         - 'alpha': error rate of the test
-
-
     References
     ----------
     .. [1] Mesgarani, N., & Chang, E. F. (2012). Selective cortical representation
            of attended speaker in multi-talker speech perception. Nature, 485(7397), 233-236.
     .. [2] https://en.wikipedia.org/wiki/T-test#Independent_two-sample_t-test
     .. [3] https://en.wikipedia.org/wiki/Welch%27s_t-test
-
     '''
 
     if fdr_method is not None and fdr_method not in ['indep', 'negcorr']:
@@ -130,11 +124,12 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     statistics = []
     rng = np.random.default_rng(random_state)
     for t in range(len(resp)):
-        bef = int(befaft[t][0] * sfreq[t])
+        bef = round(befaft[t][0] * sfreq[t])
+        aft = round(befaft[t][1] * sfreq[t])
         if bef < 5:
             raise ValueError(f'befaft period is too short, there must be at least 3 samples of response before stimulus onset.')
         before_samples.append(resp[t][:bef])
-        after_samples.append(resp[t][bef:3*bef])
+        after_samples.append(resp[t][bef:bef+aft])
 
     N_retest = 10
     # do the test N_retest times and average the stats
@@ -142,14 +137,16 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         for _ in range(N_retest):
             before_samples_permuted = rng.permuted(before_samples[trial_], axis=0)
             after_samples_permuted = rng.permuted(after_samples[trial_], axis=0)
-            N_test_samples = min([before_samples_permuted.shape[0]//2, after_samples_permuted.shape[0]//2])
+            N_test_samples = int(min([before_samples_permuted.shape[0]*.75, after_samples_permuted.shape[0]*.75]))            
             stat, pval = ttest_ind(before_samples_permuted[:N_test_samples], after_samples_permuted[:N_test_samples], axis=0,
                                    equal_var=equal_var, alternative=alternative)
+        
             pvals.append(pval)
             statistics.append(stat)
-
+    
     statistics = np.array(statistics).mean(0)
-    pvals = np.array(pvals).mean(0)
+    pvals = np.exp(np.log(np.array(pvals)+1e-15).mean(0))
+
 
     if fdr_method is not None:
         reject, pval_corrected = fdr_correction(pvals, alpha=alpha, method=fdr_method)
@@ -159,7 +156,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
 
     resp_corrected = [r[:,reject] for r in resp]
 
-    stats = {'pval': pval, 'stat': statistics, 'significant': reject, 'alpha': alpha}
+    stats = {'pval': pval_corrected, 'stat': statistics, 'significant': reject, 'alpha': alpha}
 
     if return_as_data:
         data_copy[resp_fieldname] = resp_corrected
