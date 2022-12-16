@@ -28,9 +28,13 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 0.1.7
+-------------
 
-Version 0.1.6 - In Development
-------------------------------
+- |Fix| : Fix issue where ``stats.responsive_ttest`` to allow customization of the time periods to compare between before and after stimulus onset to test for stimulus responsiveness. Also fix a minor issue where p-values where not properly corrected for multiple tests.
+
+Version 0.1.6
+-------------
 
 - |Fix| : Fix issue where ``stats.responsive_ttest`` was not comparing the correct values against each other to find responsive electrodes.
 
