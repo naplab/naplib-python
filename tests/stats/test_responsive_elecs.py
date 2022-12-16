@@ -22,7 +22,7 @@ def test_responsive_ttest_picks_correct_electrode_from_outstruct(outstruct):
     new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
     assert new_out[0]['resp'].shape[1] == 1
     assert np.array_equal(stats['significant'], np.array([0,1,0,0]).astype('bool'))
-    assert np.allclose(stats['stat'], np.array([-1.99077875e-01, -1.22257864e+02,  2.28465708e-02, -7.53923534e-01]), atol=1e-7)
+    assert np.allclose(stats['stat'], np.array([-9.18367893e-01, -1.50768755e+02,  8.01840241e-02, -1.10738582e+00]), atol=1e-7)
 
 def test_responsive_ttest_picks_correct_electrode_pass_args_individually_vs_outstruct_same(outstruct):
     new_resp, stats_resp = responsive_ttest(resp=outstruct['resp'], sfreq=100, befaft=np.array([1.,1.]), random_state=2)

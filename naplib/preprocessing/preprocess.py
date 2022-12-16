@@ -11,8 +11,9 @@ def normalize(data=None, field='resp', axis=0, method='zscore'):
     Parameters
     ----------
     data : naplib.Data object, optional
-        Data object containing data to be normalized in one of the field. If not given, must give
-        the data to be normalized directly as the ``data`` argument. 
+        Data object containing data to be normalized in one of the field. If not given, then the
+        the data to be normalized must be passed directly as a list of trial arrays
+        to the ``field`` argument instead of a string. 
 
     field : string | list of np.ndarrays or a multidimensional np.ndarray
         Field to normalize. If a string, it must specify one of the fields of the Data
