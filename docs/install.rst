@@ -58,4 +58,4 @@ Required Dependencies
 - pyyaml
 - TextGrid
 - h5py
-
+- patsy
