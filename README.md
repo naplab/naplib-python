@@ -45,5 +45,3 @@ The following items are ToDo items on the backlog:
 - Look into data parallelization methods for the Data object and associated methods
 - Consider making the Data object a [dataclass](https://docs.python.org/3/library/dataclasses.html)
 - Implement functionality to write Data objects to MATLAB formats (possibly EEGLab formats)
-- Add general fitter object which allows easy fitting (and cross-val) for ML models of the user's specification
-
