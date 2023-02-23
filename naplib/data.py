@@ -100,11 +100,11 @@ class Data(Iterable):
             lengths = []
             for k, v in data.items():
                 if not isinstance(v, list):
-                    raise TypeError(f'When creating an Data from a dict, each value in the '
+                    raise TypeError(f'When creating a Data from a dict, each value in the '
                                      'dict must be a list, but for key "{k}" got type {type(v)}')
                 lengths.append(len(v))
             if not _all_equal_list(lengths):
-                raise ValueError(f'When creating an Data from a dict, each value in the '
+                raise ValueError(f'When creating a Data from a dict, each value in the '
                                   'dict must be a list of the same length, but got different lengths: {lengths}')
             data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
@@ -184,7 +184,7 @@ class Data(Iterable):
         >>> data[0]
         {'name': 'Zero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get a slice of trials, which returns an Data object
+        >>> # Get a slice of trials, which returns a Data object
         >>> out[:2]
         Data object of 2 trials containing 3 fields
         [{"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}
@@ -196,7 +196,7 @@ class Data(Iterable):
         >>> data[0]
         {'name': 'TrialZero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get multiple fields using a list of fieldnames, which returns an Data containing that subset of fields
+        >>> # Get multiple fields using a list of fieldnames, which returns a Data containing that subset of fields
         >>> data[['resp','trial']]
         Data object of 2 trials containing 2 fields
         [{"resp": <class 'list'>, "trial": <class 'int'>}
@@ -237,7 +237,7 @@ class Data(Iterable):
 
         Examples
         --------
-        >>> # Set a field of an Data
+        >>> # Set a field of a Data
         >>> from naplib import Data
         >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
         ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
@@ -265,7 +265,7 @@ class Data(Iterable):
      
     def append(self, trial_data, strict=None):
         '''
-        Append a single trial of data to the end of an Data.
+        Append a single trial of data to the end of a Data.
         
         Parameters
         ----------
@@ -286,7 +286,7 @@ class Data(Iterable):
 
         Examples
         --------
-        >>> # Set a field of an Data
+        >>> # Set a field of a Data
         >>> from naplib import Data
         >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
         ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
@@ -409,7 +409,7 @@ class Data(Iterable):
     @property
     def fields(self):
         '''List of strings containing names of all fields in this Data.'''
-        return [k for k, _ in self._data[0].items()]
+        return [k for k, _ in self._data[0].items()] if len(self._data) > 0 else []
     
     @property
     def data(self):
