@@ -399,6 +399,8 @@ class Data(Iterable):
             if not isinstance(trial, dict):
                 raise TypeError(f'input data is not a list of dicts, found {type(trial)}')
             trial_fields = set(trial.keys())
+            if not trial_fields:
+                raise ValueError(f'A trial should have at least one field.')
             if strict and trial_fields != first_trial_fields:
                 raise ValueError(f'New data does not contain the same fields as the first trial.')        
             if strict:
@@ -409,7 +411,7 @@ class Data(Iterable):
     @property
     def fields(self):
         '''List of strings containing names of all fields in this Data.'''
-        return [k for k, _ in self._data[0].items()] if len(self._data) > 0 else []
+        return [k for k, _ in self._data[0].items()] if self._data else []
     
     @property
     def data(self):
