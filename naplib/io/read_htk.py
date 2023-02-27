@@ -1,4 +1,5 @@
 import struct
+import numpy as np
 
 
 def read_htk(filename, return_codes=False):
@@ -160,9 +161,11 @@ def read_htk(filename, return_codes=False):
         if "K" in qualifiers:
             print("CRC checking not implememnted...")
 
-        qualifiers = '_'.join(qualifiers)
-        data_type = f'{basic_kind}_{qualifiers}'
-        
         data = np.array(data)
             
-        return data, fs, type_code, data_type
+        if return_codes:
+            qualifiers = '_'.join(qualifiers)
+            data_type = f'{basic_kind}_{qualifiers}'
+            return data, fs, type_code, data_type
+        else:
+            return data, fs
