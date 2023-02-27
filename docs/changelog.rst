@@ -28,10 +28,13 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
-Version 0.1.8 - In Development
-------------------------------
 
+Version 0.1.8
+-------------
+
+- |Feature| : Added the ability to read an HTK file with ``naplib.io.read_htk``.
 - |Enhancement| : Expanded the English phonetic dictionary file used by ``features.Aligner`` to include more words.
+- |Fix| : Creating an empty ``naplib.Data`` object by initializing it with no arguments no longer raises an exception. This allows you to create an empty Data object and then build it up easily from a blank starting point.
 
 Version 0.1.7
 -------------
@@ -80,5 +83,5 @@ Version 0.1.1
 Version 0.1.0
 -------------
 
-- |MajorFeature| : We’re happy to announce the first major stable version of ``naplib-python``. The package is pip-installable and contains a wide variety of methods for neural-acoustic data analysis.
+- |MajorFeature| : We’re happy to announce the first major version of ``naplib-python``. The package is pip-installable and contains a wide variety of methods for neural-acoustic data analysis.
 
