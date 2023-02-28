@@ -23,6 +23,10 @@ Export Data
 
 .. autofunction:: export_data
 
+Read HTK
+--------
+.. autofunction:: read_htk
+
 Read BIDS
 ---------
 

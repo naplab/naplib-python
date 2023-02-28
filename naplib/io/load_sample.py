@@ -20,6 +20,26 @@ def load_speech_task_data():
         Task data containing 10 trials of stimuli, responses, and metadata for a
         simulated intracranial EEG recording.
 
+    Examples
+    --------
+    >>> from naplib.io import load_speech_task_data
+    >>> data = load_speech_task_data()
+    >>> type(data)
+    naplib.data.Data
+    >>> len(data)
+    10
+    >>> data.fields
+    ['name',
+     'sound',
+     'soundf',
+     'dataf',
+     'duration',
+     'befaft',
+     'resp',
+     'aud',
+     'script',
+     'chname']
+
     '''
 
     # read in data from file

@@ -200,6 +200,15 @@ def load(filename):
     ------
     FileNotFoundError
         Can't find file.
+
+    Examples
+    --------
+    >>> from naplib.io import save, load
+    >>> arr = [1, 2, 3]
+    >>> save('data.pkl', arr)
+    >>> arr_loaded = load('data.pkl')
+    >>> arr_loaded
+    [1, 2, 3]
     
     '''
     
@@ -223,6 +232,15 @@ def save(filename, obj):
         automatically.
     obj : Object
         Data to save.
+
+    Examples
+    --------
+    >>> from naplib.io import save, load
+    >>> arr = [1, 2, 3]
+    >>> save('data.pkl', arr)
+    >>> arr_loaded = load('data.pkl')
+    >>> arr_loaded
+    [1, 2, 3]
 
     '''
     
