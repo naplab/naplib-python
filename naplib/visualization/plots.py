@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 from scipy import signal as sig
 
 
-def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
+def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Parameters
     ----------
     x : array-like, shape (n_samples,), optional
         *x* values are optional and default to ``range(len(y))``.
-    y : array-like, shape (n_samples, n_lines)
+    y : array-like, shape (n_samples, n_points)
         Data to plot, providing the vertical coordinates. *y* values should be
         two-dimensional, and statistics used to compute shaded region interval
         are computed over the second dimension.
@@ -24,14 +24,21 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
         basic line properties. All of these and more can also be
         controlled by keyword arguments within color or plt_args.
         This argument cannot be passed as keyword.
+    reduction : str, default='mean'
+        Reduction method, either 'mean' or 'median'.
+    err_method : string or float, default='stderr'
+        The method to use to calculate error bars. If a string, one of ['stderr','std'].
+        If a float, defines the confidence interval desired. For example 0.95 specifies
+        a 95% confidence interval around the mean (i.e. the interval from the 2.5th percentile
+        to the 97.5th percentile). Note, if the data have significant outliers and reduction='mean'
+        then the confidence interval bounds might not surround the mean value line.
+        Also, nan values are not omitted if specifying a confidence interval.
     ax : plt.Axes instance, optional
         Axes to use. If not specified, will use current axes.
     color : str, default=None
         Color to plot line and shaded region. Defaults to next color in color cycle.
     alpha : float, default=0.4
         Shading alpha. Value between 0 and 1.
-    err_method : string, default='stderr
-        One of ['stderr','std'], the method to use to calculate error bars.
     plt_args : dict, default={}
         Dict of args to be passed to plt.plot(). e.g. {'linewidth': 2}, etc.
     shade_args : dict, default={}
@@ -92,27 +99,50 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
         raise Exception(f"nan_policy must be one of ['omit','raise','propogate'], but found {nan_policy}")
     if nan_policy == 'raise':
         if np.any(np.isnan(x)) or np.any(np.isnan(y)):
-            raise ValueError('Found nan in input')
-
+            raise ValueError('Found nan in input')        
+            
     if ax is None:
         ax = plt.gca()
+        
+    if reduction == 'mean':
+        if nan_policy == 'omit':
+            reduction_func = np.nanmean
+        else:
+            reduction_func = np.mean
+    elif reduction == 'median':
+        if nan_policy == 'omit':
+            reduction_func = np.nanmedian
+        else:
+            reduction_func = np.median
+    else:
+        raise ValueError(f'reduction must be either "mean" or "median", but got {reduction}')
             
     allowed_errors = ['stderr','std']
-    if err_method not in allowed_errors:
-        raise ValueError(f'err_method must be one of {allowed_errors}, but found {err_method}')
+    if isinstance(err_method, str):
+        if err_method not in allowed_errors:
+            raise ValueError(f'err_method is a string but is not one of {allowed_errors}, but rather {err_method}')
+    elif not isinstance(err_method, float):
+        raise ValueError(f'err_method must be either a string or a float, but got {err_method}')
+    elif isinstance(err_method, float) and (err_method <= 0 or err_method > 1.0):
+        raise ValueError(f'If err_method is a float then it must be in the range (0, 1]')
     if nan_policy == 'omit':
-        y_mean = np.nanmean(y, axis=1)
+        y_mean = reduction_func(y, axis=1)
         if err_method == 'stderr':
             y_err = np.nanstd(y, axis=1) / np.sqrt(y.shape[1])
         elif err_method == 'std':
             y_err = np.nanstd(y, axis=1)
-    else:
-        y_mean = y.mean(1)
+        else:
+            alpha_level = 1.0 - err_method
+            y_err = [np.percentile(y, 100*alpha_level/2., axis=1), np.percentile(y, 100*(1-(alpha_level/2.)), axis=1)]
+    else: # propogate, since 'raise' has already been taken care of
+        y_mean = reduction_func(y, axis=1)
         if err_method == 'stderr':
             y_err = y.std(1) / np.sqrt(y.shape[1])
         elif err_method == 'std':
             y_err = y.std(1)
-        
+        else:
+            alpha_level = 1.0 - err_method
+            y_err = [np.percentile(y, 10*alpha_level/2., axis=1), np.percentile(y, 10*(1-(alpha_level/2.)), axis=1)]
     
     if fmt == '':
         line_, = ax.plot(x, y_mean, **plt_args)
@@ -121,8 +151,11 @@ def shadederrorplot(*args, ax=None, err_method='stderr', color=None, alpha=0.4, 
                      
     color = line_.get_color()
     shade_args['color'] = color
-    ax.fill_between(x, y_mean-y_err, y_mean+y_err, **shade_args)
-    
+    if isinstance(err_method, str):
+        ax.fill_between(x, y_mean-y_err, y_mean+y_err, **shade_args)
+    else:
+        ax.fill_between(x, y_err[0], y_err[1], **shade_args)
+
 
 def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
     '''
