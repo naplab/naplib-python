@@ -29,6 +29,11 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
+Version 0.1.9 - In Development
+------------------------------
+
+- |Enhancement| : Expanded the functionality of ``naplib.visualization.shadederrorplot`` to allow computing the confidence interval using percentiles (such as 95% confidence interval), and to allow plotting the median or the mean at each time point.
+
 Version 0.1.8
 -------------
 
