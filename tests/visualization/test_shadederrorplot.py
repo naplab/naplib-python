@@ -72,6 +72,42 @@ def test_errorplot_error_region_median_propogate():
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1][~nan_mask], y_mean[~nan_mask], atol=1e-10)
 
+def test_errorplot_error_region_percentile_propogate():
+    x = np.array([-1,0,1,2,3])
+    y = np.arange(1, 31).reshape((5,6)).astype('float')
+    y[0,2] = 9
+    y[4,1] = -0.5
+    y[2,0] = np.nan
+    # y_std = y.std(1)
+    y_err1 = np.percentile(y, 2.5, axis=1)
+    y_err2 = np.percentile(y, 97.5, axis=1)
+    y_mean = y.mean(1)
+    y_region = [y_err1, y_err2]
+
+    fig, ax = plt.subplots(1,1)
+    shadederrorplot(x, y, ax=ax, err_method=0.95, nan_policy='propogate')
+    nan_mask = np.isnan(y_mean)
+    assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
+    assert np.allclose(ax.lines[0].get_data()[1][~nan_mask], y_mean[~nan_mask], atol=1e-10)
+
+def test_errorplot_error_region_percentile_omit():
+    x = np.array([-1,0,1,2,3])
+    y = np.arange(1, 31).reshape((5,6)).astype('float')
+    y[0,2] = 9
+    y[4,1] = -0.5
+    y[2,0] = np.nan
+    # y_std = y.std(1)
+    y_err1 = np.nanpercentile(y, 2.5, axis=1)
+    y_err2 = np.nanpercentile(y, 97.5, axis=1)
+    y_mean = np.nanmean(y, axis=1)
+    y_region = [y_err1, y_err2]
+
+    fig, ax = plt.subplots(1,1)
+    shadederrorplot(x, y, ax=ax, err_method=0.95, nan_policy='omit')
+    nan_mask = np.isnan(y_mean)
+    assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
+    assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
+
 def test_errorplot_error_region_stderr():
     x = np.array([-1,0,1,2,3])
     y = np.arange(1, 31).reshape((5,6)).astype('float')

@@ -32,7 +32,6 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
         a 95% confidence interval around the mean (i.e. the interval from the 2.5th percentile
         to the 97.5th percentile). Note, if the data have significant outliers and reduction='mean'
         then the confidence interval bounds might not surround the mean value line.
-        Also, nan values are not omitted if specifying a confidence interval.
     ax : plt.Axes instance, optional
         Axes to use. If not specified, will use current axes.
     color : str, default=None
@@ -133,7 +132,7 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
             y_err = np.nanstd(y, axis=1)
         else:
             alpha_level = 1.0 - err_method
-            y_err = [np.percentile(y, 100*alpha_level/2., axis=1), np.percentile(y, 100*(1-(alpha_level/2.)), axis=1)]
+            y_err = [np.nanpercentile(y, 100*alpha_level/2., axis=1), np.nanpercentile(y, 100*(1-(alpha_level/2.)), axis=1)]
     else: # propogate, since 'raise' has already been taken care of
         y_mean = reduction_func(y, axis=1)
         if err_method == 'stderr':
