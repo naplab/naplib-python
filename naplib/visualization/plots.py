@@ -27,6 +27,8 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
         basic line properties. All of these and more can also be
         controlled by keyword arguments within color or plt_args.
         This argument cannot be passed as keyword.
+    ax : plt.Axes instance, optional
+        Axes to use. If not specified, will use current axes.
     reduction : str, default='mean'
         Reduction method, either 'mean' or 'median'.
     err_method : string or float, default='stderr'
@@ -35,8 +37,6 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
         a 95% confidence interval around the mean (i.e. the interval from the 2.5th percentile
         to the 97.5th percentile). Note, if the data have significant outliers and reduction='mean'
         then the confidence interval bounds might not surround the mean value line.
-    ax : plt.Axes instance, optional
-        Axes to use. If not specified, will use current axes.
     color : str, default=None
         Color to plot line and shaded region. Defaults to next color in color cycle.
     alpha : float, default=0.4
