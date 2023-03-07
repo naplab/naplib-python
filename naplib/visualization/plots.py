@@ -8,6 +8,9 @@ from scipy import signal as sig
 
 def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
+    Plot the average/median value at each time point and a shaded region indicating error or confidence
+    level above and below the line.
+
     Parameters
     ----------
     x : array-like, shape (n_samples,), optional
