@@ -39,6 +39,10 @@ def test_errorplot_bad_err_method():
         shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method=1.2)
     assert 'is a float then it must be in the range (0, 1]' in str(err)
 
+    with pytest.raises(ValueError) as err:
+        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method={})
+    assert 'must be either a string or a float' in str(err)
+
 def test_errorplot_bad_reduction():
 
     fig, ax = plt.subplots(1,1)
