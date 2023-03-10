@@ -32,7 +32,9 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 Version 0.1.9 - In Development
 ------------------------------
 
+- |Feature| : Added the ``kdeplot`` function to ``naplib.visualization`` which plots kernel density and histograms jointly, and for multiple distributions at once.
 - |Enhancement| : Expanded the functionality of ``naplib.visualization.shadederrorplot`` to allow computing the confidence interval using percentiles (such as 95% confidence interval), and to allow plotting the median or the mean at each time point.
+
 
 Version 0.1.8
 -------------
