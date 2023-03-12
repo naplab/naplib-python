@@ -12,8 +12,8 @@ from copy import deepcopy
 
 def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     """
-    Plot kernel density estimate of distribution for data, along with histogram. Can plot
-    multiple densities, one per grouping.
+    Plot kernel density estimate of distribution for data, along with histogram underneath.
+    Can plot multiple densities, one per grouping. See Examples below for a depiction.
     
     Parameters
     ----------
@@ -62,13 +62,19 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     >>> groupings = np.array(['G0'] * 100) # define grouping vector
     >>> groupings[50:] = 'G1' # set a different label for the samples we shifted
     >>> # plot the density for each group, as well as a histogram underneath each
-    >>> ax = kdeplot(data, groupings=groupings, bw_method=0.25, bins=20, color=['k','r'])
+    >>> ax = kdeplot(data, groupings=groupings, bw_method=0.25, bins=15, color=['k','r'])
+
+    .. figure:: /figures/kdeplot1.png
+        :width: 400px
+        :alt: kdeplot figure
+        :align: left
+
     >>> # plot the exact same figure from a list of arrays and grouping labels of same length
     >>> data_list = [data[:50],data[50:]]
-    >>> kdeplot(data_list, groupings=['G0','G1'], bw_method=0.25, bins=20, color=['k','r'])
+    >>> kdeplot(data_list, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
     >>> # plot the exact same figure from a 2D numpy array
     >>> data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
-    >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=20, color=['k','r'])
+    >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
     >>> # plot the exact same figure but without the legend (data is still grouped into two groups though)
     >>> kdeplot(data_mat, color=['k','r'])
     """
@@ -171,7 +177,7 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
 def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Plot the average/median value at each time point and a shaded region indicating error or confidence
-    level above and below the line.
+    level above and below the line. See Examples below for a depiction.
 
     Parameters
     ----------
@@ -212,16 +218,28 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
         inputs, if 'raise', will raise a ValueError if nan is found in input, if
         'propogate', do not do anything special with nan values.
     
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        matplotlib axes containing the plot
+
     Examples
     --------
     >>> from naplib.visualization import shadederrorplot as sep
     >>> import matplotlib.pyplot as plt
-    >>> x, y = np.linspace(0, 1, 10), np.random.rand(10,5)
-    >>> fig, ax = plt.subplots()
-    >>> sep(y) # plot mean of y vs x, with shaded error regions
-    >>> sep(y, 'r--') # same plot but color is red and line is dashed
-    >>> sep(x, y) # same plot but against specific x values
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(1)
+    >>> x, y = np.linspace(0, 1, 10), rng.normal(size=(10,5))
+    >>> fig, ax = plt.subplots(3,1)
+    >>> sep(y, ax=axes[0]) # plot mean of y vs x, with shaded error regions
+    >>> sep(y, 'r--', ax=axes[1]) # same plot but color is red and line is dashed
+    >>> sep(x, y, ax=axes[2]) # same plot but against specific x values
     >>> plt.show()
+
+    .. figure:: /figures/shadederrorplot1.png
+        :width: 400px
+        :alt: shadederrorplot figure
+        :align: left
     
     Raises
     ------
@@ -320,9 +338,13 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
     else:
         ax.fill_between(x, y_err[0], y_err[1], **shade_args)
 
+    return ax
 
 def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
     '''
+    Perform hierarchical clustering and plot dendrogram and clustered values as an
+    image underneath. See Examples below for a depiction.
+
     Parameters
     ----------
     data : shape (n_samples, n_features)
@@ -346,8 +368,26 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         cluster labels from sklearn.cluster.AgglomerativeClustering, shape=(n_samples,)
     fig : matplotlib figure
         Figure where data was plotted. Only returned if axes were not passed in.
-    axes : array of Axes
+    axes : np.ndarray of matplotlib.axes.Axes
         Axes where data was plotted. Only returned if axes were not passed in.
+
+    Examples
+    --------
+    >>> from naplib.visualization import hierarchicalclusterplot as hcp
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(10)
+    >>> x = rng.normal(size=(100,5))
+    >>> x[:,1] += rng.normal(loc=1, scale=3, size=(100,))
+    >>> x[:,2] += rng.normal(loc=-1, scale=3, size=(100,))
+    >>> varnames = ['var1','var2','var3','var4','var5']
+    >>> clust, labels, fig, axes = hcp(x, varnames=varnames)
+
+    .. figure:: /figures/hierarchicalclusterplot1.png
+        :width: 400px
+        :alt: hierarchicalclusterplot figure
+        :align: left
+
     '''
     if axes is None:
         return_axes = True
@@ -383,7 +423,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=None, return_ax=False):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=None):
     '''
     Plot STRF weights as image. Colormap is automatically centered at 0 so
     that 0 corresponds to white, positive values are red, and negative values
@@ -407,12 +447,43 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
     vmax : float, optional
         If provided, colormap will be between [-vmax, vmax]. If not given,
         uses the max absolute value of the coef.
-    return_ax : bool, default=False
-        Whether or not to return axes as well.
+
     Returns
     -------
-    ax : matplotlib Axes
-        Axes where STRF coef is plotted. Only returned if ``return_ax`` is True.
+    ax : matplotlib.axes.Axes
+        Axes where STRF coef is plotted.
+
+    Examples
+    --------
+    >>> from naplib.visualization import imSTRF
+    >>> import numpy as np
+    >>> from scipy.stats import multivariate_normal
+    >>> # generate example STRF weights following mne's example:
+    >>> # https://mne.tools/stable/auto_tutorials/machine-learning/30_strf.html 
+    >>> fs = 100
+    >>> n_freqs = 32
+    >>> tmin, tmax = 0, 0.4
+    >>> delays_samp = np.arange(np.round(tmin * fs),
+    >>>                         np.round(tmax * fs) + 1).astype(int)
+    >>> delays_sec = delays_samp / fs
+    >>> freqs = np.linspace(50, 5000, n_freqs)
+    >>> grid = np.array(np.meshgrid(delays_sec, freqs))
+    >>> # We need data to be shaped as n_epochs, n_features, n_times, so swap axes here
+    >>> grid = grid.swapaxes(0, -1).swapaxes(0, 1)
+    >>> # Simulate a temporal receptive field with a Gabor filter
+    >>> means_high = [.1, 500]
+    >>> means_low = [.2, 2500]
+    >>> cov = [[.001, 0], [0, 500000]]
+    >>> gauss_high = multivariate_normal.pdf(grid, means_high, cov)
+    >>> gauss_low = -1 * multivariate_normal.pdf(grid, means_low, cov)
+    >>> weights = gauss_high + gauss_low  # Combine to create the "true" STRF
+    >>> imSTRF(weights, tmin=tmin, tmax=tmax)
+
+    .. figure:: /figures/imSTRF1.png
+        :width: 400px
+        :alt: imSTRF figure
+        :align: left
+
     '''
     
     if ax is None:
@@ -449,8 +520,7 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
 
-    if return_ax:
-        return ax
+    return ax
 
 
 def freq_response(ba, fs, ax=None, units='Hz'):
@@ -468,6 +538,12 @@ def freq_response(ba, fs, ax=None, units='Hz'):
     units : string
         One of {'Hz', 'rad/s'} specifying whether to plot frequencies in Hz or
         radians per second.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        Axes where STRF coef is plotted.
+
     '''
     if units not in ['Hz','rad/s']:
         raise ValueError(f'units must be one of ["Hz", "rad/s"] but got {units}')
@@ -492,4 +568,6 @@ def freq_response(ba, fs, ax=None, units='Hz'):
     ax.set_ylabel('Amplitude (dB)')
     ax.margins(0, 0.1)
     ax.grid(which='both', axis='both')
+
+    return ax
     

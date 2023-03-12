@@ -21,7 +21,7 @@ def test_imSTRF_on_ax_no_smooth(plot_fn, monkeypatch):
     monkeypatch.setattr(plt, 'show', lambda: None)
     fig, ax = plt.subplots(1,1)
     coef = np.random.rand(5,7)-0.5
-    ax = imSTRF(coef, ax=ax, smooth=False, return_ax=True)
+    ax = imSTRF(coef, ax=ax, smooth=False)
 
 
 def test_imSTRF_tmin_tmax(plot_fn, monkeypatch):
