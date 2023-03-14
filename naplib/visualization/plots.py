@@ -75,7 +75,8 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     >>> # plot the exact same figure from a 2D numpy array
     >>> data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
     >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
-    >>> # if we don't pass in groupings, there will simply not be a legend
+    >>> # if we don't pass in groupings but data is still a 2D array or a list,
+    >>> # then there just won't be a legend, but the plot will be the same
     >>> kdeplot(data_mat, bw_method=0.25, bins=15, color=['k','r'])
 
     """
