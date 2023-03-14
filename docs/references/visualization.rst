@@ -8,6 +8,11 @@ Shaded Error Plot
 
 .. autofunction:: shadederrorplot
 
+Kernel Density and Histogram
+------------------------
+
+.. autofunction:: kdeplot
+
 Hierarchical Cluster Plot
 -------------------------
 

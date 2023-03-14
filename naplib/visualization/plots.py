@@ -1,15 +1,185 @@
 import warnings
 import numpy as np
+import pandas as pd
 import scipy.cluster.hierarchy as shc
+from scipy.stats import gaussian_kde
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
 from scipy import signal as sig
+import seaborn as sns
+from copy import deepcopy
+
+
+def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
+    """
+    Plot kernel density estimate of distribution for data, along with histogram underneath.
+    Can plot multiple densities, one per grouping. See Examples below for a depiction.
+    
+    Parameters
+    ----------
+    data : list or array-like or list of np.ndarrays
+        Data to plot density of. If of shape (N_points,) and groupings is None, then it is assumed to
+        be a single distribution to plot. Otherwise, can be either an array of shape (N_points, M_groups),
+        or a list of length M_groups containing arrays of shape (N_points_i).
+        See ``groupings`` argument for more on how data should be formatted depending on the groupings desired.
+    groupings : list or array-like, optional
+        Grouping method for separating data into different distributions, or labels for those distributions.
+        If groupings is given when data is 1-dimensional, groupings should provide categorical labels
+        for each point in data and also be shape (N_points,). Alternatively,
+        can be a list or array-like of shape/length M_groups, with each element specifying a
+        label for each group/column in ``data``. You must specify groupings for the axis legend to be shown.
+    hist : bool, default=True
+        If True (default), plots a histogram underneath the kernel density estimate.
+    alpha : float, default=0.2
+        Alpha value for transparency of histogram. Ignored if ``hist=False``.
+    bins : int or sequence or str, default = :rc:`hist.bins`
+        Bins for histogram. Ignored if ``hist=False``.
+    **kwargs : kwargs
+        kwargs for seaborn.kdeplot. Cannot include 'data', 'x', 'y', or 'hue'. See below for
+        some examples of frequently used kwargs.
+    ax : matplotlib.axes.Axes, optional
+        Axes to plot on.
+    bw_method : string, scalar, or callable, optional
+        Method for determining the smoothing bandwidth to use; passed to scipy.stats.gaussian_kde.
+        Can be a single float to determine the bandwidth.
+    color : str or matplotlib color, or list of colors, optional
+        Color to use if only providing 1 grouping of data (e.g. if ``groupings=None``), or an iterable
+        of the color to use for each group.
+    
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        matplotlib axes containing the plot
+        
+    Examples
+    --------
+    >>> from naplib.visualization import kdeplot
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(1)
+    >>> rng = np.random.default_rng(1)
+    >>> data = rng.normal(size=(100,))
+    >>> data[50:] += 0.5 # shift the second half of the samples
+    >>> groupings = np.array(['G0'] * 100) # define grouping vector
+    >>> groupings[50:] = 'G1' # set a different label for the samples we shifted
+    >>> # plot the density for each group, as well as a histogram underneath each
+    >>> ax = kdeplot(data, groupings=groupings, bw_method=0.25, bins=15, color=['k','r'])
+
+    .. figure:: /figures/kdeplot1.png
+        :width: 400px
+        :alt: kdeplot figure
+        :align: center
+
+    >>> # plot the exact same figure from a list of arrays and grouping labels of same length
+    >>> data_list = [data[:50],data[50:]]
+    >>> kdeplot(data_list, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
+    >>> # plot the exact same figure from a 2D numpy array
+    >>> data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
+    >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
+    >>> # if we don't pass in groupings but data is still a 2D array or a list,
+    >>> # then there just won't be a legend, but the plot will be the same
+    >>> kdeplot(data_mat, bw_method=0.25, bins=15, color=['k','r'])
+
+    """
+    if 'ax' in kwargs:
+        ax = kwargs.pop('ax')
+    else:
+        ax = plt.gca()
+    
+    if isinstance(data, list) and all([not isinstance(xx, np.ndarray) for xx in data]):
+        data = np.asarray(data)
+        
+    original_groupings_none = groupings is None
+    
+    if isinstance(data, np.ndarray):
+        
+        if data.ndim == 1 or data.shape[1]==1:
+            if groupings is None:
+                groupings2 = np.zeros_like(data).astype('int') # all one group
+            else:
+                groupings2 = [str(x) for x in groupings]
+            if len(groupings2) != len(data):
+                raise ValueError(f'data and groupings must be same length, but got data'
+                                 f' with length {len(data)} and groupings with length {len(groupings)}')
+            df = pd.DataFrame.from_dict({'data': data, 'group': groupings2})
+            
+        else: # multiple things to plot since ndim>1
+            assert data.ndim > 1
+            if groupings is None:
+                groupings = np.zeros_like(data) + np.arange(data.shape[1]) # array of shape (N_points, M_groups)
+                groupings2 = groupings.flatten('F').astype('int') # e.g. now [0,0,0,1,1,1,2,2,2]
+            elif len(groupings) == data.shape[1]:
+                groupings2 = []
+                for g in groupings:
+                    groupings2 += [g] * len(data)
+            else:
+                raise TypeError(f'Invalid format for groupings when data is multidimensional numpy array.'
+                                f' Must be a list of length data.shape[1]')
+                
+            df = pd.DataFrame.from_dict({'data': data.flatten('F'), 'group': groupings2})
+            
+    elif isinstance(data, list):
+        if not all([isinstance(xx, np.ndarray) for xx in data]):
+            raise TypeError(f'If data is a list, each element must be a numpy array')
+        
+        if groupings is None:
+            groupings = [int(i) for i in range(len(data))]
+        if len(data) != len(groupings):
+            raise ValueError(f'groupings must be same length as data if data is given as list, '
+                             f'but got data with length {len(data)}, groupings with length {len(groupings)}')
+        
+        groupings_flat = []
+        for ii, d in enumerate(data):
+            for _ in d:
+                groupings_flat.append(groupings[ii])
+        
+        df = pd.DataFrame.from_dict({'data': np.concatenate(data, axis=0), 'group': groupings_flat})
+        
+    else:
+        raise TypeError(f'data must be either a np.ndarray, a list of scalars, or a list of np.ndarray, but got {type(data)}')
+        
+    xlbl_before = ax.xaxis.get_label().get_text()
+    ylbl_before = ax.yaxis.get_label().get_text()
+    
+    color = None
+    if 'color' in kwargs:
+        color = kwargs.pop('color')
+    if color is None:
+        color = [None for _ in np.unique(df['group'].values)]
+    elif color is not None and not isinstance(color, list):
+        color = [color]
+        
+    if len(color) != len(np.unique(df['group'].values)):
+        num_unique = len(np.unique(df['group'].values))
+        raise ValueError(f'If specified, number of colors provided must match number of groups,'
+                         f' but got {len(color)} colors and {num_unique} groups')
+
+    # loop through groups
+    for i, grp in enumerate(sorted(np.unique(df['group'].values))):
+        if color[i] is None:
+            col = next(ax._get_lines.prop_cycler)['color']
+        else:
+            col = color[i]
+
+        this_group_df = df.loc[df['group']==grp]
+        sns.kdeplot(data=this_group_df, ax=ax, x='data', color=col, label=grp, **kwargs)
+        # add histogram
+        if hist:
+            ax.hist(this_group_df['data'], bins=bins, color=col, density=True, alpha=alpha)
+        
+    if not original_groupings_none:
+        ax.legend()
+    
+    ax.set_xlabel(xlbl_before)
+    if ylbl_before == '':
+        ax.set_ylabel(ylbl_before)
+
+    return ax
 
 
 def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Plot the average/median value at each time point and a shaded region indicating error or confidence
-    level above and below the line.
+    level above and below the line. See Examples below for a depiction.
 
     Parameters
     ----------
@@ -50,16 +220,28 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
         inputs, if 'raise', will raise a ValueError if nan is found in input, if
         'propogate', do not do anything special with nan values.
     
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        matplotlib axes containing the plot
+
     Examples
     --------
     >>> from naplib.visualization import shadederrorplot as sep
     >>> import matplotlib.pyplot as plt
-    >>> x, y = np.linspace(0, 1, 10), np.random.rand(10,5)
-    >>> fig, ax = plt.subplots()
-    >>> sep(y) # plot mean of y vs x, with shaded error regions
-    >>> sep(y, 'r--') # same plot but color is red and line is dashed
-    >>> sep(x, y) # same plot but against specific x values
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(1)
+    >>> x, y = np.linspace(0, 1, 10), rng.normal(size=(10,5))
+    >>> fig, ax = plt.subplots(3,1)
+    >>> sep(y, ax=axes[0]) # plot mean of y, with shaded error regions
+    >>> sep(y, 'r--', ax=axes[1]) # same plot but color is red and line is dashed
+    >>> sep(x, y, ax=axes[2], err_method='std') # plot vs specific x values and use std. error
     >>> plt.show()
+
+    .. figure:: /figures/shadederrorplot1.png
+        :width: 400px
+        :alt: shadederrorplot figure
+        :align: center
     
     Raises
     ------
@@ -158,9 +340,13 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
     else:
         ax.fill_between(x, y_err[0], y_err[1], **shade_args)
 
+    return ax
 
 def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
     '''
+    Perform hierarchical clustering and plot dendrogram and clustered values as an
+    image underneath. See Examples below for a depiction.
+
     Parameters
     ----------
     data : shape (n_samples, n_features)
@@ -184,8 +370,26 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
         cluster labels from sklearn.cluster.AgglomerativeClustering, shape=(n_samples,)
     fig : matplotlib figure
         Figure where data was plotted. Only returned if axes were not passed in.
-    axes : array of Axes
+    axes : np.ndarray of matplotlib.axes.Axes
         Axes where data was plotted. Only returned if axes were not passed in.
+
+    Examples
+    --------
+    >>> from naplib.visualization import hierarchicalclusterplot as hcp
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> rng = np.random.default_rng(10)
+    >>> x = rng.normal(size=(100,5))
+    >>> x[:,1] += rng.normal(loc=1, scale=3, size=(100,))
+    >>> x[:,2] += rng.normal(loc=-1, scale=3, size=(100,))
+    >>> varnames = ['var1','var2','var3','var4','var5']
+    >>> clust, labels, fig, axes = hcp(x, varnames=varnames)
+
+    .. figure:: /figures/hierarchicalclusterplot1.png
+        :width: 400px
+        :alt: hierarchicalclusterplot figure
+        :align: center
+
     '''
     if axes is None:
         return_axes = True
@@ -221,7 +425,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_ax=False):
+def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=None):
     '''
     Plot STRF weights as image. Colormap is automatically centered at 0 so
     that 0 corresponds to white, positive values are red, and negative values
@@ -242,13 +446,46 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_
     smooth : bool, default=True
         Whether or not to smooth the STRF image. Smoothing is
         done with 'gouraud' shading in plt.pcolormesh().
-    return_ax : bool, default=False
-        Whether or not to return axes as well.
+    vmax : float, optional
+        If provided, colormap will be between [-vmax, vmax]. If not given,
+        uses the max absolute value of the coef.
 
     Returns
     -------
-    ax : matplotlib Axes
-        Axes where STRF coef is plotted. Only returned if ``return_ax`` is True.
+    ax : matplotlib.axes.Axes
+        Axes where STRF coef is plotted.
+
+    Examples
+    --------
+    >>> from naplib.visualization import imSTRF
+    >>> import numpy as np
+    >>> from scipy.stats import multivariate_normal
+    >>> # generate example STRF weights following mne's example:
+    >>> # https://mne.tools/stable/auto_tutorials/machine-learning/30_strf.html 
+    >>> fs = 100
+    >>> n_freqs = 32
+    >>> tmin, tmax = 0, 0.4
+    >>> delays_samp = np.arange(np.round(tmin * fs),
+    ...                         np.round(tmax * fs) + 1).astype(int)
+    >>> delays_sec = delays_samp / fs
+    >>> freqs = np.linspace(50, 5000, n_freqs)
+    >>> grid = np.array(np.meshgrid(delays_sec, freqs))
+    >>> # We need data to be shaped as n_epochs, n_features, n_times, so swap axes here
+    >>> grid = grid.swapaxes(0, -1).swapaxes(0, 1)
+    >>> # Simulate a temporal receptive field with a Gabor filter
+    >>> means_high = [.1, 500]
+    >>> means_low = [.2, 2500]
+    >>> cov = [[.001, 0], [0, 500000]]
+    >>> gauss_high = multivariate_normal.pdf(grid, means_high, cov)
+    >>> gauss_low = -1 * multivariate_normal.pdf(grid, means_low, cov)
+    >>> weights = gauss_high + gauss_low  # Combine to create the "true" STRF
+    >>> imSTRF(weights, tmin=tmin, tmax=tmax)
+
+    .. figure:: /figures/imSTRF1.png
+        :width: 400px
+        :alt: imSTRF figure
+        :align: center
+
     '''
     
     if ax is None:
@@ -269,9 +506,14 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_
     if smooth:
         kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
                   cmap='bwr', shading='gouraud')
+        
     else:
         kwargs = dict(vmax=np.abs(coef).max(), vmin=-np.abs(coef).max(),
                   cmap='bwr')
+        
+    if vmax is not None:
+        kwargs['vmin'] = -vmax
+        kwargs['vmax'] = vmax
         
     ax.pcolormesh(delays_sec, freqs_, coef, **kwargs)
     
@@ -280,8 +522,7 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, return_
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
 
-    if return_ax:
-        return ax
+    return ax
 
 
 def freq_response(ba, fs, ax=None, units='Hz'):
@@ -299,6 +540,29 @@ def freq_response(ba, fs, ax=None, units='Hz'):
     units : string
         One of {'Hz', 'rad/s'} specifying whether to plot frequencies in Hz or
         radians per second.
+
+    Returns
+    -------
+    ax : matplotlib.axes.Axes
+        Axes where STRF coef is plotted.
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> from naplib.visualization import freq_response
+    >>> from naplib.preprocessing import filter_butter
+    >>> # Load sample data to filter
+    >>> data = nl.io.load_speech_task_data()
+    >>> alpha_band_data, filters = filter_butter(data, btype='bandpass',
+    ...                                          Wn=[10, 20],
+    ...                                          return_filters=True)
+    >>> ax = freq_response(filters[0], fs=data[0]['dataf'])
+
+    .. figure:: /figures/freq_responses1.png
+        :width: 400px
+        :alt: frequency response figure
+        :align: center
+
     '''
     if units not in ['Hz','rad/s']:
         raise ValueError(f'units must be one of ["Hz", "rad/s"] but got {units}')
@@ -323,4 +587,6 @@ def freq_response(ba, fs, ax=None, units='Hz'):
     ax.set_ylabel('Amplitude (dB)')
     ax.margins(0, 0.1)
     ax.grid(which='both', axis='both')
+
+    return ax
     
