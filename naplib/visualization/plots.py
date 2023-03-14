@@ -579,7 +579,7 @@ def freq_response(ba, fs, ax=None, units='Hz'):
         warnings.filterwarnings("ignore", message="divide by zero encountered in log10")
         ax.semilogx(w, 20 * np.log10(abs(h)))
         
-    ax.set_title('Butterworth filter frequency response')
+    ax.set_title('Frequency Response')
     if units == 'Hz':
         ax.set_xlabel('Frequency (Hz)')
     else:
