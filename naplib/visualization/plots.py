@@ -67,7 +67,7 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     .. figure:: /figures/kdeplot1.png
         :width: 400px
         :alt: kdeplot figure
-        :align: left
+        :align: center
 
     >>> # plot the exact same figure from a list of arrays and grouping labels of same length
     >>> data_list = [data[:50],data[50:]]
@@ -75,8 +75,9 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     >>> # plot the exact same figure from a 2D numpy array
     >>> data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
     >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
-    >>> # plot the exact same figure but without the legend (data is still grouped into two groups though)
-    >>> kdeplot(data_mat, color=['k','r'])
+    >>> # if we don't pass in groupings, there will simply not be a legend
+    >>> kdeplot(data_mat, bw_method=0.25, bins=15, color=['k','r'])
+
     """
     if 'ax' in kwargs:
         ax = kwargs.pop('ax')
@@ -231,15 +232,15 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
     >>> rng = np.random.default_rng(1)
     >>> x, y = np.linspace(0, 1, 10), rng.normal(size=(10,5))
     >>> fig, ax = plt.subplots(3,1)
-    >>> sep(y, ax=axes[0]) # plot mean of y vs x, with shaded error regions
+    >>> sep(y, ax=axes[0]) # plot mean of y, with shaded error regions
     >>> sep(y, 'r--', ax=axes[1]) # same plot but color is red and line is dashed
-    >>> sep(x, y, ax=axes[2]) # same plot but against specific x values
+    >>> sep(x, y, ax=axes[2], err_method='std') # plot vs specific x values and use std. error
     >>> plt.show()
 
     .. figure:: /figures/shadederrorplot1.png
         :width: 400px
         :alt: shadederrorplot figure
-        :align: left
+        :align: center
     
     Raises
     ------
@@ -386,7 +387,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     .. figure:: /figures/hierarchicalclusterplot1.png
         :width: 400px
         :alt: hierarchicalclusterplot figure
-        :align: left
+        :align: center
 
     '''
     if axes is None:
@@ -464,7 +465,7 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
     >>> n_freqs = 32
     >>> tmin, tmax = 0, 0.4
     >>> delays_samp = np.arange(np.round(tmin * fs),
-    >>>                         np.round(tmax * fs) + 1).astype(int)
+    ...                         np.round(tmax * fs) + 1).astype(int)
     >>> delays_sec = delays_samp / fs
     >>> freqs = np.linspace(50, 5000, n_freqs)
     >>> grid = np.array(np.meshgrid(delays_sec, freqs))
@@ -482,7 +483,7 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
     .. figure:: /figures/imSTRF1.png
         :width: 400px
         :alt: imSTRF figure
-        :align: left
+        :align: center
 
     '''
     
@@ -543,6 +544,23 @@ def freq_response(ba, fs, ax=None, units='Hz'):
     -------
     ax : matplotlib.axes.Axes
         Axes where STRF coef is plotted.
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> from naplib.visualization import freq_response
+    >>> from naplib.preprocessing import filter_butter
+    >>> # Load sample data to filter
+    >>> data = nl.io.load_speech_task_data()
+    >>> alpha_band_data, filters = filter_butter(data, btype='bandpass',
+    ...                                          Wn=[10, 20],
+    ...                                          return_filters=True)
+    >>> ax = freq_response(filters[0], fs=data[0]['dataf'])
+
+    .. figure:: /figures/freq_responses1.png
+        :width: 400px
+        :alt: frequency response figure
+        :align: center
 
     '''
     if units not in ['Hz','rad/s']:
