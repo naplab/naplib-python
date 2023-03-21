@@ -29,8 +29,14 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
-Version 0.1.9 - In Development
-------------------------------
+Version 0.1.10
+--------------
+
+- |Fix| : Changed the ``features.get_wrd_dict`` function to create a dictionary which does not use the value 0 for any words, which fixes an issue when performing word alignment where one word in the transcript might be assigned the value of 0, which would be masked by the 0's which indicate spacing.
+
+
+Version 0.1.9
+-------------
 
 - |Feature| : Added the ``kdeplot`` function to ``naplib.visualization`` which plots kernel density and histograms jointly, and for multiple distributions at once.
 - |Enhancement| : Expanded the functionality of ``naplib.visualization.shadederrorplot`` to allow computing the confidence interval using percentiles (such as 95% confidence interval), and to allow plotting the median or the mean at each time point.
