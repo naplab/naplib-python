@@ -206,7 +206,10 @@ def create_wrd_dict(wrd_files_dir, list_to_skip=[]):
             if wrd == 'sp':
                 wrd_dict[wrd] = -1
             elif wrd not in wrd_dict and wrd not in list_to_skip:
-                wrd_dict[wrd] = len(wrd_dict)
+                if 'sp' in wrd_dict:
+                    wrd_dict[wrd] = len(wrd_dict)
+                else:
+                    wrd_dict[wrd] = len(wrd_dict)+1
 
     return wrd_dict
     
