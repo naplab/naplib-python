@@ -8,6 +8,9 @@ Normalize
 
 .. autofunction:: normalize
 
+.. minigallery:: naplib.preprocessing.normalize
+        :add-heading: Examples using ``normalize ``
+
 Filter Line Noise
 -----------------
 
@@ -18,6 +21,9 @@ Phase Amplitude Extract
 
 .. autofunction:: phase_amplitude_extract
 
+.. minigallery:: naplib.features.phase_amplitude_extract
+        :add-heading: Examples using ``phase_amplitude_extract ``
+
 Filterbank Hilbert
 ------------------
 
@@ -27,3 +33,6 @@ Butterworth Filter
 ------------------
 
 .. autofunction:: filter_butter
+
+.. minigallery:: naplib.features.filter_butter
+        :add-heading: Examples using ``filter_butter ``

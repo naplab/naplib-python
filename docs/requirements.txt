@@ -4,6 +4,8 @@ ipython>=7.4
 ipykernel>=5.1.0
 numpydoc>=1.1.0
 recommonmark==0.5.0
-nbsphinx==0.8.8
 pyyaml
 TextGrid
+sphinx-gallery==0.10.1
+openneuro-py==2022.4.0
+mne-bids==0.12
