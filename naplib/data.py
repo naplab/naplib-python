@@ -15,9 +15,6 @@ class Data(Iterable):
     task- and electrode-related variables. Under the hood, it consists
     of a list of dictionaries where each dictionary contains all the data
     for one trial.
-
-    Please see the :ref:`example notebooks <working with data>` for more detailed
-    tutorials which demonstrate using the Data object in different types of analysis.
     
     Parameters
     ----------

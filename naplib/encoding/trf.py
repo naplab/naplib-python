@@ -31,9 +31,6 @@ class TRF(BaseEstimator):
     This estimator used internally is sklearn.linear_model.RidgeCV() but
     can be specified as any estimator which implements the basic sklearn estimator
     API, including all estimators in sklearn.linear_model.
-
-    Please see the :ref:`TRF example notebooks <STRF examples>` for more detailed
-    tutorials which show how to train, test, and inspect TRF and STRF models.
     
     Parameters
     ----------

@@ -21,9 +21,6 @@ Aligner for Phonemes and Words
 .. autoclass:: Aligner
 	:members:
 
-.. minigallery:: naplib.features.Aligner
-        :add-heading: Examples using ``Aligner ``
-
 Phoneme Labels from Phonetic Alignment File
 -------------------------------------------
 

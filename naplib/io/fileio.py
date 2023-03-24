@@ -269,9 +269,6 @@ def read_bids(root,
     The channels in the BIDS files are either stored in the 'resp' field of the
     Data object or the 'stim' field, depending on whether the `channel_type` is 'stim'.
     
-    Please see the :ref:`Importing Data <import data examples>` for more detailed
-    tutorials which show how to import external data.
-    
     Parameters
     ----------
     root : string, path-like

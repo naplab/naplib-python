@@ -1,2 +1,0 @@
-Phoneme and Word Alignment
---------------------------

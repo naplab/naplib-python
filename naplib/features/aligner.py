@@ -25,9 +25,6 @@ class Aligner():
     appear in the dict file, you will need to add them to a dict file and specify
     it as ``dictionary_file``.
 
-    Please see the :ref:`alignment example notebooks <alignment examples>` for more detailed
-    tutorials which show how to align text and audio data and analyze the output.
-
     Note
     ----
     Several extra packages are required to perform alignment. Please follow the
