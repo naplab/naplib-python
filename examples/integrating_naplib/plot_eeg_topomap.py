@@ -89,9 +89,9 @@ alpha_theta_ratio = [log_alpha_theta_ratio(trial['resp'], trial['sfreq']) for tr
 # montage. See https://mne.tools/dev/generated/mne.channels.make_standard_montage.html for details
 data.mne_info.set_montage('standard_1020')
 
-plt.figure()
-plt.title('Trial 1 Alpha/Theta Ratio')
-plot_topomap(alpha_theta_ratio[0], data.mne_info)
+fig, ax = plt.subplots()
+ax.set_title('Trial 1 Alpha/Theta Ratio')
+plot_topomap(alpha_theta_ratio[0], data.mne_info, axes=ax)
 plt.show()
 
 
