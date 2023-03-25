@@ -205,6 +205,7 @@ sphinx_gallery_conf = {
     'reference_url': {
         'naplib': None,
     },
+    'thumbnail_size': (390, 320),
     'ignore_pattern': r'noinclude\.py',
     ## Add ability to link to mini-gallery under each function/class
     # directory where function/class granular galleries are stored
