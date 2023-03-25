@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "naplib"
-copyright = "2023, Neural Acoustic Processing Lab, Columbia University, New York"
+copyright = "2023, Neural Acoustic Processing Lab, Columbia University, New York, NY"
 authors = u"Gavin Mischler, Vinay Raghavan, Menoua Keshishian"
 
 # The short X.Y version
@@ -210,7 +210,8 @@ sphinx_gallery_conf = {
     # directory where function/class granular galleries are stored
     'backreferences_dir'  : 'gen_modules/backreferences',
     # Modules for which function/class level galleries are created. In
-    # this case sphinx_gallery and numpy in a tuple of strings.
+    # this case sphinx_gallery and naplib in a tuple of strings.
     'doc_module'          : ('sphinx_gallery', 'naplib'),
 }
+
 

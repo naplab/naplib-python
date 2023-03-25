@@ -94,8 +94,4 @@ plt.title('Trial 1 Alpha/Theta Ratio')
 plot_topomap(alpha_theta_ratio[0], data.mne_info)
 plt.show()
 
-plt.figure()
-plt.title('Trial 2 Alpha/Theta Ratio')
-plot_topomap(alpha_theta_ratio[1], data.mne_info)
-plt.show()
 
