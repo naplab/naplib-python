@@ -12,6 +12,9 @@ Auditory Spectrogram
 
 .. autofunction:: auditory_spectrogram
 
+.. minigallery:: naplib.features.auditory_spectrogram
+        :add-heading: Examples using ``auditory_spectrogram ``
+
 Aligner for Phonemes and Words
 ------------------------------
 

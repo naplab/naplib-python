@@ -11,16 +11,16 @@ naplib-python aims to facilitate the easy processing and analysis of neural-acou
 Highlighted examples to get started
 -----------------------------------
 
-The following examples can give you a sense of how to get started with naplib-python for analyzing neural-acoustic data. More examples and tutorial notebooks can be found in the `Examples page <examples/index.html>`_.
+The following examples can give you a sense of how to get started with naplib-python for analyzing neural-acoustic data. More examples and tutorial notebooks can be found in the `Examples gallery <auto_examples/index.html>`_.
 
-- `Importing data <examples/import_bids_data.html>`_:
+- `Importing data from BIDS <auto_examples/data_manipulation_preprocessing/plot_import_bids_data.html>`_:
     Getting started with naplib-python by importing data from BIDS format.
 
-- `Fitting STRF models <examples/STRF_fitting_basics.html>`_:
-    Fitting and evaluating spectro-temporal receptive field (STRF) models of auditory cortex.
+- `Preprocessing neural data <auto_examples/data_manipulation_preprocessing/plot_preprocessing_examples.html>`_:
+    Preprocessing neural data, including electrode selection and frequency band extraction.
 
-- `Performing phoneme and word alignment <examples/phoneme_and_word_alignment.html>`_:
-    Aligning text to speech stimuli using the built-in forced aligner.
+- `Fitting STRF models <auto_examples/strf_fitting/plot_STRF_fitting_basics.html>`_:
+    Fitting and evaluating spectro-temporal receptive field (STRF) models of auditory cortex.
 
 Python
 ------

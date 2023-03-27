@@ -15,9 +15,6 @@ class Data(Iterable):
     task- and electrode-related variables. Under the hood, it consists
     of a list of dictionaries where each dictionary contains all the data
     for one trial.
-
-    Please see the :ref:`example notebooks <working with data>` for more detailed
-    tutorials which demonstrate using the Data object in different types of analysis.
     
     Parameters
     ----------
@@ -91,8 +88,6 @@ class Data(Iterable):
     Data object of 2 trials containing 3 fields
     [{"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
     {"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
-
-    
     '''
     def __init__(self, data, strict=False):
         
@@ -428,7 +423,7 @@ class Data(Iterable):
     @property
     def mne_info(self):
         '''
-        `mne.Info <https://mne.tools/dev/generated/mne.Info.html>`_ instance
+        mne.Info instance
         which stores measurement information and can be used with mne's visualization
         functions. This is empty by default unless it is manually added or read in
         by a function like `naplib.io.read_bids`.

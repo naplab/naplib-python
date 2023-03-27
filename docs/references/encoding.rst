@@ -10,3 +10,5 @@ TRF
 	:members:
 	:exclude-members: get_params, set_params
 
+.. minigallery:: naplib.encoding.TRF
+        :add-heading: Examples using ``TRF ``
