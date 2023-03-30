@@ -23,14 +23,24 @@ Export Data
 
 .. autofunction:: export_data
 
-Read HTK
+Load NWB
 --------
-.. autofunction:: read_htk
+
+.. autofunction:: load_nwb
+
+Load TDT
+--------
+
+.. autofunction:: load_tdt
 
 Read BIDS
 ---------
 
 .. autofunction:: read_bids
+
+Read HTK
+--------
+.. autofunction:: read_htk
 
 Load Sample Speech Task Dataset
 -------------------------------
