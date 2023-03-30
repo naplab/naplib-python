@@ -26,9 +26,9 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     fs : string | int, default='dataf'
         Sampling rate of the data. Either a string specifying a field of the Data or an int
         giving the sampling rate for all trials.
-    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[30, 70],[70, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
-        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
+        of [[30, 70],[70, 150]] extracts the phase and amplitude of the gamma band and
         highgamma band.
     bandnames : list of strings, length=n_freq_bands, optional
         If provided, these are used to create the field names for each frequency band's amplitude
