@@ -42,6 +42,10 @@ Read HTK
 --------
 .. autofunction:: read_htk
 
+Load Directory of Wav Files
+---------------------------
+.. autofunction:: load_wav_dir
+
 Load Sample Speech Task Dataset
 -------------------------------
 
