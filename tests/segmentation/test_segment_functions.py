@@ -153,3 +153,4 @@ def test_single_label_segment_transitions_withlags_multiplelabels(outstruct):
     assert np.array_equal(labels[0], np.array([3,0]))
     assert np.array_equal(labels[1], labs2_ex)
     assert np.array_equal(prior_labels, np.array([1,2]))
+    
