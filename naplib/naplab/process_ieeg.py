@@ -16,6 +16,7 @@ from naplib.io import load_tdt, load_nwb, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
+import naplib as nl
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
 LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
@@ -24,7 +25,6 @@ DATA_LOADERS = {'tdt': load_tdt}
 
 def process_ieeg(
     data_path: str,
-    out_dir: str,
     stim_dir: str,
     stim_order_path: Optional[str]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
@@ -50,8 +50,6 @@ def process_ieeg(
     """
     data_path : str path-like
         String specifying data directory (for TDT) or file path for raw data file
-    out_dir : str path-like
-        Output directory within which data will be saved
     alignment_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
     stim_order_path : Optional[str] path-like, defaults to ``stim_dir``
@@ -115,6 +113,11 @@ def process_ieeg(
         In order of the amount that will be displayed from least to most, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
         
+        
+    Returns
+    -------
+    data : nl.Data
+        Data object containing all requested fields after preprocessing.
     """
         
     logging.basicConfig(encoding='utf-8', level=LOG_LEVELS[log_level.upper()])
