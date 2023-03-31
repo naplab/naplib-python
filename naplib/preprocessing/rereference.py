@@ -7,6 +7,7 @@ from ..array_ops import concat_apply
 from ..utils import _parse_outstruct_args
 
 
+
 def rereference(arr, data=None, field='resp', method='avg', return_reference=False):
     """
     Rereference responses based on the specification of a connection array defining which
@@ -64,11 +65,11 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
 
         re_ref_data = np.empty(data_arr.shape)
         for channel in range(arr.shape[0]):
-            ref_channels = arr[channel][np.newaxis,:] # now a 1D array of shape (channels, )
-            weighted_data = (data_arr * ref_channels)[:,ref_channels.squeeze()!=0]
+            ref_channels = arr[channel,:][np.newaxis,:] # now a 1D array of shape (1, channels)
+            weighted_data = data_arr[:,ref_channels.squeeze()!=0]
 
             if method == 'avg':
-                ref = np.mean(weighted_data, axis=1)
+                ref = np.nanmean(weighted_data, axis=1)
                 if return_ref:
                     re_ref_data[:,channel] = ref
                 else:
@@ -86,7 +87,7 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
                 else:
                     re_ref_data[:,channel] = data_arr_tmp[:,channel] - ref[:,this_ref_which_index]
             elif method == 'med':
-                ref = np.median(weighted_data, axis=1)
+                ref = np.nanmedian(weighted_data, axis=1)
 
                 if return_ref:
                     re_ref_data[:,channel] = ref
@@ -95,10 +96,12 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
             else:
                 raise ValueError(f'Invalid rereference method. Got "{method}"')
 
+        return re_ref_data
 
-            return re_ref_data
+    
         
     data_rereferenced = concat_apply(data_, _rereference, function_kwargs=dict(method=method))
+
     if return_reference:
         reference_subtracted = concat_apply(data_, _rereference, function_kwargs=dict(method=method, return_ref=True))
         return data_rereferenced, reference_subtracted
