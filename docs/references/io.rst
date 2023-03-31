@@ -28,14 +28,30 @@ Load EDF
 
 .. autofunction:: load_edf
 
-Read HTK
+Load NWB
 --------
-.. autofunction:: read_htk
+
+.. autofunction:: load_nwb
+
+Load TDT
+--------
+
+.. autofunction:: load_tdt
 
 Read BIDS
 ---------
 
 .. autofunction:: read_bids
+
+Read HTK
+--------
+
+.. autofunction:: read_htk
+
+Load Directory of Wav Files
+---------------------------
+
+.. autofunction:: load_wav_dir
 
 Load Sample Speech Task Dataset
 -------------------------------
