@@ -80,7 +80,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
             # End index of most recently found trial
             stim_start_look = int(alignment_times[-1][1]*rec_fs)
 
-        possible_inds = []
+        possible_times = []
         max_corrs = []
 
         # Align each channel, find best and set useCh on first iteration
@@ -95,8 +95,10 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
             # Search recorded audio until correlation confidence threshold is met
             FOUND = False
             while not FOUND:
+
                 # Get segment of recorded audio to search
-                rec_audio_use = rec_audio[n_start_look: n_start_look + n_search]
+                rec_audio_use = rec_audio[n_start_look : n_start_look + n_search]
+
                 # Perform cross correlation
                 corrs = sig.correlate(rec_audio_use, stim, mode='full')
                 # Remove segment where stim is correlated with zeros (instead of recorded audio)
@@ -124,11 +126,14 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                     FOUND = True
 
                     # Save possible alignment (start ind, end ind)
-                    possible_inds.append((rec_fs*(n_start_look + max_ind), rec_fs*(n_start_look + max_ind + len(stim))))
+                    possible_times.append((
+                        (n_start_look + max_ind)/rec_fs,
+                        (n_start_look + max_ind + len(stim))/rec_fs
+                        ))
                     max_corrs.append(max_val)
 
                     if verbose:
-                        print(f'Found {stim_name}', possible_inds)
+                        print(f'Found {stim_name}', possible_times)
                 else:
                     # Jump ahead by 1/10th of the search time
                     n_start_look = n_start_look + n_search//10
@@ -138,7 +143,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         if useCh == None and verbose:
             print(f'Using channel {np.argmax(max_corrs)}')
         useCh = np.argmax(max_corrs)
-        alignment_times.append(possible_inds[useCh])
+        alignment_times.append(possible_times[useCh])
         alignment_confidence.append(np.amax(max_corrs))
 
 
