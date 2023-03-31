@@ -5,37 +5,30 @@ from scipy import stats
 from tqdm.auto import tqdm, trange
 
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
- use_hilbert=True, confidence_threshold=0.2, t_use=None, t_search=120, t_start_look=0, verbose=True):
+ use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=True):
     '''
     Find the times that correspond to the start and end time of each stimulus
 
     Parameters
     ----------
-    rec_audio: np.ndarray (time,)
+    rec_audio : np.ndarray of shape (time,)
         Recorded stimulus or triggers from hospital system
-    rec_fs: int | float
+    rec_fs : int | float
         Sampling frequncy of recorded stimulus/triggers
-    stim_dict: dict
+    stim_dict : dict
         Dictionary in which keys are stimulus filenames and values are a tuple of
         (stimulus sampling frequency: int | float, stimulus waveform: np.ndarray (time, channels))
-    stim_order: list of strings
+    stim_order : list of strings
         List of stimulus filenames in order of presentation
-    use_hilbert: bool
+    use_hilbert : bool, default=True
         Whether or not to apply hilbert transform to audio for alignment
-        By default, apply hilbert transform
-    confidence_threshold: float [0,1]
+    confidence_threshold : float in range [0,1], default=0.2
         How large the Pearson's correlation between the recorded audio and the stimulus
         must be to consider the stimulus sufficiently detected
-        By default, use 0.2
-    t_use: float | None
-        How much time of the stimulus to use for alignment
-        Less time is less computationally intensive and will run quicker
-        If None, uses the entire stimulus
-    t_search: float
+    t_search : float, default=120
         How much time of the recorded audio to search on each try
-        Less time is less computationally intensive and will run quicker
-        By default, uses 30 seconds
-    t_start_look: float
+        Increase for long breaks between trials (or for started,stoped,restarted trials)
+    t_start_look : float, default=0
         What time of the recorded audio to begin the searching process
         By default, uses 0 seconds, i.e. beginning of recorded audio
 
@@ -56,8 +49,6 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     # Convert time-based arguments to indices
     n_start_look  = int(t_start_look * rec_fs)
     n_search = int(t_search * rec_fs)
-    if t_use != None:
-        n_use = int(t_use * rec_fs)
     
     # Instantiate empty list of alignments
     alignment_inds = []
@@ -95,15 +86,9 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
             # Reset n_start_look
             n_start_look = stim_start_look
 
-            # Truncate stimulus if using only partial
-            if t_use == None:
-                stim_use = stim
-            else:
-                stim_use = stim[:int(n_use * rec_fs)]
-
             # Get analytic envelope of stimulus
             if use_hilbert:
-                stim_use = np.abs(sig.hilbert(stim_use))
+                stim = np.abs(sig.hilbert(stim))
 
             # Search recorded audio until correlation confidence threshold is met
             FOUND = False
@@ -111,9 +96,9 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 # Get segment of recorded audio to search
                 rec_audio_use = rec_audio[n_start_look: n_start_look + n_search]
                 # Perform cross correlation
-                corrs = sig.correlate(rec_audio_use, stim_use, mode='full')
+                corrs = sig.correlate(rec_audio_use, stim, mode='full')
                 # Remove segment where stim is correlated with zeros (instead of recorded audio)
-                corrs = np.abs(corrs[len(stim_use)-1:])
+                corrs = np.abs(corrs[len(stim)-1:])
 
                 # Find points of cross correlation to search
                 corr_peaks = sig.find_peaks(corrs, height=np.percentile(corrs, 99.9))[0]
@@ -121,10 +106,10 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 # Find which peak produces the highest Pearson's correlation
                 max_val = 0
                 for pk in corr_peaks:
-                    if n_start_look + pk + len(stim_use) < len(rec_audio):
+                    if n_start_look + pk + len(stim) < len(rec_audio):
                         curr_corr = stats.pearsonr(
-                            stim_use,
-                            rec_audio[n_start_look + pk : n_start_look + pk + len(stim_use)])[0]
+                            stim,
+                            rec_audio[n_start_look + pk : n_start_look + pk + len(stim)])[0]
                         if curr_corr > max_val:
                             max_val = curr_corr
                             max_ind = pk
