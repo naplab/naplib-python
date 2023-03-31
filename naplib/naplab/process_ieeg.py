@@ -137,12 +137,12 @@ def process_ieeg(
         
     elif data_type == 'nwb':
         logging.info(f'Loading nwb data...')
-        if not pkl_file.endswith('.nwb'):
+        if not data_path.endswith('.nwb'):
             raise ValueError(f'data_type is a nwb but data_path is not a nwb file: {data_path}')
         raw_data = load_nwb(data_path)
         
     elif data_type == 'pkl':
-        if not pkl_file.endswith('.pkl') or not pkl_file.endswith('.p'):
+        if not data_path.endswith('.pkl') or not data_path.endswith('.p'):
             raise ValueError(f'data_type is a pkl but data_path is not a pkl file: {data_path}')
         logging.info(f'Loading pkl data...')
         raw_data = load(data_path)
