@@ -432,8 +432,8 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
             
     
 def _infer_freq_bands(
-    bands: Union[str, list[str], list[np.ndarray], list[float], np.ndarray]
-) -> list[list[Union[float, int]]]:
+    bands: Union[str, List[str], List[np.ndarray], List[float], np.ndarray]
+) -> List[List[Union[float, int]]]:
     """
     Parameters
     ----------
