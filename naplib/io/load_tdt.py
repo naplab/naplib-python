@@ -64,6 +64,7 @@ def load_tdt(directory: str, t1: float=0, t2: float=0, wav_stream: str='Wav5') -
     loaded_dict['data_f'] = data['streams']['EEG1']['fs']
     loaded_dict['wav'] = data['streams'][wav_stream]['data'].T
     loaded_dict['wav_f'] = data['streams'][wav_stream]['fs']
-    loaded_dict['labels'] = np.concatenate(eeg_stream_labels)
+    loaded_dict['labels_data'] = np.concatenate(eeg_stream_labels)
+    loaded_dict['labels_wav'] = np.array([f'Wav5_{i}' for i in range(loaded_dict['wav'].shape[1])])
     
     return loaded_dict

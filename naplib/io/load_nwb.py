@@ -28,6 +28,7 @@ def load_nwb(filepath: str) -> Dict:
         loaded_dict['data_f'] = loaded_data.acquisition['ieeg'].rate
         loaded_dict['wav'] = loaded_data.acquisition['audio'].data[:]
         loaded_dict['wav_f'] = loaded_data.acquisition['audio'].rate
-        loaded_dict['labels'] = np.array(['NWB1'] * loaded_dict['data'].shape[1])
+        loaded_dict['labels_data'] = np.array(['NWB1'] * loaded_dict['data'].shape[1])
+        loaded_dict['labels_wav'] = np.array([f'audio_{i}' for i in range(loaded_dict['wav'].shape[1])])
 
     return loaded_dict
