@@ -78,7 +78,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
             stim_start_look = n_start_look
         else:
             # End index of most recently found trial
-            stim_start_look = alignment_times[-1][1]
+            stim_start_look = int(alignment_times[-1][1]*rec_fs)
 
         possible_inds = []
         max_corrs = []
