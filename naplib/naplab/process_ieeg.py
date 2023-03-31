@@ -50,7 +50,7 @@ def process_ieeg(
     """
     data_path : str path-like
         String specifying data directory (for TDT) or file path for raw data file
-    alignment_dir : str path-like
+    stim_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
     stim_order_path : Optional[str] path-like, defaults to ``stim_dir``
         If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
@@ -260,8 +260,7 @@ def process_ieeg(
     logging.info(f'Extracting frequency bands: {Wn} ...')
     frequency_bands = preprocessing.phase_amplitude_extract(field=raw_data['data'],
                                                             fs=raw_data['data_f'],
-                                                            Wn=Wn, bandnames=bandnames,
-                                                            n_jobs=1)
+                                                            Wn=Wn, bandnames=bandnames)
     
     logging.info(f'Storing response bands of interest...')
     # only keep amplitude or phase if that's what the user specified
@@ -325,6 +324,7 @@ def process_ieeg(
 
     # # electrode localization
     # elec_locs
+    # transcripts
         
     
 def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
