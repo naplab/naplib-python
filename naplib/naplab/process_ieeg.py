@@ -17,6 +17,7 @@ from naplib import preprocessing
 from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
 import naplib as nl
+from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
 LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
@@ -133,7 +134,7 @@ def process_ieeg(
     # # load data and aud channels
     if data_type == 'tdt':
         logging.info(f'Loading tdt data...')
-        raw_data = load_tdt(data_path, t1=60, t2=90)
+        raw_data = load_tdt(data_path)
         
     elif data_type == 'nwb':
         logging.info(f'Loading nwb data...')
@@ -211,8 +212,6 @@ def process_ieeg(
     alignment_times, alignment_confidence = align_stimulus_to_recording(
         alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=log_level.upper()=='DEBUG', **alignment_kwargs
     )
-    # alignment_times, alignment_confidence = waveform_alignment(alignment_wav, raw_data['wav_f'], stim_data, stim_order)
-    alignment_times, alignment_confidence = [(10.1, 13.6), (15.5, 16.9)], [0.76, 0.82]
     
     # truncate data around earliest and lastest time that we need
     buffer_time = max(befaft) + 5
@@ -356,7 +355,6 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         between spectrums.
     debug : bool, default=False
         If True, plots the spectrum of each channel and the spectrum of the stimulus.
-
     Returns
     -------
     alignment_wav : np.ndarray
@@ -644,4 +642,3 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft):
         output[field] = split_field
     
     return nlData(output)
-
