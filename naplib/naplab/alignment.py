@@ -31,6 +31,8 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     t_start_look : float, default=0
         What time of the recorded audio to begin the searching process
         By default, uses 0 seconds, i.e. beginning of recorded audio
+    verbose : bool, default=True
+        Whether to print alignment results during alignment process
 
     Returns
     -------
@@ -133,7 +135,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
 
 
         # Determine which stimulus channel was best, set useCh, save inds
-        if useCh == None:
+        if useCh == None and verbose:
             print(f'Using channel {np.argmax(max_corrs)}')
         useCh = np.argmax(max_corrs)
         alignment_inds.append(possible_inds[useCh])
