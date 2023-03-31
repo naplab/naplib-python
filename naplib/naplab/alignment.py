@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import scipy.signal as sig
 from scipy import stats
 from tqdm.auto import tqdm, trange
@@ -137,6 +136,9 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 else:
                     # Jump ahead by 1/10th of the search time
                     n_start_look = n_start_look + n_search//10
+
+                    if n_start_look >= len(rec_audio):
+                        raise Exception(f'Ran out of audio to search. Unable to identify {stim_name}')
 
 
         # Determine which stimulus channel was best, set useCh, save inds
