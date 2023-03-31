@@ -23,6 +23,11 @@ Export Data
 
 .. autofunction:: export_data
 
+Load EDF
+--------
+
+.. autofunction:: load_edf
+
 Read HTK
 --------
 .. autofunction:: read_htk
