@@ -8,6 +8,7 @@ import naplib.preprocessing
 import naplib.array_ops
 import naplib.model_selection
 import naplib.utils
+import naplib.naplab
 from .data import Data, join_fields, concat
 
 __version__ = "0.1.10"
