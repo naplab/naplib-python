@@ -12,9 +12,9 @@ import matplotlib.pyplot as plt
 
 from hdf5storage import loadmat
 
-from ..io import load_tdt, load_nwb, load, load_wav_dir
-from .. import preprocessing
-from ..features import auditory_spectrogram
+from naplib.io import load_tdt, load_nwb, load, load_wav_dir
+from naplib import preprocessing
+from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
