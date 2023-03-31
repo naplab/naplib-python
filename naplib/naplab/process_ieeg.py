@@ -181,11 +181,6 @@ def process_ieeg(
                                  f' contains these files:\n {list(extra_stim_data_.keys())}')
     else:
         extra_stim_data = {'aud': stim_data}
-    
-    ###### GAVIN DEBUG
-    for k, v in extra_stim_data.items():
-        for kk, vv in v.items():
-            extra_stim_data[k][kk] = vv[0], vv[1][:500] # truncate sound to 500 samples to make it faster
 
     # # figure out which channel is used for alignment
     if aud_channel == 'infer':
