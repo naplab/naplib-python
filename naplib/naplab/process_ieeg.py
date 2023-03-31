@@ -16,7 +16,6 @@ from naplib.io import load_tdt, load_nwb, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
-import naplib as nl
 from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
