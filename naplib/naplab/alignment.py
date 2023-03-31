@@ -36,7 +36,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
 
     Returns
     -------
-    alignment_inds: list of tuples
+    alignment_times: list of tuples
         Indices of stimulus alignment in which each list element corresponds to each trial in stim_order
         and each tuple contains the (start_index, end_index) of each trial, matched to rec_fs
     alignment_confidence: list of floats
@@ -53,7 +53,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     n_search = int(t_search * rec_fs)
     
     # Instantiate empty list of alignments
-    alignment_inds = []
+    alignment_times = []
     alignment_confidence = []
     useCh = None
 
@@ -74,11 +74,11 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         stims_ds = [sig.resample(stim, int(len(stim)/stim_fs*rec_fs)) for stim in stims_curr]
 
         # Save n_start_look for when checking multi-channel stimulus audio
-        if len(alignment_inds) == 0:
+        if len(alignment_times) == 0:
             stim_start_look = n_start_look
         else:
             # End index of most recently found trial
-            stim_start_look = alignment_inds[-1][1]
+            stim_start_look = alignment_times[-1][1]
 
         possible_inds = []
         max_corrs = []
@@ -124,7 +124,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                     FOUND = True
 
                     # Save possible alignment (start ind, end ind)
-                    possible_inds.append((n_start_look + max_ind, n_start_look + max_ind + len(stim)))
+                    possible_inds.append((rec_fs*(n_start_look + max_ind), rec_fs*(n_start_look + max_ind + len(stim))))
                     max_corrs.append(max_val)
 
                     if verbose:
@@ -138,11 +138,11 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         if useCh == None and verbose:
             print(f'Using channel {np.argmax(max_corrs)}')
         useCh = np.argmax(max_corrs)
-        alignment_inds.append(possible_inds[useCh])
+        alignment_times.append(possible_inds[useCh])
         alignment_confidence.append(np.amax(max_corrs))
 
 
-    return alignment_inds, alignment_confidence
+    return alignment_times, alignment_confidence
 
 
 
