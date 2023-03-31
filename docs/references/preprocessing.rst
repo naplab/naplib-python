@@ -11,6 +11,16 @@ Normalize
 .. minigallery:: naplib.preprocessing.normalize
         :add-heading: Examples using ``normalize ``
 
+Rereference Data
+----------------
+
+.. autofunction:: rereference
+
+Make Rereference Array for Contacts
+-----------------------------------
+
+.. autofunction:: make_contact_rereference_arr
+
 Filter Line Noise
 -----------------
 

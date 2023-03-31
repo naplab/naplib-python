@@ -12,3 +12,5 @@ joblib
 mne
 h5py
 patsy
+tdt>=0.5.0
+pynwb>=2.3.0

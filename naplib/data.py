@@ -96,11 +96,11 @@ class Data(Iterable):
             for k, v in data.items():
                 if not isinstance(v, list):
                     raise TypeError(f'When creating a Data from a dict, each value in the '
-                                     'dict must be a list, but for key "{k}" got type {type(v)}')
+                                    f'dict must be a list, but for key "{k}" got type {type(v)}')
                 lengths.append(len(v))
             if not _all_equal_list(lengths):
                 raise ValueError(f'When creating a Data from a dict, each value in the '
-                                  'dict must be a list of the same length, but got different lengths: {lengths}')
+                                f'dict must be a list of the same length, but got different lengths: {lengths}')
             data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
         elif isinstance(data, list):
