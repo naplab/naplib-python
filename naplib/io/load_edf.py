@@ -8,28 +8,26 @@ from typing import Iterable, Dict
 
 def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     """
-    Load data from TDT structure. Directory should contain a .tdt file.
+    Load data from EDF structure. Path should be a .edf file.
 
     TODO: This function supports the original EDF format. For the EDF+ format
-    we might want to use the PyEDFlib library. It is ~15x slower.
+    we might want to use the PyEDFlib or mne libraries. They are slower.
     
     Parameters
     ----------
-    directory : str, path-like
-        Directory containing TDT data files (tev, sev, and/or tin files, etc.)
+    path : str, path-like
+        Path to EDF data file (*.edf)
     t1 : float, default=0
         Starting time to extract
     t2 : float, default=0
         Ending time to extract until (default of 0 extracts until end of file)
-    wav_stream : str, default='Wav5'
-        The name of the stream containing the audio recording to extract.
     
     Returns
     -------
     loaded_dict : dict from string to numpy array or float
         Keys: 'data' - loaded neural recording (time*channels), 'data_f' - sampling rate of data,
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
-        'labels' - array of labels for the channel streams
+        'labels' - array of labels for electrodes, 'wav_labels' - array of labels for auxiliary channels
     """
 
     with open(path, 'rb') as fin:
