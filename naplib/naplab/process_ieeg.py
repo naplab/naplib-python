@@ -36,7 +36,7 @@ def process_ieeg(
     bands: Union[str, List[str], List[np.ndarray], List[float], np.ndarray]=['highgamma'],
     phase_amp: str='amp',
     befaft: Union[List, np.ndarray]=[1, 1],
-    intermediate_fs: Optional[int]=1000,
+    intermediate_fs: Optional[int]=600,
     final_fs: int=100,
     alignment_kwargs: dict={},
     line_noise_kwargs: dict={},
@@ -95,7 +95,7 @@ def process_ieeg(
     befaft : Union[List, np.ndarray], default=[1,1]
         Extra time (in sec.) to store from the neural data before the start of and after the end of each
         stimulus.
-    intermediate_fs : Optional[int], default=1000
+    intermediate_fs : Optional[int], default=600
         If provided downsamples the loaded raw neural data to this sampling rate before further
         preprocessing. If this is greater than the raw sampling rate, no resampling is done.
     final_fs : int, default=100
@@ -290,13 +290,21 @@ def process_ieeg(
             fields_to_keep = frequency_bands.fields
         frequency_bands = frequency_bands[fields_to_keep]
 
+        if include_raw:
+            frequency_bands = nlData({'raw': raw_data['data']})
+
     else:
         # if no other frequency bands, then default to output raw
         frequency_bands = nlData({'raw': raw_data['data']})
-    
-    
+
+
+    desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in raw_data['data']]
+
+    if 'raw' in frequency_bands.fields:
+        frequency_bands['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(frequency_bands['raw'], desired_lens)]
+
     if reference_to_store is not None:
-        frequency_bands['reference'] = reference_to_store
+        frequency_bands['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store, desired_lens)]
         
         
     # # Cut this up based on alignment
@@ -312,7 +320,8 @@ def process_ieeg(
     final_output = {'name': stim_order,
                     'alignment_start': list(alignment_times[:,0]),
                     'alignment_end': list(alignment_times[:,1]),
-                    'alignment_confidence': alignment_confidence}
+                    'alignment_confidence': alignment_confidence,
+                    'data_f': final_fs}
 
     # extract spectrograms
     if store_spectrograms:
@@ -323,7 +332,9 @@ def process_ieeg(
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[f'{k} sound'] = [stim_data_dict[stim_name] for stim_name in stim_order]
+            final_output[f'{k} sound'] = [stim_data_dict[stim_name][1] for stim_name in stim_order]
+            final_output[f'{k} sound_f'] = [stim_data_dict[stim_name][0] for stim_name in stim_order]
+
     del extra_stim_data
     
     final_output['data_type'] = [data_type for _ in stim_order]
