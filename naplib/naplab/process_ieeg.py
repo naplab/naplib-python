@@ -153,8 +153,6 @@ def process_ieeg(
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
     
 
-    raw_data['data'] = raw_data['data'][:,:5]
-
     # # load StimOrder
     logging.info('Loading StimOrder...')
     if stim_order_path is not None:
