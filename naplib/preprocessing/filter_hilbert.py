@@ -1,12 +1,13 @@
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.fft import fft, ifft
+from scipy.signal import resample
 
 from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, n_jobs=-1):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=-1):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -37,6 +38,8 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         then the fields of the output Data will be {'theta phase', 'theta amp', 'highgamma phase',
         'highgamma amp'}. But if bandnames=None, then they will be {'[ 8 12] phase', '[ 8 12] amp',
         '[ 70 150] phase', '[ 70 150] amp'}.
+    fs_out : int, default=None
+        If not None, each output phase and amplitude will be resampled to this sampling rate.
     n_jobs : int, default=-1
         Number of jobs to use to compute filterbank across channels in parallel in filterbank_hilbert.
     Returns
@@ -49,7 +52,6 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     See Also
     --------
     filterbank_hilbert
-    
     References
     ----------
     .. [#edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
@@ -98,8 +100,14 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
             if band_locator.sum() == 0:
                 raise ValueError(f'Frequency band {freq_band} is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
             # average over the filters in the frequency band
-            phase_amplitude_data[freq_band_names[2*ii]].append(x_phase[:,:,band_locator].mean(-1))
-            phase_amplitude_data[freq_band_names[2*ii+1]].append(x_amplitude[:,:,band_locator].mean(-1))
+            phase_mean = x_phase[:,:,band_locator].mean(-1)
+            amp_mean = x_amplitude[:,:,band_locator].mean(-1)
+            if fs_out is not None and fs_out < fs_trial:
+                desired_len = round(fs_out / fs_trial * len(phase_mean))
+                phase_mean = resample(phase_mean, desired_len, axis=0)
+                amp_mean = resample(amp_mean, desired_len, axis=0)
+            phase_amplitude_data[freq_band_names[2*ii]].append(phase_mean)
+            phase_amplitude_data[freq_band_names[2*ii+1]].append(amp_mean)
     
     return Data(phase_amplitude_data, strict=False)
     
@@ -214,21 +222,20 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
 
     # run channels in parallel
     if n_jobs == 1:
-        hilb_channels = []
+        # pre-allocate
+        hilb_channels = np.empty((len(x), x.shape[1], len(cfs)), dtype=np.csingle)
         for chn in range(x.shape[1]):
-            hilb_channels.append(_vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds)[:,np.newaxis,:])
+            hilb_channels[:,chn,:] = _vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds, three_d=False)
     else:
         hilb_channels = Parallel(n_jobs=n_jobs)(delayed(_vectorized_band_hilbert)(
-            Xf[:,chn], h, N, freqs, cfs, sds) for chn in range(x.shape[1]))
-    
-    # concatenate channels into a complex-valued 3D array
-    
-    hilb_channels = np.concatenate(hilb_channels, axis=1)
+            Xf[:,chn], h, N, freqs, cfs, sds, True) for chn in range(x.shape[1]))
+        # concatenate channels into a complex-valued 3D array
+        hilb_channels = np.concatenate(hilb_channels, axis=1)
     
     return np.angle(hilb_channels), np.abs(hilb_channels), cfs
 
 
-def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_):
+def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_, three_d=True):
     n_freqs = len(freqs_)
     H = np.zeros((N_,len(cfs_)))
     k = freqs_.reshape(-1,1)-cfs_.reshape(1,-1)
@@ -237,4 +244,7 @@ def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_):
     H[0,:] = 0.
     H = np.multiply(H,h_)
     hilbdata = ifft(X_fft[:,np.newaxis] * H, N_, axis=0).astype('csingle')
-    return hilbdata[:,np.newaxis,:]
+    if three_d:
+        return hilbdata[:,np.newaxis,:]
+    else:
+        return hilbdata

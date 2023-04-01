@@ -152,6 +152,9 @@ def process_ieeg(
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
     
+
+    raw_data['data'] = raw_data['data'][:,:5]
+
     # # load StimOrder
     logging.info('Loading StimOrder...')
     if stim_order_path is not None:
@@ -168,6 +171,7 @@ def process_ieeg(
         raw_data['data'] = resample(raw_data['data'], new_len, axis=0)
         data_f = intermediate_fs
         raw_data['data_f'] = intermediate_fs
+
 
     # # load stimuli files
     logging.info('Loading stimuli...')
@@ -202,6 +206,7 @@ def process_ieeg(
             alignment_wav = raw_data['wav']
             alignment_ch = aud_channel
     
+
     # # perform alignment
     alignment_times, alignment_confidence = align_stimulus_to_recording(
         alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=log_level.upper()=='DEBUG', **alignment_kwargs
@@ -224,6 +229,7 @@ def process_ieeg(
     raw_data['data'] = raw_data['data'][earliest_sample:latest_sample]
     raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample]
     
+
     # # preprocessing
     
     # # common referencing
@@ -242,7 +248,11 @@ def process_ieeg(
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
                                                        **line_noise_kwargs)
-        
+
+    # # Cut this up based on alignment
+    logging.info('Chunking responses based on alignment...')
+    data_by_trials = _split_data_on_alignment(nlData({'resp': raw_data['data']}), raw_data['data_f'], alignment_times, befaft)
+
     # # extract frequency bands
     if 'raw' in bands:
         include_raw = True
@@ -258,41 +268,43 @@ def process_ieeg(
             bandnames.append(str(wn_))
     
     logging.info(f'Extracting frequency bands: {Wn} ...')
-    frequency_bands = preprocessing.phase_amplitude_extract(field=raw_data['data'],
+    data_by_trials = preprocessing.phase_amplitude_extract(data_by_trials, field='resp',
                                                             fs=raw_data['data_f'],
-                                                            Wn=Wn, bandnames=bandnames)
-    
+                                                            Wn=Wn, fs_out=final_fs,
+                                                            bandnames=bandnames,
+                                                            n_jobs=1)
+
     logging.info(f'Storing response bands of interest...')
     # only keep amplitude or phase if that's what the user specified
     if phase_amp == 'amp':
-        fields_to_keep = [xx for xx in frequency_bands.fields if ' amp' in xx]
+        fields_to_keep = [xx for xx in data_by_trials.fields if ' amp' in xx]
     elif phase_amp == 'phase':
-        fields_to_keep = [xx for xx in frequency_bands.fields if ' phase' in xx]
+        fields_to_keep = [xx for xx in data_by_trials.fields if ' phase' in xx]
     else:
-        fields_to_keep = frequency_bands.fields
-    frequency_bands = frequency_bands[fields_to_keep]
+        fields_to_keep = data_by_trials.fields
+    data_by_trials = data_by_trials[fields_to_keep]
+    desired_lens = [len(x) for x in data_by_trials[data_by_trials.fields[0]]]
     
     if include_raw:
-        frequency_bands['raw'] = raw_data['data']
-    
+        data_by_trials['raw'] = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft)['raw']
+        data_by_trials['raw'] = [resample(xx, d, axis=0) for xx, d in zip(data_by_trials['raw'], desired_lens)]
+
+
     if reference_to_store is not None:
-        frequency_bands['reference'] = reference_to_store
-        
-        
-    # # Cut this up based on alignment
-    logging.info('Chunking responses based on alignment...')
-    frequency_bands = _split_data_on_alignment(frequency_bands, raw_data['data_f'], alignment_times, befaft)
-    
-    if store_all_wav:
-        logging.info('Chunking wav channels based on alignment...')
-        wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft)
+        data_by_trials['reference'] = _split_data_on_alignment(nlData({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft)['ref']
+        data_by_trials['reference'] = [resample(x, d, axis=0) for x, d in zip(data_by_trials['reference'], desired_lens)]
+
 
     # final output dict to be made into naplib.Data object
     alignment_times = np.asarray(alignment_times)
     final_output = {'name': stim_order,
                     'alignment_start': list(alignment_times[:,0]),
                     'alignment_end': list(alignment_times[:,1]),
-                    'alignment_confidence': alignment_confidence}
+                    'alignment_confidence': alignment_confidence,
+                    'data_f': [final_fs for _ in stim_order],
+                    'befaft': [befaft for _ in stim_order]}
+    if store_all_wav:
+        final_output['wav_f'] = [raw_data['wav_f'] for _ in stim_order]
 
     # extract spectrograms
     if store_spectrograms:
@@ -303,22 +315,25 @@ def process_ieeg(
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[f'{k} sound'] = [stim_data_dict[stim_name] for stim_name in stim_order]
-    del extra_stim_data
+            final_output[f'{k} sound'] = [stim_data_dict[stim_name][1] for stim_name in stim_order]
+            final_output[f'{k} sound_f'] = [stim_data_dict[stim_name][0] for stim_name in stim_order]
+
+    if store_all_wav:
+        logging.info('Chunking wav channels based on alignment...')
+        data_by_trials['wav'] = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft)['wav']
     
     final_output['data_type'] = [data_type for _ in stim_order]
     
-    for bandname in frequency_bands.fields:
-        final_output[bandname] = frequency_bands[bandname]
-        
-    if store_all_wav:
-        for ww, wav_ch_name in enumerate(raw_data['labels_wav']):
-            final_output[wav_ch_name] = [xx[:,ww] for xx in wav_data_chunks['wav']]
+    for bandname in data_by_trials.fields:
+        final_output[bandname] = data_by_trials[bandname]
+
+    del data_by_trials
     
     # # Put output Data all together
     final_output = nlData(final_output)
     final_output.set_info({'channel_labels': raw_data['labels_data'],
                            'rereference_grid': rereference_grid})
+
     return final_output
     
 
