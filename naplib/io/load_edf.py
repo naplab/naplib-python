@@ -41,6 +41,9 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         header_size = int(fin.read(8).decode('ascii'))
         _ = fin.seek(44, 1)
 
+        if version != 0:
+            raise NotImplementedError('EDF version > 0 not yet supported.')
+
         num_records = int(fin.read(8).decode('ascii'))
         record_dur = float(fin.read(8).decode('ascii'))
         num_signals = int(fin.read(4).decode('ascii'))
