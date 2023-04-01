@@ -162,9 +162,6 @@ def process_ieeg(
         
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
-    
-    # gavin debug
-    raw_data['data'] = raw_data['data'][:,:5]
 
     # # load StimOrder
     logging.info('Loading StimOrder...')
@@ -252,12 +249,16 @@ def process_ieeg(
     else:
         reference_to_store = None
     
-    # filter line noise (now raw_data['data'] is a list of length 1)
+    # filter line noise (after this, raw_data['data'] is a list of length 1)
     logging.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
                                                        **line_noise_kwargs)
         
+    # # Cut raw data up into blocks based on alignment
+    logging.info('Chunking responses based on alignment...')
+    data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft)
+
     # # extract frequency bands
     if 'raw' in bands:
         include_raw = True
@@ -275,7 +276,7 @@ def process_ieeg(
 
     if len(Wn) > 0:
         logging.info(f'Extracting frequency bands: {Wn} ...')
-        frequency_bands = preprocessing.phase_amplitude_extract(field=raw_data['data'],
+        data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                 fs=raw_data['data_f'],
                                                                 Wn=Wn, bandnames=bandnames,
                                                                 n_jobs=1)
@@ -283,34 +284,29 @@ def process_ieeg(
         logging.info(f'Storing response bands of interest...')
         # only keep amplitude or phase if that's what the user specified
         if phase_amp == 'amp':
-            fields_to_keep = [xx for xx in frequency_bands.fields if ' amp' in xx]
+            fields_to_keep = [xx for xx in data_by_trials.fields if ' amp' in xx]
         elif phase_amp == 'phase':
-            fields_to_keep = [xx for xx in frequency_bands.fields if ' phase' in xx]
+            fields_to_keep = [xx for xx in data_by_trials.fields if ' phase' in xx]
         else:
-            fields_to_keep = frequency_bands.fields
-        frequency_bands = frequency_bands[fields_to_keep]
+            fields_to_keep = data_by_trials.fields
+        data_by_trials = data_by_trials[fields_to_keep]
 
         if include_raw:
-            frequency_bands = nlData({'raw': raw_data['data']})
+            data_by_trials['raw'] = data_by_trials_raw['raw']
 
     else:
         # if no other frequency bands, then default to output raw
-        frequency_bands = nlData({'raw': raw_data['data']})
+        data_by_trials = data_by_trials_raw
 
+    desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in data_by_trials_raw['raw']]
 
-    desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in raw_data['data']]
-
-    if 'raw' in frequency_bands.fields:
-        frequency_bands['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(frequency_bands['raw'], desired_lens)]
+    if 'raw' in data_by_trials.fields:
+        data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
 
     if reference_to_store is not None:
-        frequency_bands['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store, desired_lens)]
+        data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store, desired_lens)]
         
-        
-    # # Cut this up based on alignment
-    logging.info('Chunking responses based on alignment...')
-    frequency_bands = _split_data_on_alignment(frequency_bands, raw_data['data_f'], alignment_times, befaft)
-    
+
     if store_all_wav:
         logging.info('Chunking wav channels based on alignment...')
         wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft)
@@ -321,7 +317,8 @@ def process_ieeg(
                     'alignment_start': list(alignment_times[:,0]),
                     'alignment_end': list(alignment_times[:,1]),
                     'alignment_confidence': alignment_confidence,
-                    'data_f': final_fs}
+                    'data_f': [final_fs for _ in stim_order],
+                    'befaft': [befaft for _ in stim_order]}
 
     # extract spectrograms
     if store_spectrograms:
@@ -339,12 +336,14 @@ def process_ieeg(
     
     final_output['data_type'] = [data_type for _ in stim_order]
     
-    for bandname in frequency_bands.fields:
-        final_output[bandname] = frequency_bands[bandname]
+    for bandname in data_by_trials.fields:
+        final_output[bandname] = data_by_trials[bandname]
         
     if store_all_wav:
+        final_output['wav_f'] = [raw_data['wav_f'] for _ in stim_order]
         for ww, wav_ch_name in enumerate(raw_data['labels_wav']):
             final_output[wav_ch_name] = [xx[:,ww] for xx in wav_data_chunks['wav']]
+            final_output[f'{wav_ch_name}_f'] = [xx[:,ww] for xx in wav_data_chunks['wav']]
     
     # # Put output Data all together
     final_output = nlData(final_output)
@@ -481,16 +480,18 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         if desired_len != len(stim_data):
             stim_data = resample(stim_data, desired_len, axis=0)
 
+        if stim_data.ndim > 1 and stim_data.shape[1] > 1:
+            logging.warning('Performing alignment with stereo audio stimuli is not recommended.'
+                            ' It is recommended to use mono-channel audio for alignment, and any'
+                            ' additional stimuli (including stereo audio) desired in the final '
+                            ' Data object can be specified as extra stimulus directories.')
+
         scores = []
         for c in range(wav_data.shape[1]):
             if stim_data.ndim == 1 or stim_data.shape[1] == 1:
                 pos = np.nanargmax(correlate(wav_data[:, c], stim_data.squeeze(), 'valid'))
                 score = pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())[0]
             else:
-                logging.warning('Performing alignment with stereo audio stimuli is not recommended.'
-                                ' It is recommended to use mono-channel audio for alignment, and any'
-                                ' additional stimuli (including stereo audio) desired in the final '
-                                ' Data object can be specified as extra stimulus directories.')
                 pos_left = np.nanargmax(correlate(wav_data[:, c], stim_data[:,0], 'valid'))
                 score_left = pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])[0]
                 pos_right = np.nanargmax(correlate(wav_data[:, c], stim_data[:,1], 'valid'))
