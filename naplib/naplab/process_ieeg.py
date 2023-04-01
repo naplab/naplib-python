@@ -1,18 +1,18 @@
 import logging
 import os
-from typing import Union, Tuple, List, Optional, Dict
+from typing import Union, Tuple, List, Optional, Dict, Sequence
 
 import numpy as np
-from scipy.signal import resample
-from scipy.signal import welch
+from scipy.signal import resample, welch, correlate
 from scipy.interpolate import interp1d
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import pearsonr
 
 import matplotlib.pyplot as plt
 
 from hdf5storage import loadmat
 
-from naplib.io import load_tdt, load_nwb, load, load_wav_dir
+from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
@@ -25,7 +25,7 @@ DATA_LOADERS = {'tdt': load_tdt}
 
 def process_ieeg(
     data_path: str,
-    stim_dir: str,
+    alignment_dir: str,
     stim_order_path: Optional[str]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
@@ -50,7 +50,7 @@ def process_ieeg(
     """
     data_path : str path-like
         String specifying data directory (for TDT) or file path for raw data file
-    alignment_dir : str path-like
+    stim_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
     stim_order_path : Optional[str] path-like, defaults to ``stim_dir``
         If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
@@ -137,13 +137,19 @@ def process_ieeg(
         
     elif data_type == 'nwb':
         logging.info(f'Loading nwb data...')
-        if not data_path.endswith('.nwb'):
-            raise ValueError(f'data_type is a nwb but data_path is not a nwb file: {data_path}')
+        if not data_path.endswith(('.nwb', '.NWB')):
+            raise ValueError(f'data_type is nwb but data_path is not a nwb file: {data_path}')
         raw_data = load_nwb(data_path)
+
+    elif data_type == 'edf':
+        logging.info(f'Loading edf data...')
+        if not data_path.endswith(('.edf', '.EDF')):
+            raise ValueError(f'data_type is edf but data_path is not an edf file: {data_path}')
+        raw_data = load_edf(data_path)
         
     elif data_type == 'pkl':
-        if not data_path.endswith('.pkl') or not data_path.endswith('.p'):
-            raise ValueError(f'data_type is a pkl but data_path is not a pkl file: {data_path}')
+        if not data_path.endswith(('.pkl', '.p')):
+            raise ValueError(f'data_type is pkl but data_path is not a pkl file: {data_path}')
         logging.info(f'Loading pkl data...')
         raw_data = load(data_path)
         if not isinstance(raw_data, dict) or ('data' not in raw_data and 'data_f' not in raw_data and 'wav' not in raw_data and 'wav_f' not in raw_data):
@@ -157,7 +163,7 @@ def process_ieeg(
     if stim_order_path is not None:
         stim_order = _load_stim_order(stim_order_path)
     else:
-        stim_order = _load_stim_order(stim_dir)
+        stim_order = _load_stim_order(alignment_dir)
 
     data_f = raw_data['data_f']
         
@@ -171,7 +177,7 @@ def process_ieeg(
 
     # # load stimuli files
     logging.info('Loading stimuli...')
-    stim_data = load_wav_dir(stim_dir)
+    stim_data = load_wav_dir(alignment_dir)
     if stim_dirs is not None:
         extra_stim_data = {k: load_wav_dir(stim_dir2) for k, stim_dir2 in stim_dirs.items()}
         for extra_stim_data_ in extra_stim_data.values():
@@ -187,6 +193,7 @@ def process_ieeg(
         logging.info(f'Inferring alignment channel from wav channels...')
         alignment_wav, alignment_ch = _infer_aud_channel(raw_data['wav'],
                                                          raw_data['wav_f'],
+                                                         raw_data.get('wav_labels', None),
                                                          list(stim_data.values()),
                                                          method=aud_channel_infer_method,
                                                          debug=log_level.upper()=='DEBUG')
@@ -327,7 +334,7 @@ def process_ieeg(
     # elec_locs
         
     
-def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
+def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
                        method: str='spectrum', min_freq=20, debug=False):
     """
@@ -341,9 +348,9 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         List of tuples containing sampling rate and stimuli sounds/trigger waveforms,
         each of shape (time, ) or (time, 2). If stereo, the left channel will be used.
     method : str, default='spectrum'
-        Method for inferring correct channel from wav_data. Options are 'spectrum', 'envelope'.
-        The 'spectrum' method computes the correlation between the spectrum of each channel in
-        wav_data with the spectrum of the stim_data and choosing the maximum.
+        Method for inferring correct channel from wav_data. Options are 'spectrum', 'envelope',
+        'crosscorr'. The 'spectrum' method computes the correlation between the spectrum of
+        each channel in wav_data with the spectrum of the stim_data and choosing the maximum.
     min_freq : float, default=20
         Only used if method='spectrum'. Minimum frequency to include when calculating correlation
         between spectrums.
@@ -363,8 +370,23 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         return wav_data[:,0], wav_fs
     
     assert isinstance(stim_data, list)
-    
-    if method == 'spectrum':
+
+    if method == 'interactive':
+        if wav_labels is None:
+            raise ValueError('Interactive mode only supported when wav_labels is available.')
+
+        print(f'These are the available channels: {", ".join(wav_labels)}.')
+        ch_idx = None
+        while ch_idx is None:
+            pick = input('Which is the audio channel? ').strip()
+            for i, s in enumerate(wav_labels):
+                if pick == s:
+                    ch_idx = i
+                    break
+
+        return wav_data[:, ch_idx], ch_idx
+
+    elif method == 'spectrum':
         fs0 = stim_data[0][0]
         concat_stims = []
         for i, (fs, stim_waveform) in enumerate(stim_data):
@@ -407,7 +429,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         cat_px = np.concatenate([px1, px2], axis=1)
         dists = 1.0-pdist(cat_px.T, metric='correlation')
         dists = squareform(dists)
-        best_ch_idx = np.argmax(dists[:,-1])
+        best_ch_idx = np.nanargmax(dists[:,-1])
         
         if debug:
             plt.figure(figsize=(8,6))
@@ -419,6 +441,28 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
             plt.show()
         
         return wav_data[:, best_ch_idx], best_ch_idx
+    
+    elif method == 'crosscorr' or method == 'xcorr':
+        # Find longest stimulus for more robust infernce
+        longest_stim = np.argmax(len(s)/f for f, s in stim_data)
+        stim_fs, stim_data = stim_data[longest_stim]
+
+        desired_len = int(wav_fs / stim_fs * len(stim_data))
+        if desired_len != len(stim_data):
+            stim_data = resample(stim_data, desired_len, axis=0)
+
+        scores = []
+        for c in range(wav_data.shape[1]):
+            pos = np.nanargmax(correlate(wav_data[:, c], stim_data, 'valid'))
+            score = pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data)[0]
+            scores.append(score)
+
+        if debug:
+            logging.info(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
+
+        best_ch_idx = np.nanargmax(scores)
+
+        return wav_data[:,best_ch_idx], best_ch_idx
     
     else:
         raise ValueError(f'Unsupported method argument: {method}')
@@ -492,17 +536,17 @@ def _infer_data_type(data_path: str):
     file_path : str
         Path to file or directory which contains the data.
     """
-    if data_path.endswith('.edf') or data_path.endswith('.EDF'):
+    if data_path.endswith(('.edf', '.EDF')):
         return 'edf', data_path
         
-    if data_path.endswith('.nwb') or data_path.endswith('.NWB'):
+    if data_path.endswith(('.nwb', '.NWB')):
         return 'nwb', data_path
     
-    if data_path.endswith('.pkl') or data_path.endswith('.p'):
+    if data_path.endswith(('.pkl', '.p')):
         return 'pkl', data_path
     
     files_in_dir = [x for x in os.listdir(data_path) if '.' in x and x[0]!='.']
-    file_suffixes = [x.split('.')[1] for x in files_in_dir]
+    file_suffixes = [x.split('.')[-1] for x in files_in_dir]
     
     if 'sev' in file_suffixes or 'tev' in file_suffixes:
         if 'tev' in file_suffixes:
