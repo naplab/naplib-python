@@ -8,7 +8,6 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
  use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=True):
     '''
     Find the times that correspond to the start and end time of each stimulus
-
     Parameters
     ----------
     rec_audio : np.ndarray of shape (time,)
@@ -33,7 +32,6 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         By default, uses 0 seconds, i.e. beginning of recorded audio
     verbose : bool, default=True
         Whether to print alignment results during alignment process
-
     Returns
     -------
     alignment_times: list of tuples
@@ -43,6 +41,8 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         Pearson's correlation between the stimulus and recorded audio for each trial
     '''
 
+    # Z-score the recorded audio to discard DC offset
+    rec_audio = stats.zscore(rec_audio, axis=0)
 
     # Optionally, derive analytic envelope of the recorded audio
     if use_hilbert:
@@ -94,15 +94,15 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
 
             # Search recorded audio until correlation confidence threshold is met
             FOUND = False
-            while not FOUND:
+            while not FOUND and n_start_look + len(stim) <= len(rec_audio):
+                # Number of samples of recorded audio to search over
+                n_search_use = min(n_search + len(stim), len(rec_audio) - n_start_look)
 
                 # Get segment of recorded audio to search
-                rec_audio_use = rec_audio[n_start_look : n_start_look + n_search]
+                rec_audio_use = rec_audio[n_start_look : n_start_look + n_search_use]
 
                 # Perform cross correlation
-                corrs = sig.correlate(rec_audio_use, stim, mode='full')
-                # Remove segment where stim is correlated with zeros (instead of recorded audio)
-                corrs = np.abs(corrs[len(stim)-1:])
+                corrs = sig.correlate(rec_audio_use, stim, mode='valid')
 
                 # Find points of cross correlation to search
                 corr_peaks = sig.find_peaks(corrs, height=np.percentile(corrs, 99.9))[0]
@@ -133,11 +133,19 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                     max_corrs.append(max_val)
 
                     if verbose:
-                        print(f'Found {stim_name}', possible_times)
-                else:
-                    # Jump ahead by 1/10th of the search time
-                    n_start_look = n_start_look + n_search//10
+                        print(f'Found {stim_name} with correlation={max_val:.4f} @', possible_times)
 
+                    # Jump ahead to 99th percentile of the found stimulus
+                    n_start_look = n_start_look + max_ind + len(stim)*99//100
+                else:
+                    # Jump ahead to 99th percentile of last search window
+                    n_start_look = n_start_look + n_search*99//100
+
+            if not FOUND:
+                plt.figure()
+                plt.plot(rec_audio)
+                plt.show()
+                raise ValueError('Failed to find all stimuli during alignment. Is this the correct audio channel?')
 
         # Determine which stimulus channel was best, set useCh, save inds
         if useCh == None and verbose:
@@ -148,8 +156,3 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
 
 
     return alignment_times, alignment_confidence
-
-
-
-
-
