@@ -652,7 +652,7 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
             for ch in range(sig.shape[1]):
                 specs.append(auditory_spectrogram(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
             spec = np.concatenate(specs, axis=-1)
-        elif sign.ndim == 1:
+        elif sig.ndim == 1:
             spec = auditory_spectrogram(sig, fs, **aud_kwargs)
         else:
             raise ValueError(f'Waveform to compute spectrogram for is more than 2 dimensional. Got {sig.ndim} dimensions')
