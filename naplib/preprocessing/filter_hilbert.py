@@ -43,6 +43,12 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         If not None, each output phase and amplitude will be resampled to this sampling rate.
     n_jobs : int, default=-1
         Number of jobs to use to compute filterbank across channels in parallel in filterbank_hilbert.
+        Using n_jobs > 1 is highly memory intensive, so it will not necessarily improve performance,
+        depending on the length of trials.
+    verbose : int, default=0
+        Level of output verbosity. If >= 1 displays progress over trials. If >= 2 also displays progress
+        over channels for each trial.
+
     Returns
     -------
     phase_amplitude_data : naplib.Data instance
@@ -61,17 +67,13 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     '''
     field, fs = _parse_outstruct_args(data, field, fs, allow_different_lengths=True, allow_strings_without_outstruct=False)
     
-    Wn_ = np.asarray(Wn)
-    if Wn_.ndim == 1:
-        Wn_ = Wn_[np.newaxis,:]
+    Wn = np.asarray(Wn)
+    if Wn.ndim == 1:
+        Wn = Wn[np.newaxis,:]
     
-    max_f_overall = Wn_.max() + 1
-    
-    
-    n_freq_bands = Wn_.shape[0]
     freq_band_names = []
     if bandnames is not None:
-        if not (isinstance(bandnames, list) and isinstance(bandnames[0], str) and len(bandnames) == Wn_.shape[0]):
+        if not (isinstance(bandnames, list) and isinstance(bandnames[0], str) and len(bandnames) == Wn.shape[0]):
             raise ValueError(f'If provided, bandnames must be a list of strings, one for each frequency band.')
         if len(set(bandnames)) != len(bandnames):
             raise ValueError(f'All frequency bandnames must be unique, but found duplicates.')
@@ -79,41 +81,36 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
             freq_band_names.append(bandname + ' phase')
             freq_band_names.append(bandname + ' amp')
     else:
-        for freq_band in Wn_:
+        for freq_band in Wn:
             freq_band_names.append(f'{freq_band} phase')
             freq_band_names.append(f'{freq_band} amp')
 
-    if len(set([str(w) for w in Wn_])) != Wn_.shape[0]:
+    if len(set([str(w) for w in Wn])) != Wn.shape[0]:
         raise ValueError(f'All frequency bands in Wn must be unique, but found duplicates.')
 
     # prepare dict of lists to put output data into
     phase_amplitude_data = {}
     for freq_band_name in freq_band_names:
         phase_amplitude_data[freq_band_name] = []
-
+    
     # loop through trials
     for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=verbose < 1):
-        x_phase, x_amplitude, center_freqs = filterbank_hilbert(trial, fs_trial, Wn=[0, max_f_overall], n_jobs=n_jobs)
+        phase_mean, amp_mean, _ = filterbank_hilbert(trial, fs_trial, Wn, n_jobs=n_jobs, verbose=verbose)
+
+        # resample frequency band outputs to fs_out if necessary
+        if fs_out is not None and fs_out < fs_trial:
+            desired_len = round(fs_out / fs_trial * len(phase_mean))
+            phase_mean = resample(phase_mean, desired_len, axis=0)
+            amp_mean = resample(amp_mean, desired_len, axis=0)
         
-        for ii, freq_band in enumerate(Wn_):
-            minf, maxf = freq_band
-            band_locator = np.logical_and(center_freqs>=minf, center_freqs<=maxf)
-            if band_locator.sum() == 0:
-                raise ValueError(f'Frequency band {freq_band} is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
-            # average over the filters in the frequency band
-            phase_mean = x_phase[:,:,band_locator].mean(-1)
-            amp_mean = x_amplitude[:,:,band_locator].mean(-1)
-            if fs_out is not None and fs_out < fs_trial:
-                desired_len = round(fs_out / fs_trial * len(phase_mean))
-                phase_mean = resample(phase_mean, desired_len, axis=0)
-                amp_mean = resample(amp_mean, desired_len, axis=0)
-            phase_amplitude_data[freq_band_names[2*ii]].append(phase_mean)
-            phase_amplitude_data[freq_band_names[2*ii+1]].append(amp_mean)
+        for i in range(len(Wn)):
+            phase_amplitude_data[freq_band_names[2*i]].append(phase_mean[:,:,i])
+            phase_amplitude_data[freq_band_names[2*i+1]].append(amp_mean[:,:,i])
     
     return Data(phase_amplitude_data, strict=False)
     
     
-def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1, verbose=1):
+def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=-1, verbose=1):
     '''
     Compute the phase and amplitude (envelope) of a signal over for a single frequency band,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -128,7 +125,7 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1, verbose=1):
         Signal to filter. Filtering is performed on each channel independently.
     fs : int
         Sampling rate.
-    Wn : list or array-like, length 2, default=[1, 150]
+    Wn : list or array-like, length 2, default=[[1, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
         of [1, 150] results in 42 filters.
     n_jobs : int, default=-1
@@ -162,11 +159,13 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1, verbose=1):
     
     '''
     
+    Wn = np.asarray(Wn)
+
     # create filter bank
     a = np.array([np.log10(0.39), 0.5])
     f0          = 0.018 
     octSpace    = 1./7 
-    minf, maxf  = Wn
+    minf, maxf  = Wn.min(), Wn.max()+1
     if minf >= maxf:
         raise ValueError(f'Upper bound of frequency range must be greater than lower bound, but got lower bound of {minf} and upper bound of {maxf}')
     maxfo       = np.log2(maxf/f0)  # octave of max freq
@@ -219,26 +218,47 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1, verbose=1):
     if x.ndim > 1:
         ind = [np.newaxis] * x.ndim
         ind[0] = slice(None)
-        h = h[tuple(ind)]   
+        h = h[tuple(ind)]
+
+
+    hilb_phase = np.zeros((*x.shape, len(Wn)), dtype='float32')
+    hilb_amp = np.zeros((*x.shape, len(Wn)), dtype='float32')
 
     # run channels in parallel
     if n_jobs == 1:
         # pre-allocate
-        hilb_channels = np.empty((len(x), x.shape[1], len(cfs)), dtype=np.csingle)
         for chn in trange(x.shape[1], disable=verbose < 2):
-            hilb_channels[:,chn,:] = _vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds, three_d=False)
+            hilb_channel = _vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds, three_d=False)
+            for i, (minf, maxf) in enumerate(Wn):
+                band_locator = np.logical_and(cfs>=minf, cfs<=maxf)
+                if band_locator.sum() == 0:
+                    raise ValueError(f'Frequency band [{minf}, {maxf}] is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
+                
+                # average over the filters in the frequency band
+                hilb_phase[:,chn,i] = np.angle(hilb_channel[:,band_locator]).mean(-1)
+                hilb_amp[:,chn,i] = np.abs(hilb_channel[:,band_locator]).mean(-1)
+
     else:
         hilb_channels = Parallel(n_jobs=n_jobs)(delayed(_vectorized_band_hilbert)(
             Xf[:,chn], h, N, freqs, cfs, sds, True) for chn in range(x.shape[1]))
-        # concatenate channels into a complex-valued 3D array
-        hilb_channels = np.concatenate(hilb_channels, axis=1)
+
+        for chn, hilb_channel in enumerate(hilb_channels):
+            for i, (minf, maxf) in enumerate(Wn):
+                band_locator = np.logical_and(cfs>=minf, cfs<=maxf)
+                if band_locator.sum() == 0:
+                    raise ValueError(f'Frequency band [{minf}, {maxf}] is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
+                
+                # average over the filters in the frequency band
+                hilb_phase[:,chn,i] = np.angle(hilb_channel[:,band_locator]).mean(-1)
+                hilb_amp[:,chn,i] = np.abs(hilb_channel[:,band_locator]).mean(-1)
     
-    return np.angle(hilb_channels), np.abs(hilb_channels), cfs
+    return hilb_phase, hilb_amp, cfs
+
 
 
 def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_, three_d=True):
     n_freqs = len(freqs_)
-    H = np.zeros((N_,len(cfs_)))
+    H = np.zeros((N_,len(cfs_)), dtype='float32')
     k = freqs_.reshape(-1,1)-cfs_.reshape(1,-1)
     H[:n_freqs] = np.exp((-0.5)*((np.divide(k, sds_))**2))
     H[n_freqs:,:] = np.flip(H[1:int(np.floor((N_+1)/2)),:], axis=0)
