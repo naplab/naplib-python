@@ -1,10 +1,10 @@
 import numpy as np
 import scipy.signal as sig
 from scipy import stats
-from tqdm.auto import tqdm, trange
+from tqdm.auto import tqdm
 
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
- use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=True):
+ use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=1):
     '''
     Find the times that correspond to the start and end time of each stimulus
     Parameters
@@ -57,7 +57,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     useCh = None
 
     # Iterate over each stimulus provided in stim_order
-    for stim_name in tqdm(stim_order):
+    for stim_name in tqdm(stim_order, total=len(stim_order), disable=verbose < 1):
         # Get stimulus waveform and sampling rate
         stim_fs, stim_full = stim_dict[stim_name]
 
@@ -117,7 +117,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                             max_val = curr_corr
                             max_ind = pk
 
-                if verbose:
+                if verbose >= 2:
                     print(f'Started looking at t={n_start_look/rec_fs:.2f}')
                     print(f'Found segment with correlation={max_val:.4f}')
 
@@ -131,7 +131,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                         ))
                     max_corrs.append(max_val)
 
-                    if verbose:
+                    if verbose >= 1:
                         print(f'Found {stim_name} with correlation={max_val:.4f} @', possible_times)
 
                     # Jump ahead to 99th percentile of the found stimulus
@@ -147,7 +147,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 raise ValueError('Failed to find all stimuli during alignment. Is this the correct audio channel?')
 
         # Determine which stimulus channel was best, set useCh, save inds
-        if useCh == None and verbose:
+        if useCh is None and verbose >= 1:
             print(f'Using channel {np.argmax(max_corrs)}')
         useCh = np.argmax(max_corrs)
         alignment_times.append(possible_times[useCh])

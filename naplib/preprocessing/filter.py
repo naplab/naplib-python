@@ -1,11 +1,12 @@
 import numpy as np
 from scipy import signal as sig
+from tqdm.auto import tqdm
 
 from ..data import Data
 from ..utils import _parse_outstruct_args
 
 
-def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, axis=0, num_repeats=1):
+def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, axis=0, num_repeats=1, verbose=0):
     '''
     Filter input data with a notch filter to remove line noise and its harmonics.
     A notch FIR filter is applied at the line noise frequency and all of its
@@ -44,13 +45,12 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
     
     assert isinstance(f, int) or isinstance(f, float), 'line-noise frequency "f" must be an int or float'
     
-        
     output = []
     
     # params for firwin2
     fs_ = float(fs[0])
     
-    for x, trial_fs in zip(field, fs):
+    for x, trial_fs in tqdm(zip(field, fs), total=len(field), disable=verbose < 1):
         
         multiplier = 1
 
@@ -77,7 +77,7 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
     return output
 
 
-def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='dataf', order=2, return_filters=False):
+def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='dataf', order=2, return_filters=False, verbose=0):
     '''
     Filter time series signals using an Nth order digital Butterworth filter. The filter
     is applied to each column of each trial in the field data.
@@ -123,7 +123,7 @@ def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='da
     
     filters = []
     
-    for trial_data, trial_fs in zip(field, fs):
+    for trial_data, trial_fs in tqdm(zip(field, fs), total=len(field), disable=verbose < 1):
     
         b, a = sig.butter(order, Wn, btype=btype, fs=trial_fs, output='ba')
         

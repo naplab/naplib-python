@@ -2,12 +2,13 @@ import numpy as np
 from joblib import Parallel, delayed
 from scipy.fft import fft, ifft
 from scipy.signal import resample
+from tqdm.auto import tqdm, trange
 
 from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=-1):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=-1, verbose=0):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -91,7 +92,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         phase_amplitude_data[freq_band_name] = []
 
     # loop through trials
-    for trial, fs_trial in zip(field, fs):
+    for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=verbose < 1):
         x_phase, x_amplitude, center_freqs = filterbank_hilbert(trial, fs_trial, Wn=[0, max_f_overall], n_jobs=n_jobs)
         
         for ii, freq_band in enumerate(Wn_):
@@ -112,7 +113,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     return Data(phase_amplitude_data, strict=False)
     
     
-def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
+def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1, verbose=1):
     '''
     Compute the phase and amplitude (envelope) of a signal over for a single frequency band,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -224,7 +225,7 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     if n_jobs == 1:
         # pre-allocate
         hilb_channels = np.empty((len(x), x.shape[1], len(cfs)), dtype=np.csingle)
-        for chn in range(x.shape[1]):
+        for chn in trange(x.shape[1], disable=verbose < 2):
             hilb_channels[:,chn,:] = _vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds, three_d=False)
     else:
         hilb_channels = Parallel(n_jobs=n_jobs)(delayed(_vectorized_band_hilbert)(

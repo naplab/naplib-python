@@ -216,7 +216,7 @@ def process_ieeg(
     
     # # perform alignment
     alignment_times, alignment_confidence = align_stimulus_to_recording(
-        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=log_level.upper()=='DEBUG', **alignment_kwargs
+        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=_verbosity(log_level), **alignment_kwargs
     )
     
     # truncate data around earliest and lastest time that we need
@@ -253,6 +253,7 @@ def process_ieeg(
     logging.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
+                                                       verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
         
     # # Cut raw data up into blocks based on alignment
@@ -277,9 +278,10 @@ def process_ieeg(
     if len(Wn) > 0:
         logging.info(f'Extracting frequency bands: {Wn} ...')
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
-                                                                fs=raw_data['data_f'],
-                                                                Wn=Wn, bandnames=bandnames,
-                                                                n_jobs=1)
+                                                               fs=raw_data['data_f'],
+                                                               Wn=Wn, bandnames=bandnames,
+                                                               n_jobs=1,
+                                                               verbose=_verbosity(log_level))
 
         logging.info(f'Storing response bands of interest...')
         # only keep amplitude or phase if that's what the user specified
@@ -722,3 +724,13 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft):
         output[field] = split_field
     
     return nlData(output)
+
+def _verbosity(log_level) -> int:
+    log_level = log_level.upper()
+    if log_level == 'DEBUG':
+        return 2
+    elif log_level == 'INFO':
+        return 1
+    else:
+        return 0
+
