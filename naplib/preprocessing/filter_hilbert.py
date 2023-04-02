@@ -1,12 +1,13 @@
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.fft import fft, ifft
+from scipy.signal import resample
 
-from ..data import Data
-from ..utils import _parse_outstruct_args
+from naplib.data import Data
+from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, n_jobs=-1):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=-1):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -26,9 +27,9 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     fs : string | int, default='dataf'
         Sampling rate of the data. Either a string specifying a field of the Data or an int
         giving the sampling rate for all trials.
-    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[30, 70],[70, 150]]
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
-        of [[30, 70],[70, 150]] extracts the phase and amplitude of the gamma band and
+        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
         highgamma band.
     bandnames : list of strings, length=n_freq_bands, optional
         If provided, these are used to create the field names for each frequency band's amplitude
@@ -37,9 +38,10 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         then the fields of the output Data will be {'theta phase', 'theta amp', 'highgamma phase',
         'highgamma amp'}. But if bandnames=None, then they will be {'[ 8 12] phase', '[ 8 12] amp',
         '[ 70 150] phase', '[ 70 150] amp'}.
+    fs_out : int, default=None
+        If not None, each output phase and amplitude will be resampled to this sampling rate.
     n_jobs : int, default=-1
         Number of jobs to use to compute filterbank across channels in parallel in filterbank_hilbert.
-
     Returns
     -------
     phase_amplitude_data : naplib.Data instance
@@ -47,17 +49,14 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         there will be a field for phase and a field for amplitude of that band, each with
         shape (time, channels) for each trial.
     
-
     See Also
     --------
     filterbank_hilbert
-
     References
     ----------
     .. [#edwards] Edwards, Erik, et al. "Comparison of time–frequency responses
                and the event-related potential to auditory speech stimuli in
                human cortex." Journal of neurophysiology 102.1 (2009): 377-386.
-
     '''
     field, fs = _parse_outstruct_args(data, field, fs, allow_different_lengths=True, allow_strings_without_outstruct=False)
     
@@ -101,8 +100,14 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
             if band_locator.sum() == 0:
                 raise ValueError(f'Frequency band {freq_band} is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
             # average over the filters in the frequency band
-            phase_amplitude_data[freq_band_names[2*ii]].append(x_phase[:,:,band_locator].mean(-1))
-            phase_amplitude_data[freq_band_names[2*ii+1]].append(x_amplitude[:,:,band_locator].mean(-1))
+            phase_mean = x_phase[:,:,band_locator].mean(-1)
+            amp_mean = x_amplitude[:,:,band_locator].mean(-1)
+            if fs_out is not None and fs_out < fs_trial:
+                desired_len = round(fs_out / fs_trial * len(phase_mean))
+                phase_mean = resample(phase_mean, desired_len, axis=0)
+                amp_mean = resample(amp_mean, desired_len, axis=0)
+            phase_amplitude_data[freq_band_names[2*ii]].append(phase_mean)
+            phase_amplitude_data[freq_band_names[2*ii+1]].append(amp_mean)
     
     return Data(phase_amplitude_data, strict=False)
     
@@ -136,7 +141,6 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
         Envelope of each frequency bin in the filter bank for each channel.
     center_freqs : np.ndarray, shape (frequency_bins,)
         Center frequencies for each frequency bin used in the filter bank.
-
     Examples
     --------
     >>> import naplib as nl
@@ -202,7 +206,7 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
     
     # perform hilbert transform at each center freq
     
-    Xf = fft(x, N, axis=0)
+    Xf = fft(x.astype('float32'), N, axis=0)
     
     h = np.zeros(N, dtype=Xf.dtype)
     if N % 2 == 0:
@@ -216,25 +220,31 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=-1):
         ind[0] = slice(None)
         h = h[tuple(ind)]   
 
-    filtered_data = np.zeros((*x.shape, len(cfs)), dtype=np.cdouble)
-
-
-    def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_):
-        n_freqs = len(freqs_)
-        H = np.zeros((N_,len(cfs_)))
-        k = freqs_.reshape(-1,1)-cfs_.reshape(1,-1)
-        H[:n_freqs] = np.exp((-0.5)*((np.divide(k, sds_))**2))
-        H[n_freqs:,:] = np.flip(H[1:int(np.floor((N_+1)/2)),:], axis=0)
-        H[0,:] = 0.
-        H = np.multiply(H,h_)
-        hilbdata = ifft(X_fft[:,np.newaxis] * H, N_, axis=0)
-        return hilbdata[:,np.newaxis,:]
-    
     # run channels in parallel
-    hilb_channels = Parallel(n_jobs=n_jobs)(delayed(_vectorized_band_hilbert)(
-        Xf[:,chn], h, N, freqs, cfs, sds) for chn in range(x.shape[1]))
-    
-    # concatenate channels into a complex-valued 3D array
-    hilb_channels = np.concatenate(hilb_channels, axis=1)
+    if n_jobs == 1:
+        # pre-allocate
+        hilb_channels = np.empty((len(x), x.shape[1], len(cfs)), dtype=np.csingle)
+        for chn in range(x.shape[1]):
+            hilb_channels[:,chn,:] = _vectorized_band_hilbert(Xf[:,chn], h, N, freqs, cfs, sds, three_d=False)
+    else:
+        hilb_channels = Parallel(n_jobs=n_jobs)(delayed(_vectorized_band_hilbert)(
+            Xf[:,chn], h, N, freqs, cfs, sds, True) for chn in range(x.shape[1]))
+        # concatenate channels into a complex-valued 3D array
+        hilb_channels = np.concatenate(hilb_channels, axis=1)
     
     return np.angle(hilb_channels), np.abs(hilb_channels), cfs
+
+
+def _vectorized_band_hilbert(X_fft, h_, N_, freqs_, cfs_, sds_, three_d=True):
+    n_freqs = len(freqs_)
+    H = np.zeros((N_,len(cfs_)))
+    k = freqs_.reshape(-1,1)-cfs_.reshape(1,-1)
+    H[:n_freqs] = np.exp((-0.5)*((np.divide(k, sds_))**2))
+    H[n_freqs:,:] = np.flip(H[1:int(np.floor((N_+1)/2)),:], axis=0)
+    H[0,:] = 0.
+    H = np.multiply(H,h_)
+    hilbdata = ifft(X_fft[:,np.newaxis] * H, N_, axis=0).astype('csingle')
+    if three_d:
+        return hilbdata[:,np.newaxis,:]
+    else:
+        return hilbdata

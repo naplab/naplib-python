@@ -1,18 +1,18 @@
 import logging
 import os
-from typing import Union, Tuple, List, Optional, Dict
+from typing import Union, Tuple, List, Optional, Dict, Sequence
 
 import numpy as np
-from scipy.signal import resample
-from scipy.signal import welch
+from scipy.signal import resample, welch, correlate
 from scipy.interpolate import interp1d
 from scipy.spatial.distance import pdist, squareform
+from scipy.stats import pearsonr
 
 import matplotlib.pyplot as plt
 
 from hdf5storage import loadmat
 
-from naplib.io import load_tdt, load_nwb, load, load_wav_dir
+from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
 from naplib import Data as nlData
@@ -20,12 +20,11 @@ from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
 LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
-DATA_LOADERS = {'tdt': load_tdt}
 
 
 def process_ieeg(
     data_path: str,
-    stim_dir: str,
+    alignment_dir: str,
     stim_order_path: Optional[str]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
@@ -33,11 +32,11 @@ def process_ieeg(
     rereference_method: Optional[Union[str, np.ndarray]]=None,
     store_reference: bool=False,
     aud_channel: Union[str, int]='infer',
-    aud_channel_infer_method: str='spectrum',
+    aud_channel_infer_method: str='crosscorr',
     bands: Union[str, List[str], List[np.ndarray], List[float], np.ndarray]=['highgamma'],
     phase_amp: str='amp',
     befaft: Union[List, np.ndarray]=[1, 1],
-    intermediate_fs: Optional[int]=1000,
+    intermediate_fs: Optional[int]=600,
     final_fs: int=100,
     alignment_kwargs: dict={},
     line_noise_kwargs: dict={},
@@ -52,12 +51,12 @@ def process_ieeg(
         String specifying data directory (for TDT) or file path for raw data file
     alignment_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
-    stim_order_path : Optional[str] path-like, defaults to ``stim_dir``
+    stim_order_path : Optional[str] path-like, defaults to ``alignment_dir``
         If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
         stimuli names as lines in the file, which should correspond to the names of the .wav files in ``stim_dir``. If a
         directory, the directory must contain such a file. If None, will search for such a file within
-        ``stim_dir``.
-    stim_dirs : Optional[Dict[str, str]], defaults to alignment_dir
+        ``alignment_dir``.
+    stim_dirs : Optional[Dict[str, str]], defaults to ``alignment_dir``
         If not provided, alignment_dir is assumed to contain the stimulus as well.
         If provided, can be used to specify additional paths from which to load sounds which will be converted to the
         chosen spectrotemporal features. This dict should have keys which are the name for the stimuli and values
@@ -77,9 +76,15 @@ def process_ieeg(
     aud_channel : Union[str, int], default='infer',
         If an int, specifies the index of the wav channel loaded from the raw recording which
         should be used for alignment. If 'infer', then this is inferred.
-    aud_channel_infer_method : str, default='spectrum'
-        Method for inferring aud channel, either 'spectrum' or 'envelope'.
-    bands : Union[str, list[str], list[np.ndarray], list[float], np.ndarray]
+    aud_channel_infer_method : str, default='crosscorr'
+        Method for inferring aud channel used for alignment, either 'crosscorr','spectrum', or 'interactive'.
+        'crosscorr' computes cross correlation between stimulus waveform and each wav channel and selects
+        maximum. 'spectrum' compares the power spectra of each wav channel to that of the stimulus and chooses
+        the maximum (which is not very robust when using certain alignment stimuli like triggers).
+        'interactive' prints the name of each wav channel and asks the user to specify which one
+        should be used for alignment. This is only an option when wav_labels are present, which is
+        only for some data types (like edf).
+    bands : Union[str, list[str], list[np.ndarray], list[float], np.ndarray], default=['highgamma']
         Frequency bands, specified as either strings or array-likes of length 2 giving the lower
         and upper bounds. For example, [[8, 13], np.array([30, 70]), 'highgamma'] is equivalent
         to ['theta', 'gamma', [30, 70]]. Or, can use 'raw' to specify raw neural data. Keep in mind,
@@ -90,7 +95,7 @@ def process_ieeg(
     befaft : Union[List, np.ndarray], default=[1,1]
         Extra time (in sec.) to store from the neural data before the start of and after the end of each
         stimulus.
-    intermediate_fs : Optional[int], default=1000
+    intermediate_fs : Optional[int], default=600
         If provided downsamples the loaded raw neural data to this sampling rate before further
         preprocessing. If this is greater than the raw sampling rate, no resampling is done.
     final_fs : int, default=100
@@ -137,13 +142,19 @@ def process_ieeg(
         
     elif data_type == 'nwb':
         logging.info(f'Loading nwb data...')
-        if not data_path.endswith('.nwb'):
-            raise ValueError(f'data_type is a nwb but data_path is not a nwb file: {data_path}')
+        if not data_path.endswith(('.nwb', '.NWB')):
+            raise ValueError(f'data_type is nwb but data_path is not a nwb file: {data_path}')
         raw_data = load_nwb(data_path)
+
+    elif data_type == 'edf':
+        logging.info(f'Loading edf data...')
+        if not data_path.endswith(('.edf', '.EDF')):
+            raise ValueError(f'data_type is edf but data_path is not an edf file: {data_path}')
+        raw_data = load_edf(data_path)
         
     elif data_type == 'pkl':
-        if not data_path.endswith('.pkl') or not data_path.endswith('.p'):
-            raise ValueError(f'data_type is a pkl but data_path is not a pkl file: {data_path}')
+        if not data_path.endswith(('.pkl', '.p')):
+            raise ValueError(f'data_type is pkl but data_path is not a pkl file: {data_path}')
         logging.info(f'Loading pkl data...')
         raw_data = load(data_path)
         if not isinstance(raw_data, dict) or ('data' not in raw_data and 'data_f' not in raw_data and 'wav' not in raw_data and 'wav_f' not in raw_data):
@@ -151,13 +162,13 @@ def process_ieeg(
         
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
-    
+
     # # load StimOrder
     logging.info('Loading StimOrder...')
     if stim_order_path is not None:
         stim_order = _load_stim_order(stim_order_path)
     else:
-        stim_order = _load_stim_order(stim_dir)
+        stim_order = _load_stim_order(alignment_dir)
 
     data_f = raw_data['data_f']
         
@@ -171,7 +182,7 @@ def process_ieeg(
 
     # # load stimuli files
     logging.info('Loading stimuli...')
-    stim_data = load_wav_dir(stim_dir)
+    stim_data = load_wav_dir(alignment_dir)
     if stim_dirs is not None:
         extra_stim_data = {k: load_wav_dir(stim_dir2) for k, stim_dir2 in stim_dirs.items()}
         for extra_stim_data_ in extra_stim_data.values():
@@ -187,6 +198,7 @@ def process_ieeg(
         logging.info(f'Inferring alignment channel from wav channels...')
         alignment_wav, alignment_ch = _infer_aud_channel(raw_data['wav'],
                                                          raw_data['wav_f'],
+                                                         raw_data.get('wav_labels', None),
                                                          list(stim_data.values()),
                                                          method=aud_channel_infer_method,
                                                          debug=log_level.upper()=='DEBUG')
@@ -237,12 +249,16 @@ def process_ieeg(
     else:
         reference_to_store = None
     
-    # filter line noise (now raw_data['data'] is a list of length 1)
+    # filter line noise (after this, raw_data['data'] is a list of length 1)
     logging.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
                                                        **line_noise_kwargs)
         
+    # # Cut raw data up into blocks based on alignment
+    logging.info('Chunking responses based on alignment...')
+    data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft)
+
     # # extract frequency bands
     if 'raw' in bands:
         include_raw = True
@@ -257,33 +273,40 @@ def process_ieeg(
         else:
             bandnames.append(str(wn_))
     
-    logging.info(f'Extracting frequency bands: {Wn} ...')
-    frequency_bands = preprocessing.phase_amplitude_extract(field=raw_data['data'],
-                                                            fs=raw_data['data_f'],
-                                                            Wn=Wn, bandnames=bandnames,
-                                                            n_jobs=1)
-    
-    logging.info(f'Storing response bands of interest...')
-    # only keep amplitude or phase if that's what the user specified
-    if phase_amp == 'amp':
-        fields_to_keep = [xx for xx in frequency_bands.fields if ' amp' in xx]
-    elif phase_amp == 'phase':
-        fields_to_keep = [xx for xx in frequency_bands.fields if ' phase' in xx]
+
+    if len(Wn) > 0:
+        logging.info(f'Extracting frequency bands: {Wn} ...')
+        data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
+                                                                fs=raw_data['data_f'],
+                                                                Wn=Wn, bandnames=bandnames,
+                                                                n_jobs=1)
+
+        logging.info(f'Storing response bands of interest...')
+        # only keep amplitude or phase if that's what the user specified
+        if phase_amp == 'amp':
+            fields_to_keep = [xx for xx in data_by_trials.fields if ' amp' in xx]
+        elif phase_amp == 'phase':
+            fields_to_keep = [xx for xx in data_by_trials.fields if ' phase' in xx]
+        else:
+            fields_to_keep = data_by_trials.fields
+        data_by_trials = data_by_trials[fields_to_keep]
+
+        if include_raw:
+            data_by_trials['raw'] = data_by_trials_raw['raw']
+
     else:
-        fields_to_keep = frequency_bands.fields
-    frequency_bands = frequency_bands[fields_to_keep]
-    
-    if include_raw:
-        frequency_bands['raw'] = raw_data['data']
-    
+        # if no other frequency bands, then default to output raw
+        data_by_trials = data_by_trials_raw
+
+    desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in data_by_trials_raw['raw']]
+
+    if 'raw' in data_by_trials.fields:
+        data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
+
     if reference_to_store is not None:
-        frequency_bands['reference'] = reference_to_store
+        data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store, desired_lens)]
         
-        
-    # # Cut this up based on alignment
-    logging.info('Chunking responses based on alignment...')
-    frequency_bands = _split_data_on_alignment(frequency_bands, raw_data['data_f'], alignment_times, befaft)
-    
+
     if store_all_wav:
         logging.info('Chunking wav channels based on alignment...')
         wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft)
@@ -293,7 +316,9 @@ def process_ieeg(
     final_output = {'name': stim_order,
                     'alignment_start': list(alignment_times[:,0]),
                     'alignment_end': list(alignment_times[:,1]),
-                    'alignment_confidence': alignment_confidence}
+                    'alignment_confidence': alignment_confidence,
+                    'data_f': [final_fs for _ in stim_order],
+                    'befaft': [befaft for _ in stim_order]}
 
     # extract spectrograms
     if store_spectrograms:
@@ -304,17 +329,21 @@ def process_ieeg(
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[f'{k} sound'] = [stim_data_dict[stim_name] for stim_name in stim_order]
+            final_output[f'{k} sound'] = [stim_data_dict[stim_name][1] for stim_name in stim_order]
+            final_output[f'{k} sound_f'] = [stim_data_dict[stim_name][0] for stim_name in stim_order]
+
     del extra_stim_data
     
     final_output['data_type'] = [data_type for _ in stim_order]
     
-    for bandname in frequency_bands.fields:
-        final_output[bandname] = frequency_bands[bandname]
+    for bandname in data_by_trials.fields:
+        final_output[bandname] = data_by_trials[bandname]
         
     if store_all_wav:
+        final_output['wav_f'] = [raw_data['wav_f'] for _ in stim_order]
         for ww, wav_ch_name in enumerate(raw_data['labels_wav']):
             final_output[wav_ch_name] = [xx[:,ww] for xx in wav_data_chunks['wav']]
+            final_output[f'{wav_ch_name}_f'] = [xx[:,ww] for xx in wav_data_chunks['wav']]
     
     # # Put output Data all together
     final_output = nlData(final_output)
@@ -327,9 +356,9 @@ def process_ieeg(
     # elec_locs
         
     
-def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
+def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
-                       method: str='spectrum', min_freq=20, debug=False):
+                       method: str='crosscorr', min_freq=20, debug=False):
     """
     Infer which recorded wav channel matches the stimulus waveforms provided.
     
@@ -337,13 +366,20 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
     ----------
     wav_data : np.ndarray, shape (time, channels)
         Loaded wav channels from the recording system. Should be of shape (time, channels)
+    wav_fs : int
+        Sampling rate of wav data.
+    wav_labels : Sequence[str]
+        Name for each wav channel.
     stim_data : List[Tuple[float, np.ndarray]]
         List of tuples containing sampling rate and stimuli sounds/trigger waveforms,
         each of shape (time, ) or (time, 2). If stereo, the left channel will be used.
     method : str, default='spectrum'
-        Method for inferring correct channel from wav_data. Options are 'spectrum', 'envelope'.
-        The 'spectrum' method computes the correlation between the spectrum of each channel in
-        wav_data with the spectrum of the stim_data and choosing the maximum.
+        Method for inferring correct channel from wav_data. Options are 'spectrum', 'envelope',
+        'crosscorr', or 'interactive'.
+        'crosscorr' computes cross correlation between stimulus waveform and each wav channel and selects
+        maximum. 'spectrum' compares the power spectra of each wav channel to that of the stimulus and chooses
+        the maximum (which is not very robust when using certain alignment stimuli like triggers).
+        'interactive' plots each wav channel and asks the user to specify which one should be used for alignment.
     min_freq : float, default=20
         Only used if method='spectrum'. Minimum frequency to include when calculating correlation
         between spectrums.
@@ -363,8 +399,23 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         return wav_data[:,0], wav_fs
     
     assert isinstance(stim_data, list)
-    
-    if method == 'spectrum':
+
+    if method == 'interactive':
+        if wav_labels is None:
+            raise ValueError('Interactive mode only supported when wav_labels is available.')
+
+        print(f'These are the available channels: {", ".join(wav_labels)}.')
+        ch_idx = None
+        while ch_idx is None:
+            pick = input('Which is the audio channel? ').strip()
+            for i, s in enumerate(wav_labels):
+                if pick == s:
+                    ch_idx = i
+                    break
+
+        return wav_data[:, ch_idx], ch_idx
+
+    elif method == 'spectrum':
         fs0 = stim_data[0][0]
         concat_stims = []
         for i, (fs, stim_waveform) in enumerate(stim_data):
@@ -407,7 +458,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
         cat_px = np.concatenate([px1, px2], axis=1)
         dists = 1.0-pdist(cat_px.T, metric='correlation')
         dists = squareform(dists)
-        best_ch_idx = np.argmax(dists[:,-1])
+        best_ch_idx = np.nanargmax(dists[:,-1])
         
         if debug:
             plt.figure(figsize=(8,6))
@@ -419,6 +470,41 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int,
             plt.show()
         
         return wav_data[:, best_ch_idx], best_ch_idx
+    
+    elif method == 'crosscorr' or method == 'xcorr':
+        # Find longest stimulus for more robust inference
+        longest_stim = np.argmax(len(s)/f for f, s in stim_data)
+        stim_fs, stim_data = stim_data[longest_stim]
+
+        desired_len = int(wav_fs / stim_fs * len(stim_data))
+        if desired_len != len(stim_data):
+            stim_data = resample(stim_data, desired_len, axis=0)
+
+        if stim_data.ndim > 1 and stim_data.shape[1] > 1:
+            logging.warning('Performing alignment with stereo audio stimuli is not recommended.'
+                            ' It is recommended to use mono-channel audio for alignment, and any'
+                            ' additional stimuli (including stereo audio) desired in the final '
+                            ' Data object can be specified as extra stimulus directories.')
+
+        scores = []
+        for c in range(wav_data.shape[1]):
+            if stim_data.ndim == 1 or stim_data.shape[1] == 1:
+                pos = np.nanargmax(correlate(wav_data[:, c], stim_data.squeeze(), 'valid'))
+                score = pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())[0]
+            else:
+                pos_left = np.nanargmax(correlate(wav_data[:, c], stim_data[:,0], 'valid'))
+                score_left = pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])[0]
+                pos_right = np.nanargmax(correlate(wav_data[:, c], stim_data[:,1], 'valid'))
+                score_right = pearsonr(wav_data[pos_right:pos_right+len(stim_data), c], stim_data[:,1])[0]
+                score = np.nanmax([score_left, score_right])
+            scores.append(score)
+
+        if debug:
+            logging.info(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
+
+        best_ch_idx = np.nanargmax(scores)
+
+        return wav_data[:,best_ch_idx], best_ch_idx
     
     else:
         raise ValueError(f'Unsupported method argument: {method}')
@@ -492,17 +578,17 @@ def _infer_data_type(data_path: str):
     file_path : str
         Path to file or directory which contains the data.
     """
-    if data_path.endswith('.edf') or data_path.endswith('.EDF'):
+    if data_path.endswith(('.edf', '.EDF')):
         return 'edf', data_path
         
-    if data_path.endswith('.nwb') or data_path.endswith('.NWB'):
+    if data_path.endswith(('.nwb', '.NWB')):
         return 'nwb', data_path
     
-    if data_path.endswith('.pkl') or data_path.endswith('.p'):
+    if data_path.endswith(('.pkl', '.p')):
         return 'pkl', data_path
     
     files_in_dir = [x for x in os.listdir(data_path) if '.' in x and x[0]!='.']
-    file_suffixes = [x.split('.')[1] for x in files_in_dir]
+    file_suffixes = [x.split('.')[-1] for x in files_in_dir]
     
     if 'sev' in file_suffixes or 'tev' in file_suffixes:
         if 'tev' in file_suffixes:
