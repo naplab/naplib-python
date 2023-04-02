@@ -233,8 +233,8 @@ def process_ieeg(
     alignment_times = np.asarray(alignment_times) - earliest_time # shift times back since we are going to truncate the data
     earliest_sample = int(raw_data['data_f'] * earliest_time)
     latest_sample = int(raw_data['data_f'] * latest_time)
-    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample]
-    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample]
+    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample].copy()
+    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample].copy()
     
     # # preprocessing
     
@@ -253,6 +253,7 @@ def process_ieeg(
     logging.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
+                                                       in_place=True,
                                                        verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
         

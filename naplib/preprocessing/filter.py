@@ -6,7 +6,7 @@ from ..data import Data
 from ..utils import _parse_outstruct_args
 
 
-def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, axis=0, num_repeats=1, verbose=0):
+def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, axis=0, num_repeats=1, in_place=False, verbose=0):
     '''
     Filter input data with a notch filter to remove line noise and its harmonics.
     A notch FIR filter is applied at the line noise frequency and all of its
@@ -33,7 +33,11 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
         Axis of the array to apply the filter to.
     num_repeats : int, default=1
         Number of times to repeat convolving the filter. This is useful to increase if the number of taps
-        is low compared to the sampling rate (e.g. less than 1 full second). 
+        is low compared to the sampling rate (e.g. less than 1 full second).
+    in_place : bool, default=False
+        Whether to filter the data in-place.
+    verbose : int, default=0
+        Level of output verbosity. If >= 1, displays progress bar over trials.
 
     Returns
     -------
@@ -54,7 +58,7 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
         
         multiplier = 1
 
-        filtered_x = x.copy()
+        filtered_x = x if in_place else x.copy()
         if filtered_x.ndim == 1:
             filtered_x = filtered_x[:,np.newaxis]
 
@@ -65,10 +69,10 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
             freqs = np.array([0, notchFreq-1, notchFreq-.5, notchFreq+.5, notchFreq+1, fs_/2])/(fs_/2)
             gains = np.array([1, 1, 0, 0, 1, 1])
             taps = sig.firwin2(num_taps, freqs, gains)
-            taps_conv = sig.convolve(taps, taps[::-1]).reshape(-1,1)
+            taps_conv = sig.convolve(taps, taps[::-1]).reshape(-1,1).astype('float32')
 
             for _ in range(num_repeats):
-                filtered_x = sig.convolve(filtered_x, taps_conv, mode='same')
+                filtered_x[:] = sig.convolve(filtered_x, taps_conv, mode='same')
 
             multiplier += 1
     
@@ -77,7 +81,7 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
     return output
 
 
-def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='dataf', order=2, return_filters=False, verbose=0):
+def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='dataf', order=2, return_filters=False, in_place=False, verbose=0):
     '''
     Filter time series signals using an Nth order digital Butterworth filter. The filter
     is applied to each column of each trial in the field data.
@@ -104,6 +108,10 @@ def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='da
         The order of the filter.
     return_filters : bool, default=False
         If True, return the filter transfer function coefficients from each trial's filtering.
+    in_place : bool, default=False
+        Whether to filter the data in-place.
+    verbose : int, default=0
+        Level of output verbosity. If >= 1, displays progress bar over trials.
     
     Returns
     -------
@@ -129,7 +137,11 @@ def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='da
         
         filters.append((b, a))
         
-        filtered_data.append(sig.filtfilt(b, a, trial_data, axis=0))
+        if in_place:
+            filtered_data.append(sig.filtfilt(b, a, trial_data, axis=0))
+        else:
+            trial_data[:] = sig.filtfilt(b, a, trial_data, axis=0)
+            filtered_data.append(trial_data)
         
     if return_filters:
         return filtered_data, filters
