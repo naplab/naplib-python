@@ -130,7 +130,7 @@ class Data(Iterable):
         if not isinstance(fielddata, list):
             raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
         if len(fielddata) != len(self):
-            raise Exception('Length of field is not equal to length of this Data')
+            raise Exception(f'Length of field ({len(fielddata)}) is not equal to length of this Data ({len(self)})')
         for i in range(len(self.data)):
             self.data[i][fieldname] = fielddata[i]
             
