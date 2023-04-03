@@ -118,8 +118,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                             max_ind = pk
 
                 if verbose >= 2:
-                    print(f'Started looking at t={n_start_look/rec_fs:.2f}')
-                    print(f'Found segment with correlation={max_val:.4f}')
+                    print(f'Searching from t={n_start_look/rec_fs:.2f}, found segment with correlation={max_val:.4f}')
 
                 if max_val > confidence_threshold:
                     FOUND = True
@@ -144,7 +143,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 plt.figure()
                 plt.plot(rec_audio)
                 plt.show()
-                raise ValueError('Failed to find all stimuli during alignment. Is this the correct audio channel?')
+                raise ValueError(f'Failed to find stimulus {stim_name} during alignment.')
 
         # Determine which stimulus channel was best, set useCh, save inds
         if useCh is None and verbose >= 1:
