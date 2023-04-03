@@ -18,8 +18,8 @@ def test_load_edf():
     assert data['wav'].shape == (4096, 11)
     
     ref_labels = [s.item() for s in ref['header']['label'][0, 0][0]]
-    assert all(a == b for a, b in zip(data['labels'], ref_labels[:104]))
-    assert all(a == b for a, b in zip(data['wav_labels'], ref_labels[104:]))
+    assert all(a == b for a, b in zip(data['labels_data'], ref_labels[:104]))
+    assert all(a == b for a, b in zip(data['labels_wav'], ref_labels[104:]))
 
     assert np.allclose(data['data'], ref['data'])
     assert np.allclose(data['wav'], ref['wav'])
