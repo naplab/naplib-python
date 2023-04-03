@@ -34,6 +34,11 @@ Phase Amplitude Extract
 .. minigallery:: naplib.features.phase_amplitude_extract
         :add-heading: Examples using ``phase_amplitude_extract ``
 
+Filter Hilbert
+--------------
+
+.. autofunction:: filter_hilbert
+
 Filterbank Hilbert
 ------------------
 

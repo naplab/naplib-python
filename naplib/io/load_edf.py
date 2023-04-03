@@ -10,8 +10,10 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     """
     Load data from EDF file (*.edf).
 
-    TODO: This function supports the original EDF format. For the EDF+ format
-    we might want to use PyEDFlib or mne.io. They are slower.
+    Notes
+    -----
+    This function supports the original EDF format. For the EDF+ format
+    it may be better to use PyEDFlib or mne.io. They are slower.
     
     Parameters
     ----------
@@ -29,6 +31,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
         'labels_data' - array of labels for the channel streams.
         'labels_wav' - array of labels for the audio streams
+
     """
 
     with open(path, 'rb') as fin:
