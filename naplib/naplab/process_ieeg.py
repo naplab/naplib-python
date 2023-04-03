@@ -30,7 +30,7 @@ def process_ieeg(
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     rereference_grid: Optional[np.ndarray]=None,
-    rereference_method: Optional[Union[str, np.ndarray]]=None,
+    rereference_method: str='avg',
     store_reference: bool=False,
     aud_channel: Union[str, int]='infer',
     aud_channel_infer_method: str='crosscorr',
@@ -70,7 +70,7 @@ def process_ieeg(
         If not None, then data are re-referenced based on this referencing scheme. If a numpy array, then
         should specify categorical groupings of which electrodes to be grouped together for re-referencing,
         and must be the same length as the number of electrodes in the raw data.
-    rereference_method : Optional[str], default='avg'
+    rereference_method : str, default='avg'
         If provided, must specify a method for common rereferencing, either 'avg' (average), 'pca' (PCA),
         or 'med' (median). Only used if ``rereference_grid`` is not None.
     store_reference : bool, default=False
