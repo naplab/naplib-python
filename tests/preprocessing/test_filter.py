@@ -58,6 +58,25 @@ def test_remove_60hz(data60):
     assert np.allclose(bp_before, 0.4996227062895015)
     assert np.allclose(bp_after, 0.0057041888335567295)
 
+def test_remove_60hz_inplace(data60):
+    data_tmp = data60['out']['resp']
+    data_f = data60['out']['dataf'][0]
+    
+    data_filt = [d.copy() for d in data_tmp]
+    filter_line_noise(field=data_filt, fs=data_f, in_place=True)
+
+    assert len(data_filt) == len(data_tmp)
+
+    bp_before = bandpower(data_tmp[0][:,0], 500, 59, 61)
+    bp_after = bandpower(data_filt[0][:,0], 500, 59, 61)
+    assert np.allclose(bp_before, 0.4943959279403939)
+    assert np.allclose(bp_after, 0.005800069917108402)
+
+    bp_before = bandpower(data_tmp[0][:,1], 500, 59, 61)
+    bp_after = bandpower(data_filt[0][:,1], 500, 59, 61)
+    assert np.allclose(bp_before, 0.4996227062895015)
+    assert np.allclose(bp_after, 0.0057041888335567295)
+
 def test_remove_60hz_multiple_num_repeats(data60):
     data_tmp = data60['out']
 
@@ -105,11 +124,12 @@ def test_bandpass(data):
     assert np.allclose(bp_band, 0.10979631639822579)
     assert np.allclose(bp_high, 0.0053699618743934365)
 
-def test_bandstop(data):
-    filtered = filter_butter(field=data['out']['resp'], fs=data['out']['dataf'][0], Wn=[10, 20], btype='bandstop')
-    bp_low = bandpower(filtered[0][:,0], 100, 0.1, 10)
-    bp_band = bandpower(filtered[0][:,0], 100, 10, 20)
-    bp_high = bandpower(filtered[0][:,0], 100, 20, 29.9)
+def test_bandstop_inplace(data):
+    data, data_f = data['out']['resp'].copy(), data['out']['dataf'][0]
+    filter_butter(field=data, fs=data_f, Wn=[10, 20], btype='bandstop', in_place=True)
+    bp_low = bandpower(data[0][:,0], 100, 0.1, 10)
+    bp_band = bandpower(data[0][:,0], 100, 10, 20)
+    bp_high = bandpower(data[0][:,0], 100, 20, 29.9)
     assert np.allclose(bp_low, 0.1294933044166706)
     assert np.allclose(bp_band, 0.005552836561214947)
     assert np.allclose(bp_high, 0.11518997948303428)

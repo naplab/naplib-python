@@ -4,7 +4,7 @@ import scipy
 
 
 from naplib import Data
-from naplib.preprocessing import filterbank_hilbert, phase_amplitude_extract
+from naplib.preprocessing import filter_hilbert, filterbank_hilbert, phase_amplitude_extract
 
 @pytest.fixture(scope='module')
 def data_hilbert():
@@ -46,7 +46,7 @@ def test_frequency_range_too_narrow_extract(data_hilbert):
 
     with pytest.raises(ValueError) as excinfo:
         phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandC'])
-    assert 'is too narrow and no filters ' in str(excinfo.value)
+    assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_filter_multiple_bands_same_as_one(data_hilbert):
     data_tmp = data_hilbert['out']
@@ -95,7 +95,7 @@ def test_no_filters_in_freq_range():
 
     with pytest.raises(ValueError) as excinfo:
         phs_amp_data = filterbank_hilbert(x, fs, Wn=[40, 42])
-    assert 'is too narrow, so' in str(excinfo.value)
+    assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_center_freqs_and_output_shape():
     x = np.random.rand(1000, 5)
@@ -114,9 +114,30 @@ def test_center_freqs_and_output_shape():
 
     x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[1, 150])
 
-    assert x_phs.shape == (*x.shape, len(expected_cfs))
-    assert x_amp.shape == (*x.shape, len(expected_cfs))
+    assert x_phs.shape == (*x.shape, 42)
+    assert x_amp.shape == (*x.shape, 42)
     assert np.allclose(cfs, expected_cfs)
+
+def test_filter_center_freqs_and_output_shape():
+    x = np.random.rand(1000, 5)
+    fs = 100
+    expected_cfs = np.array([  1.21558792,   1.64557736,   2.1458696 ,   2.71717229,
+          3.36004234,   4.07492865,   4.499086  ,   4.96739367,
+          5.48444726,   6.05532071,   6.6856161 ,   7.38151862,
+          8.14985731,   8.99817199,   9.93478734,  10.96889452,
+         12.11064142,  13.37123219,  14.76303725,  16.29971462,
+         17.99634398,  19.86957468,  21.93778904,  24.22128283,
+         26.74246438,  29.5260745 ,  32.59942923,  35.99268797,
+         39.73914935,  43.87557808,  48.44256567,  71.98537593,
+         79.4782987 ,  87.75115616,  96.88513133, 106.96985753,
+        118.10429798, 130.39771692, 143.97075186])
+
+    x_phs, x_amp, cfs = filter_hilbert(x, fs, Wn=[[1, 50], [70, 150]])
+
+    assert x_phs.shape == (*x.shape, 2)
+    assert x_amp.shape == (*x.shape, 2)
+    assert np.allclose(cfs, expected_cfs)
+
 
 def test_oneD_signal_same_output():
     x = np.random.rand(1000, 1)

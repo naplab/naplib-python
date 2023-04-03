@@ -1,4 +1,5 @@
 import logging
+import warnings
 import os
 from typing import Union, Tuple, List, Optional, Dict, Sequence
 
@@ -44,6 +45,7 @@ def process_ieeg(
     store_sounds: bool=False,
     store_all_wav: bool=False,
     aud_kwargs: dict={},
+    n_jobs: int=1,
     log_level : str='INFO'
 ):
     """
@@ -114,6 +116,9 @@ def process_ieeg(
     aud_kwargs : dict, default={}
         Keyword arguments to pass to ``naplib.features.auditory_spectrogram``. Can include overrides for frame_len,
         tc, and factor.
+    n_jobs : int, default=1
+        Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
+        so there might even be a negative effect when working with large datasets.
     log_level : str, default='INFO'
         In order of the amount that will be displayed from least to most, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
@@ -216,7 +221,7 @@ def process_ieeg(
     
     # # perform alignment
     alignment_times, alignment_confidence = align_stimulus_to_recording(
-        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=log_level.upper()=='DEBUG', **alignment_kwargs
+        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=_verbosity(log_level), **alignment_kwargs
     )
     
     # truncate data around earliest and lastest time that we need
@@ -233,8 +238,8 @@ def process_ieeg(
     alignment_times = np.asarray(alignment_times) - earliest_time # shift times back since we are going to truncate the data
     earliest_sample = int(raw_data['data_f'] * earliest_time)
     latest_sample = int(raw_data['data_f'] * latest_time)
-    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample]
-    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample]
+    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample].copy()
+    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample].copy()
     
     # # preprocessing
     
@@ -253,6 +258,8 @@ def process_ieeg(
     logging.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
+                                                       in_place=True,
+                                                       verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
         
     # # Cut raw data up into blocks based on alignment
@@ -277,9 +284,10 @@ def process_ieeg(
     if len(Wn) > 0:
         logging.info(f'Extracting frequency bands: {Wn} ...')
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
-                                                                fs=raw_data['data_f'],
-                                                                Wn=Wn, bandnames=bandnames,
-                                                                n_jobs=1)
+                                                               fs=raw_data['data_f'],
+                                                               Wn=Wn, bandnames=bandnames,
+                                                               n_jobs=n_jobs,
+                                                               verbose=_verbosity(log_level))
 
         logging.info(f'Storing response bands of interest...')
         # only keep amplitude or phase if that's what the user specified
@@ -649,7 +657,7 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
             for ch in range(sig.shape[1]):
                 specs.append(auditory_spectrogram(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
             spec = np.concatenate(specs, axis=-1)
-        elif sign.ndim == 1:
+        elif sig.ndim == 1:
             spec = auditory_spectrogram(sig, fs, **aud_kwargs)
         else:
             raise ValueError(f'Waveform to compute spectrogram for is more than 2 dimensional. Got {sig.ndim} dimensions')
@@ -722,3 +730,13 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft):
         output[field] = split_field
     
     return nlData(output)
+
+def _verbosity(log_level) -> int:
+    log_level = log_level.upper()
+    if log_level == 'DEBUG':
+        return 2
+    elif log_level == 'INFO':
+        return 1
+    else:
+        return 0
+
