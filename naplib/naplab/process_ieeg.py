@@ -30,7 +30,7 @@ def process_ieeg(
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     rereference_grid: Optional[np.ndarray]=None,
-    rereference_method: Optional[Union[str, np.ndarray]]=None,
+    rereference_method: str='avg',
     store_reference: bool=False,
     aud_channel: Union[str, int]='infer',
     aud_channel_infer_method: str='crosscorr',
@@ -247,10 +247,10 @@ def process_ieeg(
     if rereference_grid is not None:
         logging.info(f'Performing commong rereferencing using "{rereference_method}" method...')
         if store_reference:
-            rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=raw_data['data'], method=rereference_method, return_reference=True)
+            rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=True)
         else:
-            rereferenced_data = preprocessing.rereference(rereference_grid, field=raw_data['data'], method=rereference_method, return_reference=False)
-        raw_data['data'] = rereferenced_data
+            rereferenced_data = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=False)
+        raw_data['data'] = rereferenced_data[0]
     else:
         reference_to_store = None
     
@@ -286,6 +286,7 @@ def process_ieeg(
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
+                                                               fs_out=final_fs,
                                                                n_jobs=n_jobs,
                                                                verbose=_verbosity(log_level))
 
@@ -312,7 +313,8 @@ def process_ieeg(
         data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
 
     if reference_to_store is not None:
-        data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store, desired_lens)]
+        reference_to_store = _split_data_on_alignment(nlData({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft)
+        data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store['ref'], desired_lens)]
         
 
     if store_all_wav:
@@ -325,7 +327,7 @@ def process_ieeg(
                     'alignment_start': list(alignment_times[:,0]),
                     'alignment_end': list(alignment_times[:,1]),
                     'alignment_confidence': alignment_confidence,
-                    'data_f': [final_fs for _ in stim_order],
+                    'dataf': [final_fs for _ in stim_order],
                     'befaft': [befaft for _ in stim_order]}
 
     # extract spectrograms
@@ -338,25 +340,25 @@ def process_ieeg(
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
             final_output[f'{k} sound'] = [stim_data_dict[stim_name][1] for stim_name in stim_order]
-            final_output[f'{k} sound_f'] = [stim_data_dict[stim_name][0] for stim_name in stim_order]
+            final_output[f'{k} soundf'] = [stim_data_dict[stim_name][0] for stim_name in stim_order]
 
     del extra_stim_data
     
     final_output['data_type'] = [data_type for _ in stim_order]
     
-    for bandname in data_by_trials.fields:
-        final_output[bandname] = data_by_trials[bandname]
+    for fieldname in data_by_trials.fields:
+        final_output[fieldname] = data_by_trials[fieldname]
         
     if store_all_wav:
-        final_output['wav_f'] = [raw_data['wav_f'] for _ in stim_order]
+        final_output['wavf'] = [raw_data['wav_f'] for _ in stim_order]
         for ww, wav_ch_name in enumerate(raw_data['labels_wav']):
             final_output[wav_ch_name] = [xx[:,ww] for xx in wav_data_chunks['wav']]
-            final_output[f'{wav_ch_name}_f'] = [xx[:,ww] for xx in wav_data_chunks['wav']]
     
     # # Put output Data all together
     final_output = nlData(final_output)
     final_output.set_info({'channel_labels': raw_data['labels_data'],
                            'rereference_grid': rereference_grid})
+    logging.info('All done!')
     return final_output
     
 
