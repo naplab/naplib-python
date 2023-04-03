@@ -45,6 +45,7 @@ def process_ieeg(
     store_sounds: bool=False,
     store_all_wav: bool=False,
     aud_kwargs: dict={},
+    n_jobs: int=1,
     log_level : str='INFO'
 ):
     """
@@ -115,6 +116,9 @@ def process_ieeg(
     aud_kwargs : dict, default={}
         Keyword arguments to pass to ``naplib.features.auditory_spectrogram``. Can include overrides for frame_len,
         tc, and factor.
+    n_jobs : int, default=1
+        Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
+        so there might even be a negative effect when working with large datasets.
     log_level : str, default='INFO'
         In order of the amount that will be displayed from least to most, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
@@ -282,7 +286,7 @@ def process_ieeg(
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
-                                                               n_jobs=1,
+                                                               n_jobs=n_jobs,
                                                                verbose=_verbosity(log_level))
 
         logging.info(f'Storing response bands of interest...')
