@@ -8,28 +8,27 @@ from typing import Iterable, Dict
 
 def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     """
-    Load data from TDT structure. Directory should contain a .tdt file.
+    Load data from EDF file (*.edf).
 
     TODO: This function supports the original EDF format. For the EDF+ format
-    we might want to use the PyEDFlib library. It is ~15x slower.
+    we might want to use PyEDFlib or mne.io. They are slower.
     
     Parameters
     ----------
-    directory : str, path-like
+    path : str, path-like
         Directory containing TDT data files (tev, sev, and/or tin files, etc.)
     t1 : float, default=0
         Starting time to extract
     t2 : float, default=0
         Ending time to extract until (default of 0 extracts until end of file)
-    wav_stream : str, default='Wav5'
-        The name of the stream containing the audio recording to extract.
     
     Returns
     -------
     loaded_dict : dict from string to numpy array or float
         Keys: 'data' - loaded neural recording (time*channels), 'data_f' - sampling rate of data,
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
-        'labels' - array of labels for the channel streams
+        'labels_data' - array of labels for the channel streams.
+        'labels_wav' - array of labels for the audio streams
     """
 
     with open(path, 'rb') as fin:
@@ -40,6 +39,9 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         start_time = fin.read(8).decode('ascii')
         header_size = int(fin.read(8).decode('ascii'))
         _ = fin.seek(44, 1)
+
+        if version != 0:
+            raise ValueError('EDF with version != 0 not yet supported.')
 
         num_records = int(fin.read(8).decode('ascii'))
         record_dur = float(fin.read(8).decode('ascii'))
@@ -89,8 +91,8 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         'data_f': sampling_rate,
         'wav': aux_data,
         'wav_f': sampling_rate,
-        'labels': labels[~aux_signals],
-        'wav_labels': labels[aux_signals],
+        'labels_data': labels[~aux_signals],
+        'labels_wav': labels[aux_signals],
     }
 
 
