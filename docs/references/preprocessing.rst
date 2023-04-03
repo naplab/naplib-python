@@ -11,6 +11,16 @@ Normalize
 .. minigallery:: naplib.preprocessing.normalize
         :add-heading: Examples using ``normalize ``
 
+Rereference Data
+----------------
+
+.. autofunction:: rereference
+
+Make Rereference Array for Contacts
+-----------------------------------
+
+.. autofunction:: make_contact_rereference_arr
+
 Filter Line Noise
 -----------------
 
@@ -23,6 +33,11 @@ Phase Amplitude Extract
 
 .. minigallery:: naplib.features.phase_amplitude_extract
         :add-heading: Examples using ``phase_amplitude_extract ``
+
+Filter Hilbert
+--------------
+
+.. autofunction:: filter_hilbert
 
 Filterbank Hilbert
 ------------------

@@ -96,11 +96,11 @@ class Data(Iterable):
             for k, v in data.items():
                 if not isinstance(v, list):
                     raise TypeError(f'When creating a Data from a dict, each value in the '
-                                     'dict must be a list, but for key "{k}" got type {type(v)}')
+                                    f'dict must be a list, but for key "{k}" got type {type(v)}')
                 lengths.append(len(v))
             if not _all_equal_list(lengths):
                 raise ValueError(f'When creating a Data from a dict, each value in the '
-                                  'dict must be a list of the same length, but got different lengths: {lengths}')
+                                f'dict must be a list of the same length, but got different lengths: {lengths}')
             data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
         elif isinstance(data, list):
@@ -130,7 +130,7 @@ class Data(Iterable):
         if not isinstance(fielddata, list):
             raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
         if len(fielddata) != len(self):
-            raise Exception('Length of field is not equal to length of this Data')
+            raise Exception(f'Length of field ({len(fielddata)}) is not equal to length of this Data ({len(self)})')
         for i in range(len(self.data)):
             self.data[i][fieldname] = fielddata[i]
             

@@ -18,3 +18,4 @@ The package is split up into submodules.
     segmentation
     stats
     visualization
+    naplab

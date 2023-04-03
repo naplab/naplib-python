@@ -29,6 +29,14 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
+Version 0.2.0
+-------------
+
+- |Efficiency| : The major functionality of ``filterbank_hilbert`` has been significantly optimized and put into a new function called ``filter_hilbert`` which reduces memory usage by averaging the output over center frequencies before returning it to the user, utilizing up to 50x less memory.
+- |API| : The API of filtering functions within the ``preprocessing`` module has changed to support inplace operations or other API changes that may change their output compared to v0.1.10 by changing default values of arguments. This includes ``filter_line_noise`` 
+- |MajorFeature| : New module called ``naplab`` containing preprocessing pipelines and tools used by the Neural Acoustic Processing Lab (NAPLab) for processing raw neural data.
+
+
 Version 0.1.10
 --------------
 
