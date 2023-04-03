@@ -46,7 +46,7 @@ def test_frequency_range_too_narrow_extract(data_hilbert):
 
     with pytest.raises(ValueError) as excinfo:
         phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandC'])
-    assert 'is too narrow and no filters ' in str(excinfo.value)
+    assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_filter_multiple_bands_same_as_one(data_hilbert):
     data_tmp = data_hilbert['out']
@@ -95,7 +95,7 @@ def test_no_filters_in_freq_range():
 
     with pytest.raises(ValueError) as excinfo:
         phs_amp_data = filterbank_hilbert(x, fs, Wn=[40, 42])
-    assert 'is too narrow, so' in str(excinfo.value)
+    assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_center_freqs_and_output_shape():
     x = np.random.rand(1000, 5)
@@ -114,8 +114,8 @@ def test_center_freqs_and_output_shape():
 
     x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[1, 150])
 
-    assert x_phs.shape == (*x.shape, len(expected_cfs))
-    assert x_amp.shape == (*x.shape, len(expected_cfs))
+    assert x_phs.shape == (*x.shape, 1)
+    assert x_amp.shape == (*x.shape, 1)
     assert np.allclose(cfs, expected_cfs)
 
 def test_oneD_signal_same_output():

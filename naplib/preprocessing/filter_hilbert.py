@@ -199,7 +199,7 @@ def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=-1, verbose=1):
     cfs = np.array(cfs)
     for minf, maxf in Wn:
         if np.logical_and(cfs>=minf, cfs<=maxf).sum() == 0:
-            raise ValueError(f'Frequency band [{minf}, {maxf}] is too narrow and no filters in filterbank are placed inside. Try a wider frequency band.')
+            raise ValueError(f'Frequency band [{minf}, {maxf}] is too narrow, so no filters in filterbank are placed inside. Try a wider frequency band.')
     
     # choose those that lie in the input freqRange
     cfs = cfs[np.logical_and(cfs>=minf_global, cfs<=maxf_global)]
@@ -234,11 +234,8 @@ def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=-1, verbose=1):
         hilb_phase = np.zeros((x.shape[0], len(Wn)), dtype='float32')
         hilb_amp = np.zeros((x.shape[0], len(Wn)), dtype='float32')
         for i, (minf, maxf) in enumerate(Wn):
-            band_locator = np.logical_and(cfs>=minf, cfs<=maxf)
-            if band_locator.sum() == 0:
-                raise ValueError(f'Frequency band [{minf}, {maxf}] is too narrow and no filters have center frequencies inside it. Try a wider frequency band.')
-            
             # average over the filters in the frequency band
+            band_locator = np.logical_and(cfs>=minf, cfs<=maxf)
             hilb_phase[:,i] = np.angle(hilb_channel[:,band_locator]).mean(-1)
             hilb_amp[:,i] = np.abs(hilb_channel[:,band_locator]).mean(-1)
 
