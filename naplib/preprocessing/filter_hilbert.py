@@ -131,10 +131,10 @@ def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
         Signal to filter. Filtering is performed on each channel independently.
     fs : int
         Sampling rate.
-    Wn : list of lists or array-likes, each length 2, default=[[1, 150]]
-        Lower and upper boundaries for each frequency band. The default frequency
-        band of [1, 150] results in 42 filters. If Wn is 1-dimensional of length 2,
-        it will be coerced into a 2-dimensional array of size (1, 2).
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
+        Lower and upper boundaries for filterbank center frequencies. The default
+        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
+        highgamma band.
     n_jobs : int, default=1
         Number of jobs to use to compute filterbank across channels in parallel.
     
