@@ -120,6 +120,10 @@ def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
     computed from the complex values. Then amplitude and phase are averaged for each
     channel over the center frequencies. See [#edwards]_ for details on the filter
     bank used.
+
+    See Also
+    --------
+    filterbank_hilbert
     
     Parameters
     ----------
@@ -160,6 +164,7 @@ def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
     >>> freqs[-1] # center frequency of last filter bank filter
     143.97075186
     
+
     '''
     
     Wn = np.asarray(Wn)
@@ -268,6 +273,10 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=1, verbose=1):
     Hilbert Transform of each filter's output is computed and the amplitude and phase
     are computed from the complex values. See [#edwards]_ for details on the filter
     bank used.
+
+    See Also
+    --------
+    filter_hilbert
     
     Parameters
     ----------
