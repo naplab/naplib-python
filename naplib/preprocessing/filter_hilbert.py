@@ -9,7 +9,7 @@ from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=-1, verbose=0):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=1, verbose=0):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -42,7 +42,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
         '[ 70 150] phase', '[ 70 150] amp'}.
     fs_out : int, default=None
         If not None, each output phase and amplitude will be resampled to this sampling rate.
-    n_jobs : int, default=-1
+    n_jobs : int, default=1
         Number of jobs to use to compute filterbank across channels in parallel in filterbank_hilbert.
         Using n_jobs != 1 is memory intensive, so it will not necessarily improve performance if working
         with a large dataset.
@@ -111,7 +111,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     return Data(phase_amplitude_data, strict=False)
     
     
-def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=-1, verbose=1):
+def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
     '''
     Compute the phase and amplitude (envelope) of a signal over for a single frequency band,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -129,7 +129,7 @@ def filterbank_hilbert(x, fs, Wn=[[1,150]], n_jobs=-1, verbose=1):
     Wn : list of lists or array-likes, each length 2, default=[[1, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
         of [1, 150] results in 42 filters.
-    n_jobs : int, default=-1
+    n_jobs : int, default=1
         Number of jobs to use to compute filterbank across channels in parallel.
     
     Returns
