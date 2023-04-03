@@ -2,6 +2,7 @@ import numpy as np
 import scipy.signal as sig
 from scipy import stats
 from tqdm.auto import tqdm
+import matplotlib.pyplot as plt
 
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
  use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=1):
