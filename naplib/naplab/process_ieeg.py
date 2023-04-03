@@ -286,6 +286,7 @@ def process_ieeg(
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
+                                                               fs_out=final_fs,
                                                                n_jobs=n_jobs,
                                                                verbose=_verbosity(log_level))
 
