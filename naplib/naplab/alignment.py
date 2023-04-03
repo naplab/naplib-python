@@ -25,10 +25,10 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         How large the Pearson's correlation between the recorded audio and the stimulus
         must be to consider the stimulus sufficiently detected
     t_search : float, default=120
-        How much time of the recorded audio to search on each try
+        How much time of the recorded audio to search on each try.
         Increase for long breaks between trials (or for started,stoped,restarted trials)
     t_start_look : float, default=0
-        What time of the recorded audio to begin the searching process
+        What time of the recorded audio to begin the searching process.
         By default, uses 0 seconds, i.e. beginning of recorded audio
     verbose : bool, default=True
         Whether to print alignment results during alignment process
@@ -36,7 +36,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     -------
     alignment_times: list of tuples
         Indices of stimulus alignment in which each list element corresponds to each trial in stim_order
-        and each tuple contains the (start_index, end_index) of each trial, matched to rec_fs
+        and each tuple contains the (start_time, end_time) of each trial
     alignment_confidence: list of floats
         Pearson's correlation between the stimulus and recorded audio for each trial
     '''
@@ -124,7 +124,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 if max_val > confidence_threshold:
                     FOUND = True
 
-                    # Save possible alignment (start ind, end ind)
+                    # Save possible alignment (start time, end time)
                     possible_times.append((
                         (n_start_look + max_ind)/rec_fs,
                         (n_start_look + max_ind + len(stim))/rec_fs
