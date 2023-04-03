@@ -9,7 +9,7 @@ from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[70, 150]], bandnames=None, fs_out=None, n_jobs=1, verbose=0):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]], bandnames=None, fs_out=None, n_jobs=1, verbose=0):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -29,10 +29,9 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     fs : string | int, default='dataf'
         Sampling rate of the data. Either a string specifying a field of the Data or an int
         giving the sampling rate for all trials.
-    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[70, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
-        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
-        highgamma band.
+        of [[70, 150]] extracts the phase and amplitude of the highgamma band.
     bandnames : list of strings, length=n_freq_bands, optional
         If provided, these are used to create the field names for each frequency band's amplitude
         and phase in the output Data. Should be the same length as the number of bands
@@ -111,7 +110,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[30, 70],[7
     return Data(phase_amplitude_data, strict=False)
     
     
-def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
+def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1, verbose=1):
     '''
     Compute the phase and amplitude (envelope) of a signal over multiple frequency bands,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -131,10 +130,9 @@ def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
         Signal to filter. Filtering is performed on each channel independently.
     fs : int
         Sampling rate.
-    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[8, 12],[70, 150]]
+    Wn : list or array-like, shape (n_freq_bands, 2) or (2,), default=[[70, 150]]
         Lower and upper boundaries for filterbank center frequencies. The default
-        of [[30, 70],[70, 150]] extracts the phase and amplitude of the theta band and
-        highgamma band.
+        of [[70, 150]] extracts the phase and amplitude of the highgamma band.
     n_jobs : int, default=1
         Number of jobs to use to compute filterbank across channels in parallel.
     
@@ -265,7 +263,7 @@ def filter_hilbert(x, fs, Wn=[[1,150]], n_jobs=1, verbose=1):
     return hilb_phase, hilb_amp, cfs
 
 
-def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=1, verbose=1):
+def filterbank_hilbert(x, fs, Wn=[70,150], n_jobs=1, verbose=1):
     '''
     Compute the phase and amplitude (envelope) of a signal for a single frequency band,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -284,8 +282,8 @@ def filterbank_hilbert(x, fs, Wn=[1,150], n_jobs=1, verbose=1):
         Signal to filter. Filtering is performed on each channel independently.
     fs : int
         Sampling rate.
-    Wn : list or array-like, length 2, default=[1, 150]
-        Lower and upper boundaries for filterbank center frequencies. The default
+    Wn : list or array-like, length 2, default=[70, 150]
+        Lower and upper boundaries for filterbank center frequencies. A range
         of [1, 150] results in 42 filters.
     n_jobs : int, default=1
         Number of jobs to use to compute filterbank across channels in parallel.
