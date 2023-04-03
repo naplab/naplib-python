@@ -120,7 +120,7 @@ def process_ieeg(
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
     log_level : str, default='INFO'
-        In order of the amount that will be displayed from least to most, can be
+        In order of the amount that will be displayed from most to least, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
         
         
