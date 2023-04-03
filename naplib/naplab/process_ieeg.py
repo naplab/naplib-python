@@ -30,7 +30,7 @@ def process_ieeg(
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     rereference_grid: Optional[np.ndarray]=None,
-    rereference_method: Optional[Union[str, np.ndarray]]=None,
+    rereference_method: str='avg',
     store_reference: bool=False,
     aud_channel: Union[str, int]='infer',
     aud_channel_infer_method: str='crosscorr',
@@ -247,9 +247,9 @@ def process_ieeg(
     if rereference_grid is not None:
         logging.info(f'Performing commong rereferencing using "{rereference_method}" method...')
         if store_reference:
-            rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=raw_data['data'], method=rereference_method, return_reference=True)
+            rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=True)
         else:
-            rereferenced_data = preprocessing.rereference(rereference_grid, field=raw_data['data'], method=rereference_method, return_reference=False)
+            rereferenced_data = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=False)
         raw_data['data'] = rereferenced_data
     else:
         reference_to_store = None
@@ -286,6 +286,7 @@ def process_ieeg(
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
+                                                               fs_out=final_fs,
                                                                n_jobs=n_jobs,
                                                                verbose=_verbosity(log_level))
 
