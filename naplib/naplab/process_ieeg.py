@@ -56,7 +56,7 @@ def process_ieeg(
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
     stim_order_path : Optional[str] path-like, defaults to ``alignment_dir``
         If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
-        stimuli names as lines in the file, which should correspond to the names of the .wav files in ``stim_dir``. If a
+        stimuli names as lines in the file, which should correspond to the names of the .wav files in ``alignment_dir``. If a
         directory, the directory must contain such a file. If None, will search for such a file within
         ``alignment_dir``.
     stim_dirs : Optional[Dict[str, str]], defaults to ``alignment_dir``
@@ -109,7 +109,7 @@ def process_ieeg(
         Dict of kwargs to naplib.preprocessing.filter_line_noise
     store_spectrograms : bool, default=True
         If True, compute and store auditory spectrograms for each stimulus in stim_dirs in the output Data.
-    store_spectrograms : bool, default=False
+    store_sounds : bool, default=False
         If True, store raw sound wave for each stimulus in stim_dirs in the output Data.
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
