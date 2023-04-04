@@ -4,7 +4,7 @@ import numpy as np
 from typing import Dict, Optional, Tuple
 from scipy.io import wavfile
 
-def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=False) -> Dict[str, Tuple[float, np.ndarray]]:
+def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=True) -> Dict[str, Tuple[float, np.ndarray]]:
     """
     Load a set of wav files in a directory and return then in a dict mapping
     from filename (without the .wav suffix) to tuples of floats and numpy arrays
@@ -19,11 +19,12 @@ def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=False) -> 
         If provided, should be a regex pattern which will be used to match against
         the wav files found in the directory. For example, if ``pattern=r".*_stim.*",
         then only the wav files whose base name contains "_stim" will be loaded.
-    rescale : bool, default=False
+    rescale : bool, default=True
         If True, convert each input to a float in the range -1 to 1 based on the
         max value of the loaded dtype. For example, a wav file stored as 16-bit
         integers will be rescaled to np.float32 between -1 and 1 by dividing by
-        32768.0. This is only done on wav files that are integer types.
+        32768.0. This is only done on wav files that are integer types. If True,
+        output is always of type np.float32
     
     Returns
     -------
@@ -46,5 +47,7 @@ def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=False) -> 
             elif  data.dtype in [np.uint8]:
                 dtype_info = np.iinfo(data.dtype)
                 loaded_dict[wav_name] = (fs, ((data / np.float32(128.0)) - 1).astype(np.float32)) # map between -1 and 1
+            else:
+                loaded_dict[wav_name] = (fs, data.astype(np.float32))
     
     return loaded_dict
