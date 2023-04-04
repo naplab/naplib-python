@@ -676,6 +676,8 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
     """
     spec_dict = {}
     for k, (fs, sig) in stim_data_dict.items():
+        if k not in stim_order:
+            continue # skip this stimulus if don't need it for stim_order
         if sig.ndim == 2:
             specs = []
             for ch in range(sig.shape[1]):
