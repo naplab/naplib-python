@@ -198,7 +198,7 @@ def process_ieeg(
         for extra_stim_data_ in extra_stim_data.values():
             if set(stim_data.keys()) != set(extra_stim_data_.keys()):
                 raise ValueError(f'Alignment dir contains different wav files from one of the stim_dirs.'
-                                 f' Alignment dir contains these files:\n {list(stim_data.keys())}\nbut one stim directory'
+                                 f' Alignment dir contains these files:\n {list(stim_data.keys())}\nbut at least one stim directory'
                                  f' contains these files:\n {list(extra_stim_data_.keys())}')
     else:
         extra_stim_data = {'aud': stim_data}
@@ -245,6 +245,16 @@ def process_ieeg(
     raw_data['data'] = raw_data['data'][earliest_sample:latest_sample].copy()
     raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample].copy()
 
+    # # append befaft zeros to the stims which were not used for alignment as well as the one which was (if it's in the dict too)
+    for stim_data_name, stim_data_dict_ in extra_stim_data.items():
+        for wavname_, wavdata_ in stim_data_dict_.items():
+            bef_zeros = int(round(raw_data['data_f'] * befaft[0]))
+            aft_zeros = int(round(raw_data['data_f'] * befaft[1]))
+            if wavdata_[1].ndim == 1:
+                stim_data_dict_[wavname_] = wavdata_[0], np.pad(wavdata_[1], (bef_zeros,aft_zeros))
+            else:
+                stim_data_dict_[wavname_] = wavdata_[0], np.pad(wavdata_[1], ((bef_zeros,aft_zeros), (0,0)))
+
     
     # # preprocessing
     
@@ -255,6 +265,7 @@ def process_ieeg(
             rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=True)
         else:
             rereferenced_data = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=False)
+            reference_to_store = None
         raw_data['data'] = rereferenced_data[0]
     else:
         reference_to_store = None

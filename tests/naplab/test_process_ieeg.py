@@ -49,14 +49,51 @@ def test_single_stimuli_pipeline(small_data):
 
     # check wav channels
     labels_wav = true_data['labels_wav']
-    print(data_out[0][labels_wav[0]][15:30])
-    print(true_data['wav'][15:30,0])
-    assert np.allclose(data_out[0][labels_wav[0]], true_data['wav'][:,0])
-    assert np.allclose(data_out[0][labels_wav[1]], true_data['wav'][:,1])
-    assert np.allclose(data_out[0][labels_wav[2]], true_data['wav'][:,2])
+    assert np.allclose(data_out[0][labels_wav[0]][110:120], np.ones((10,))) # trigger
+    assert np.allclose(data_out[0][labels_wav[0]], true_data['wav'][1900:3100,0])
+    assert np.allclose(data_out[0][labels_wav[1]], true_data['wav'][1900:3100,1])
+    assert np.allclose(data_out[0][labels_wav[2]], true_data['wav'][1900:3100,2])
     assert data_out[0]['wavf'] == 100
 
-    # check stimuli
-    print(data_out.fields)
-    assert np.allclose(data_out[0]['sound trig_1.wav'], true_data['wav'][:,0])
+    # check stimuli (also should include befaft period now)
+    assert np.allclose(data_out[0]['aud sound'], true_data['wav'][1900:3100,0])
+    
+    # check other bands present
+    assert data_out['theta amp'][0].shape == (1200,2)
+    assert data_out['theta phase'][0].shape == (1200,2)
 
+
+def test_single_stimuli_pipeline_with_rereference(small_data):
+
+    dir_path = small_data['path']
+    true_data = small_data['data_dict']
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        rereference_grid=np.ones((2,2)),
+        rereference_method='avg',
+        bands=['raw'],
+        intermediate_fs=100,
+        final_fs=100,
+        store_reference=True,
+        store_spectrograms=False,
+        log_level='CRITICAL',
+        befaft=[1,1]
+    )
+
+    # check trial names based on wav files
+    assert data_out['name'] == ['trig_1.wav']
+
+    # check alignment
+    assert np.allclose(data_out['alignment_start'][0], 20)
+    assert np.allclose(data_out['alignment_end'][0], 30)
+
+    assert data_out['raw'][0].shape == (1200,2) # 2 seconds from befaft, plus 10 seconds of trial at 100 Hz
+
+    # check extracted data is correctly rereferenced (500 samples that are the same should be 0)
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+
+    # check reference is equal to mean of two channels data
+    assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
+    
