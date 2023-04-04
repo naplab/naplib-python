@@ -129,8 +129,11 @@ def process_ieeg(
     data : nl.Data
         Data object containing all requested fields after preprocessing.
     """
-        
-    logging.basicConfig(encoding='utf-8', level=LOG_LEVELS[log_level.upper()])
+
+    root_logger = logging.getLogger()
+    root_logger.setLevel(LOG_LEVELS[log_level.upper()])
+    handler = logging.FileHandler('Img_To_Local_Python.log', 'w', 'utf-8')
+    root_logger.addHandler(handler)
 
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
