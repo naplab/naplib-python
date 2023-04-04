@@ -480,12 +480,16 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
             px2 = interp(f1)[:,np.newaxis]
             shared_f = f1
         else:
-            shared_f = wav_fs
+            shared_f = f1
+
 
         good_freqs = shared_f >= min_freq
         shared_f = shared_f[good_freqs]
         px1 = px1[good_freqs]
         px2 = px2[good_freqs]
+
+        if px2.ndim == 1:
+            px2 = px2[:,np.newaxis]
 
         cat_px = np.concatenate([px1, px2], axis=1)
         dists = 1.0-pdist(cat_px.T, metric='correlation')
