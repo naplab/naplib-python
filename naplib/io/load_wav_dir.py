@@ -42,9 +42,9 @@ def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=False) -> 
             # check dtype and only
             if data.dtype in [np.int16, np.int32]:
                 dtype_info = np.iinfo(data.dtype)
-                loaded_dict[wav_name] = (fs, data / -np.float32(dtype_info.min))
+                loaded_dict[wav_name] = (fs, (data / -np.float32(dtype_info.min)).astype(np.float32))
             elif  data.dtype in [np.uint8]:
                 dtype_info = np.iinfo(data.dtype)
-                loaded_dict[wav_name] = (fs, (data / np.float32(128.0)) - 1) # map between -1 and 1
+                loaded_dict[wav_name] = (fs, ((data / np.float32(128.0)) - 1).astype(np.float32)) # map between -1 and 1
     
     return loaded_dict
