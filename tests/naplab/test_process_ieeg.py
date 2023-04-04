@@ -29,6 +29,7 @@ def test_single_stimuli_pipeline(small_data):
     data_out = process_ieeg(
         dir_path,
         dir_path,
+        stim_dirs={'aud_copy': dir_path},
         bands=['raw', 'theta'],
         phase_amp='both',
         intermediate_fs=100,
@@ -62,15 +63,15 @@ def test_single_stimuli_pipeline(small_data):
     assert data_out[0]['wavf'] == 100
 
     # check stimuli (also should include befaft period now)
-    assert np.allclose(data_out[0]['aud sound'], true_data['wav'][1900:3100,0])
+    assert np.allclose(data_out[0]['aud_copy sound'], true_data['wav'][1900:3100,0])
     
     # check other bands present
     assert data_out['theta amp'][0].shape == (1200,2)
     assert data_out['theta phase'][0].shape == (1200,2)
 
     # check spectrograms correct shape
-    assert data_out['aud'][0].shape == (1200,128)
-    assert np.allclose(data_out['aud'][0][10,:], np.zeros((128,)))
+    assert data_out['aud_copy'][0].shape == (1200,128)
+    assert np.allclose(data_out['aud_copy'][0][10,:], np.zeros((128,)))
 
 
 def test_single_stimuli_spectrum_inference_method(small_data):
