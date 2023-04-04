@@ -29,7 +29,7 @@ def test_single_stimuli_pipeline(small_data):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        store_spectrograms=False,
+        store_spectrograms=True,
         log_level='CRITICAL',
         befaft=[1,1]
     )
@@ -61,6 +61,9 @@ def test_single_stimuli_pipeline(small_data):
     # check other bands present
     assert data_out['theta amp'][0].shape == (1200,2)
     assert data_out['theta phase'][0].shape == (1200,2)
+
+    # check spectrograms correct shape
+    assert data_out['aud'][0].shape == (1200,128)
 
 
 def test_single_stimuli_pipeline_with_rereference(small_data):
@@ -96,4 +99,6 @@ def test_single_stimuli_pipeline_with_rereference(small_data):
 
     # check reference is equal to mean of two channels data
     assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
+
+
     
