@@ -183,7 +183,7 @@ def process_ieeg(
     data_f = raw_data['data_f']
         
     # # resample to intermediate_fs Hz
-    if intermediate_fs is not None and data_f > intermediate_fs and intermediate_fs <= final_fs:
+    if intermediate_fs is not None and data_f > intermediate_fs and intermediate_fs >= final_fs:
         new_len = int(intermediate_fs / float(data_f) * raw_data['data'].shape[0])
         logging.info(f'Resampling data to {intermediate_fs} Hz')
         raw_data['data'] = resample(raw_data['data'], new_len, axis=0)
