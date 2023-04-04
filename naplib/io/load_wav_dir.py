@@ -40,7 +40,7 @@ def load_wav_dir(directory: str, pattern: Optional[str]=None, rescale=False) -> 
         loaded_dict[wav_name] = (fs, data) # separated the tuple when reading file and inputting here for code-readability
         if rescale:
             # check dtype and only
-            if data.dtype in [np.float32, np.float64]:
+            if data.dtype in [np.int16, np.int32]:
                 dtype_info = np.iinfo(data.dtype)
                 loaded_dict[wav_name] = (fs, data / np.float32(dtype_info.min))
             elif  data.dtype in [np.uint8]:
