@@ -21,6 +21,7 @@ from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
 LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
+BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering doesn't produce edge effects
 
 
 def process_ieeg(
@@ -165,9 +166,10 @@ def process_ieeg(
             raise ValueError(f'data_type is pkl but data_path is not a pkl file: {data_path}')
         logging.info(f'Loading pkl data...')
         raw_data = load(data_path)
-        if not isinstance(raw_data, dict) or ('data' not in raw_data and 'data_f' not in raw_data and 'wav' not in raw_data and 'wav_f' not in raw_data):
+        if not isinstance(raw_data, dict) or ('data' not in raw_data or 'data_f' not in raw_data or 'wav' not in raw_data or 'wav_f' not in raw_data):
             raise ValueError(f'pkl data is not formatted correctly. Must be a pickled dict containing "data", "data_f", "wav", "wav_f" keys at least')
-        
+        if store_all_wav and 'labels_wav' not in raw_data:
+            raise ValueError('store_all_wav is True, but to store wav channels in final output there must be the key "labels_wav" in the pickled data.')
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
 
@@ -228,9 +230,8 @@ def process_ieeg(
     )
     
     # truncate data around earliest and lastest time that we need
-    buffer_time = max(befaft) + 5
-    earliest_time = max([alignment_times[0][0] - buffer_time, 0])
-    latest_time = alignment_times[-1][1] + buffer_time
+    earliest_time = max([alignment_times[0][0] - BUFFER_TIME-1, 0])
+    latest_time = alignment_times[-1][1] + BUFFER_TIME+1
     if befaft[0] > alignment_times[0][0]:
         raise ValueError(f"Not enough data to use befaft[0]={befaft[0]}. First stimulus aligned to {alignment_times[0][0]} sec")
 
@@ -243,6 +244,7 @@ def process_ieeg(
     latest_sample = int(raw_data['data_f'] * latest_time)
     raw_data['data'] = raw_data['data'][earliest_sample:latest_sample].copy()
     raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample].copy()
+
     
     # # preprocessing
     
@@ -264,10 +266,14 @@ def process_ieeg(
                                                        in_place=True,
                                                        verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
+
         
     # # Cut raw data up into blocks based on alignment
     logging.info('Chunking responses based on alignment...')
-    data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft)
+    data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
+
+    # print('split by trials')
+    # print(data_by_trials_raw['raw'][0].shape)
 
     # # extract frequency bands
     if 'raw' in bands:
@@ -312,23 +318,25 @@ def process_ieeg(
 
     desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in data_by_trials_raw['raw']]
 
+
     if 'raw' in data_by_trials.fields:
         data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
 
     if reference_to_store is not None:
-        reference_to_store = _split_data_on_alignment(nlData({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft)
+        reference_to_store = _split_data_on_alignment(nlData({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
         data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store['ref'], desired_lens)]
-        
+    
+    data_by_trials = _remove_buffer_time(data_by_trials, final_fs, buffer_time=BUFFER_TIME)
 
     if store_all_wav:
         logging.info('Chunking wav channels based on alignment...')
-        wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft)
+        wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
 
     # final output dict to be made into naplib.Data object
     alignment_times = np.asarray(alignment_times)
     final_output = {'name': stim_order,
-                    'alignment_start': list(alignment_times[:,0]),
-                    'alignment_end': list(alignment_times[:,1]),
+                    'alignment_start': list(alignment_times[:,0] + earliest_time),
+                    'alignment_end': list(alignment_times[:,1] + earliest_time),
                     'alignment_confidence': alignment_confidence,
                     'dataf': [final_fs for _ in stim_order],
                     'befaft': [befaft for _ in stim_order]}
@@ -359,7 +367,7 @@ def process_ieeg(
     
     # # Put output Data all together
     final_output = nlData(final_output)
-    final_output.set_info({'channel_labels': raw_data['labels_data'],
+    final_output.set_info({'channel_labels': raw_data.get('labels_data', None),
                            'rereference_grid': rereference_grid})
     logging.info('All done!')
     return final_output
@@ -719,7 +727,7 @@ def _load_stim_order(stim_order_path: str) -> List[str]:
         return lines
 
     
-def _split_data_on_alignment(data, fs, alignment_startstops, befaft):
+def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time=1):
     """
     data must be length 1, but can have as many fields as needed, each of which is a numpy array (time, ...)
     """
@@ -727,14 +735,23 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft):
     for field in data.fields:
         split_field = []
         for align_region in alignment_startstops:
-            start_time = align_region[0]-befaft[0]
-            end_time = align_region[1]+befaft[1]
-            start_sample = int(start_time * fs)
-            end_sample = int(end_time * fs)
+            start_time = align_region[0]-befaft[0]-buffer_time
+            end_time = align_region[1]+befaft[1]+buffer_time
+            start_sample = int(round(start_time * fs))
+            end_sample = int(round(end_time * fs))
             split_field.append(data[0][field][start_sample:end_sample])
         output[field] = split_field
     
     return nlData(output)
+
+def _remove_buffer_time(data, fs, buffer_time=1):
+    output = {}
+    buffer_samples = round(fs*buffer_time)
+    for trial in range(len(data)):
+        for field in data.fields:
+            data[trial][field] = data[trial][field][buffer_samples:-buffer_samples]
+    return data
+
 
 def _verbosity(log_level) -> int:
     log_level = log_level.upper()
