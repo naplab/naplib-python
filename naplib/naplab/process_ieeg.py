@@ -187,9 +187,9 @@ def process_ieeg(
 
     # # load stimuli files
     logging.info('Loading stimuli...')
-    stim_data = load_wav_dir(alignment_dir)
+    stim_data = load_wav_dir(alignment_dir, rescale=True)
     if stim_dirs is not None:
-        extra_stim_data = {k: load_wav_dir(stim_dir2) for k, stim_dir2 in stim_dirs.items()}
+        extra_stim_data = {k: load_wav_dir(stim_dir2, rescale=True) for k, stim_dir2 in stim_dirs.items()}
         for extra_stim_data_ in extra_stim_data.values():
             if set(stim_data.keys()) != set(extra_stim_data_.keys()):
                 raise ValueError(f'Alignment dir contains different wav files from one of the stim_dirs.'
