@@ -98,7 +98,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     x = x.squeeze()
     L_x = x.shape[0]
     
-    shift = round(math.log2(sfreq / 16384.)) # octaves to shift
+    shift = math.log2(sfreq / 16_000) # octaves to shift
     L_frm = round(frame_len * 2**(4 + shift)) # frame length (points)
     
     if tc > 0:
