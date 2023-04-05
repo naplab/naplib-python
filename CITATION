@@ -1,0 +1,8 @@
+@misc{mischler2023naplibpython,
+      title={naplib-python: Neural Acoustic Data Processing and Analysis Tools in Python}, 
+      author={Gavin Mischler and Vinay Raghavan and Menoua Keshishian and Nima Mesgarani},
+      year={2023},
+      eprint={2304.01799},
+      archivePrefix={arXiv},
+      primaryClass={q-bio.NC}
+}

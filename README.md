@@ -39,6 +39,12 @@ The basic data structure for storing neural recording data is the ``Data`` objec
 
 naplib-python is built by the [Neural Acoustic Processing Lab](http://naplab.ee.columbia.edu/) at Columbia University. We primarily use it for processing neural data coming from electrocorticography (ECoG) and electroencephalography (EEG) along with paired audio stimuli in order to study the auditory cortex. You are free to use the software according to its license, and we welcome contributions if you would like to propose changes, additions, or fixes. See our [**contribution guide**](https://naplib-python.readthedocs.io/en/latest/contributing.html) for more details.
 
+## Citing naplib-python
+
+If you find ``naplib-python`` useful for your research, please cite the following paper:
+
+> Mischler, Gavin, Vinay Raghavan, Menoua Keshishian, and Nima Mesgarani. ‘naplib-python: Neural Acoustic Data Processing and Analysis Tools in Python’. ArXiv [q-Bio.NC], 2023. arXiv. http://arxiv.org/abs/2304.01799.
+
 ## Backlog
 
 The following items are ToDo items on the backlog:

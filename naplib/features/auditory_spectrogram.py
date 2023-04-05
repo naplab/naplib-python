@@ -72,6 +72,8 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     -----
     This is a python re-implementation of the Matlab function `wav2aud` in the
     `NSLtools toolbox <https://github.com/tel/NSLtools>`_.
+
+    For correct performance, x should be a float array.
     
     References
     ----------

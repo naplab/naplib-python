@@ -192,9 +192,10 @@ def process_ieeg(
 
     # # load stimuli files
     logging.info('Loading stimuli...')
-    stim_data = load_wav_dir(alignment_dir, subset=set(stim_order))
+    stim_data = load_wav_dir(alignment_dir, rescale=True, subset=set(stim_order))
     if stim_dirs is not None:
-        extra_stim_data = {k: load_wav_dir(stim_dir2, subset=set(stim_order)) for k, stim_dir2 in stim_dirs.items()}
+        extra_stim_data = {k: load_wav_dir(stim_dir2, rescale=True, subset=set(stim_order)) for k, stim_dir2 in stim_dirs.items()}
+
     else:
         extra_stim_data = {'aud': stim_data}
 
