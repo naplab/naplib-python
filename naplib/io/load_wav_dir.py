@@ -1,10 +1,10 @@
 import os
 import re
 import numpy as np
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, Tuple, Set
 from scipy.io import wavfile
 
-def load_wav_dir(directory: str, pattern: Optional[str]=None) -> Dict[str, Tuple[float, np.ndarray]]:
+def load_wav_dir(directory: str, pattern: Optional[str]=None, subset: Optional[Set[str]]=None) -> Dict[str, Tuple[float, np.ndarray]]:
     """
     Load a set of wav files in a directory and return then in a dict mapping
     from filename (without the .wav suffix) to tuples of floats and numpy arrays
@@ -19,12 +19,16 @@ def load_wav_dir(directory: str, pattern: Optional[str]=None) -> Dict[str, Tuple
         If provided, should be a regex pattern which will be used to match against
         the wav files found in the directory. For example, if ``pattern=r".*_stim.*",
         then only the wav files whose base name contains "_stim" will be loaded.
+    subset : Set[str], default=None
+        If provided, only this subset of files will be loaded.
     
     Returns
     -------
     loaded_dict : dict from string to tuple of float (fs) and numpy array (wav data)
     """
     wav_files = [x for x in os.listdir(directory) if len(x) >= 4 and x[-4:]=='.wav']
+    if subset is not None:
+        wav_files = subset.copy()
     if pattern is not None:
         wav_files = [x for x in wav_files if re.match(pattern, x)]
     

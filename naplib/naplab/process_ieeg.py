@@ -192,16 +192,9 @@ def process_ieeg(
 
     # # load stimuli files
     logging.info('Loading stimuli...')
-    stim_data = load_wav_dir(alignment_dir)
-    if not set(stim_order).issubset(set(stim_data.keys())):
-        raise ValueError(f'Provided alignment directory {alignment_dir} does not contain all the stimuli'
-                         f' present in the StimOrder file. Missing: {set(stim_order) - set(stim_data.keys())}')
+    stim_data = load_wav_dir(alignment_dir, subset=set(stim_order))
     if stim_dirs is not None:
-        extra_stim_data = {k: load_wav_dir(stim_dir2) for k, stim_dir2 in stim_dirs.items()}
-        for extra_stim_data_dir, extra_stim_data_ in extra_stim_data.items():
-            if not set(stim_order).issubset(set(extra_stim_data_.keys())):
-                raise ValueError(f'Provided stim directory {extra_stim_data_dir} does not contain all the stimuli'
-                                 f' present in the StimOrder file. Missing: {set(stim_order) - set(extra_stim_data_.keys())}')
+        extra_stim_data = {k: load_wav_dir(stim_dir2, subset=set(stim_order)) for k, stim_dir2 in stim_dirs.items()}
     else:
         extra_stim_data = {'aud': stim_data}
 
