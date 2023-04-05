@@ -17,6 +17,7 @@ naplib-python is a Python module for analyzing neural-acoustic data such as ECoG
    auto_examples/index
    references/index
    changelog
+   citation
 
 .. toctree::
    :maxdepth: 1
