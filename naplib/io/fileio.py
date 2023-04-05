@@ -1,7 +1,7 @@
 import pickle
 import warnings
 import numpy as np
-from tqdm import tqdm
+from tqdm.auto import tqdm
 from hdf5storage import loadmat, savemat
 import h5py
 

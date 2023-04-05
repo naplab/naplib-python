@@ -79,7 +79,7 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
                 u, _, _ = svd(weighted_data.T @ weighted_data)
                 ref = u[:,0] * (weighted_data @ u[:,0][:,np.newaxis])
                 data_arr_tmp = (data_arr - data_arr.mean(1, keepdims=True)) / data_arr.std(1, keepdims=True)
-                ref_channels[channel] = 1
+                ref_channels[0,channel] = 1
                 nonzero_channel_indices = np.argwhere(ref_channels.squeeze()!=0).squeeze()
                 this_ref_which_index = list(nonzero_channel_indices).index(channel)
                 if return_ref:
