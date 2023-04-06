@@ -78,7 +78,10 @@ def normalize(data=None, field='resp', axis=0, method='zscore', nan_policy='prop
             raise ValueError(f'nan found in data')
        
     if method == 'zscore':
-        return concat_apply(data_, zscore, axis=axis, function_kwargs={'nan_policy': nan_policy})
+        if axis is None:
+            return concat_apply(data_, zscore, axis=0, function_kwargs={'nan_policy': nan_policy, 'axis': None})
+        else:
+            return concat_apply(data_, zscore, axis=axis, function_kwargs={'nan_policy': nan_policy, 'axis': axis})
     
     # method == 'center'
     for i, tmp in enumerate(data_):
