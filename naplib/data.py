@@ -449,7 +449,7 @@ def concat(data_list, axis=0, copy=True):
     
     Parameters
     ----------
-    data : sequence of Data instances
+    data : list or tuple of Data instances
         Sequence containing the different Data objects to concatenate.
     axis : int, defualt=0
         To concantate over trials (default), axis should be 0. To concatenate
@@ -494,7 +494,12 @@ def concat(data_list, axis=0, copy=True):
     >>> d_concat['meta_data']
     ['meta1', 'meta2']
     '''
-
+    if not isinstance(data_list, (list, tuple)):
+        raise TypeError(f'data_list must be a list or tuple but got {type(data_list)}')
+        
+    if len(data_list) == 0:
+        raise ValueError('need at least one Data object to concatenate')
+        
     for out in data_list:
         if not isinstance(out, Data):
             raise TypeError(f'All inputs to data_list must be a Data instance but found {type(out)}')
@@ -540,7 +545,6 @@ def concat(data_list, axis=0, copy=True):
         raise ValueError(f'axis must be 0 or 1 but got {axis}')
         
     return data_merged
-
     
 def join_fields(data_list, fieldname='resp', axis=-1, return_as_data=False):
     '''
