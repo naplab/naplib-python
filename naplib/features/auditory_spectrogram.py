@@ -1,7 +1,8 @@
 from os.path import dirname, join
 import math
+import logging
 import numpy as np
-from scipy.signal import lfilter
+from scipy.signal import resample, lfilter
 from hdf5storage import loadmat
 
 
@@ -51,8 +52,8 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     x : np.ndarray
         Acoustic signal to convert to time-frequency representation
     sfreq : int
-        Sampling rate of the signal. For best performance, it may be
-        recommended to resample the signal to a power of 2 sampling rate.
+        Sampling rate of the signal. This function is meant to be used on a signal
+        with 16KHz sampling rate. If sfreq is different, it resamples the audio to 16KHz.
     frame_len : float, default=8
         Frame length of the output, in ms. Typically 8, 16, or a power of 2.
     tc : float, default=4
@@ -96,20 +97,24 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
         raise ValueError(f"If a string, factor must be one of {'linear', 'boolean', 'half-wave'}, but got '{factor}'")
     
     x = x.squeeze()
+
+    # If x is not sampled at 16KHz, resample
+    if sfreq != 16_000:
+        logging.warning(f"Resampling audio from {round(sfreq)/1000:g}KHz to 16KHz")
+        x, sfreq = resample(x, round(len(x) / sfreq * 16_000)), 16_000
+
     L_x = x.shape[0]
-    
-    shift = math.log2(sfreq / 16_000) # octaves to shift
-    L_frm = round(frame_len * 2**(4 + shift)) # frame length (points)
+    L_frm = round(frame_len * 2**4) # frame length (points)
     
     if tc > 0:
-        alpha = math.exp(-1 / (tc * 2**(4 + shift))) # decay factor
+        alpha = math.exp(-1 / (tc * 2**4)) # decay factor
         alpha_filt = np.array([1, -alpha])
     else:
         alpha = 0 # this is now just short-term average
     
     # hair cell time constant in ms
     haircell_tc = 0.5
-    beta = math.exp(-1 / (haircell_tc * 2**(4 + shift)))
+    beta = math.exp(-1 / (haircell_tc * 2**4))
     low_pass_filt = np.array([1, -beta])
     
     # allocate memory for output
@@ -121,7 +126,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     
     # do last channel first (highest frequency)
     
-    p = int(np.real(COCHBA[0, M-1]))
+    p = round(np.real(COCHBA[0, M-1]))
     B = np.real(COCHBA[1:p+2, M-1])
     A = np.imag(COCHBA[1:p+2, M-1])
     
@@ -137,7 +142,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     for ch in range(M-2, -1, -1):
         
         # cochlear filterbank
-        p = int(np.real(COCHBA[0, ch]))
+        p = round(np.real(COCHBA[0, ch]))
         B = np.real(COCHBA[1:p+2, ch])
         A = np.imag(COCHBA[1:p+2, ch])
         y = lfilter(B, A, x).squeeze()
