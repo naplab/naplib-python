@@ -29,6 +29,12 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
 
+Version 0.3.0
+-------------
+
+- |Fix| : The ``auditory_spectrogram`` function was giving incorrect results when the input sampling rate was not a multiple of 2. For consistency with the Matlab wav2aud function's output, the function now resamples audio to 16k sampling rate before computing the auditory spectrogram, which ensures that the output is in the correct frequency range.
+- |Fix| : Multiple miscellaneous fixes for the ``process_ieeg`` pipeline edge cases.
+
 Version 0.2.0
 -------------
 
