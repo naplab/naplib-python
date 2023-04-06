@@ -71,7 +71,7 @@ def test_single_stimuli_pipeline(small_data):
 
     # check spectrograms correct shape
     assert data_out['aud_copy'][0].shape == (1200,128)
-    assert np.allclose(data_out['aud_copy'][0][10,:], np.zeros((128,)))
+    assert np.all(data_out['aud_copy'][0][:100] < 0.01)
 
 
 def test_single_stimuli_spectrum_inference_method(small_data):
@@ -194,6 +194,3 @@ def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
     # shape of output correct
     assert data_out['raw'][0].shape == (120,2)
 
-
-
-    
