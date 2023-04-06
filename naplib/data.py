@@ -437,7 +437,6 @@ class Data(Iterable):
 def concat(data_list, axis=0, copy=True):
     '''
     Concatenate Data objects across either trials or fields.
-
     This performs an inner join on the other dimension, meaning
     non-shared fields will be lost if concatenating over trials,
     and non-shared trials will be lost if concatenating over fields.
@@ -457,7 +456,6 @@ def concat(data_list, axis=0, copy=True):
         over fields, axis should be 1.
     copy : bool, default=True
         Whether to deep copy each Data object before concatenating.
-
     Returns
     -------
     data_merged : Data instance
@@ -495,7 +493,6 @@ def concat(data_list, axis=0, copy=True):
     [[1, 2], [3, 4, 5]]
     >>> d_concat['meta_data']
     ['meta1', 'meta2']
-
     '''
 
     for out in data_list:
@@ -506,13 +503,10 @@ def concat(data_list, axis=0, copy=True):
         return data_list[0]
     
     if axis == 0:
-        field_set = OrderedDict({k: None for k in data_list[0].fields})
+        field_set = set(data_list[0].fields)
         for data in data_list[1:]:
-            subset = set(field_set.keys()).intersection(set(data.fields))
-            for k in field_set:
-                if k not in subset:
-                    field_set.pop(k)
-        field_set = list(field_set.keys())
+            field_set = field_set.intersection(set(data.fields))
+        field_set = [ff for ff in data_list[0].fields if ff in field_set]
         
         if copy:
             data_merged = deepcopy(data_list[0][field_set])
