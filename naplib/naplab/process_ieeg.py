@@ -244,8 +244,8 @@ def process_ieeg(
     # # append befaft zeros to the stims which were not used for alignment as well as the one which was (if it's in the dict too)
     for stim_data_name, stim_data_dict_ in extra_stim_data.items():
         for wavname_, wavdata_ in stim_data_dict_.items():
-            bef_zeros = int(round(raw_data['data_f'] * befaft[0]))
-            aft_zeros = int(round(raw_data['data_f'] * befaft[1]))
+            bef_zeros = int(round(wavdata_[0] * befaft[0]))
+            aft_zeros = int(round(wavdata_[0] * befaft[1]))
             if wavdata_[1].ndim == 1:
                 stim_data_dict_[wavname_] = wavdata_[0], np.pad(wavdata_[1], (bef_zeros,aft_zeros))
             else:
