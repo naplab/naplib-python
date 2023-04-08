@@ -27,7 +27,7 @@ BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering does
 def process_ieeg(
     data_path: str,
     alignment_dir: str,
-    stim_order_path: Optional[str]=None,
+    stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     rereference_grid: Optional[np.ndarray]=None,
@@ -54,11 +54,11 @@ def process_ieeg(
         String specifying data directory (for TDT) or file path for raw data file
     alignment_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
-    stim_order_path : Optional[str] path-like, defaults to ``alignment_dir``
-        If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
-        stimuli names as lines in the file, which should correspond to the names of the .wav files in ``alignment_dir``. If a
-        directory, the directory must contain such a file. If None, will search for such a file within
-        ``alignment_dir``.
+    stim_order : Optional[Union[str, Sequence[str]]] path-like or sequence of strings, defaults to ``alignment_dir``
+        If a sequence of strings, must contain the order of the stimuli names corresponding to the names of the .wav files in
+        ``alignment_dir``. If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
+        stimuli names as lines in the file. If a directory, the directory must contain such a file. If None, will search for
+        such a file within ``alignment_dir``.
     stim_dirs : Optional[Dict[str, str]], defaults to ``alignment_dir``
         If not provided, alignment_dir is assumed to contain the stimulus as well.
         If provided, can be used to specify additional paths from which to load sounds which will be converted to the
@@ -175,10 +175,10 @@ def process_ieeg(
 
     # # load StimOrder
     logging.info('Loading StimOrder...')
-    if stim_order_path is not None:
-        stim_order = _load_stim_order(stim_order_path)
-    else:
+    if stim_order is None:
         stim_order = _load_stim_order(alignment_dir)
+    elif isinstance(stim_order, str):
+        stim_order = _load_stim_order(stim_order)
 
     data_f = raw_data['data_f']
         
