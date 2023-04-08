@@ -46,7 +46,7 @@ def normalize(data=None, field='resp', axis=0, method='zscore', nan_policy='prop
     
     '''
     
-    data_ = _parse_outstruct_args(data, field)
+    data = _parse_outstruct_args(data, field)
     
     if method not in ['zscore', 'center']:
         raise ValueError(f"Bad method input. method must be one of ['zscore', 'center'], but found {method}")
@@ -54,20 +54,20 @@ def normalize(data=None, field='resp', axis=0, method='zscore', nan_policy='prop
     if nan_policy not in ['propagate','omit','raise']:
         raise ValueError(f"Bad nan_policy input. Must be one of ['propagate','omit','raise'], but found {nan_policy}")
 
-    if isinstance(data_, np.ndarray):
-        data_ = [d for d in data_]
+    if isinstance(data, np.ndarray):
+        data = [d for d in data]
         axis -= 1 # since we got rid of the first axis by putting into a list, need to change this
-    elif not isinstance(data_, list) or not isinstance(data_[0], np.ndarray):
-        raise TypeError(f'data found is not either np.ndarray, or list or arrays, but found {type(data_)}')
+    elif not isinstance(data, list) or not isinstance(data[0], np.ndarray):
+        raise TypeError(f'data found is not either np.ndarray, or list or arrays, but found {type(data)}')
 
     if axis is None:
-        concat_data = np.concatenate(data_, axis=0)
+        concat_data = np.concatenate(data, axis=0)
         if nan_policy in ['propagate', 'raise']:
             center_val = np.mean(concat_data, axis=axis, keepdims=False)
         else:
             center_val = np.nanmean(concat_data, axis=axis, keepdims=False)
     else:
-        concat_data = np.concatenate(data_, axis=axis)
+        concat_data = np.concatenate(data, axis=axis)
         if nan_policy in ['propagate', 'raise']:
             center_val = np.mean(concat_data, axis=axis, keepdims=True)
         else:
@@ -79,13 +79,13 @@ def normalize(data=None, field='resp', axis=0, method='zscore', nan_policy='prop
        
     if method == 'zscore':
         if axis is None:
-            return concat_apply(data_, zscore, axis=0, function_kwargs={'nan_policy': nan_policy, 'axis': None})
+            return concat_apply(data, zscore, axis=0, function_kwargs={'nan_policy': nan_policy, 'axis': None})
         else:
-            return concat_apply(data_, zscore, axis=axis, function_kwargs={'nan_policy': nan_policy, 'axis': axis})
+            return concat_apply(data, zscore, axis=axis, function_kwargs={'nan_policy': nan_policy, 'axis': axis})
     
     # method == 'center'
-    for i, tmp in enumerate(data_):
-        data_[i] = tmp - center_val
+    for i, tmp in enumerate(data):
+        data[i] = tmp - center_val
 
-    return data_
+    return data
 
