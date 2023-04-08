@@ -72,6 +72,7 @@ def normalize(data=None, field='resp', axis=0, method='zscore', nan_policy='prop
             center_val = np.mean(concat_data, axis=axis, keepdims=True)
         else:
             center_val = np.nanmean(concat_data, axis=axis, keepdims=True)
+    del concat_data
     
     if nan_policy == 'raise':
         if np.any(np.isnan(center_val)):
