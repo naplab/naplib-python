@@ -71,6 +71,24 @@ def test_normalize_properly_centers_and_scales_zscore_from_np_array(data):
     concat_norm_data = np.concatenate(norm_data, axis=0)
     assert np.allclose(concat_norm_data.mean(0), np.array([0,0,0,0]), atol=1e-12)
     assert np.allclose(concat_norm_data.std(0), np.array([1,1,1,1]), atol=1e-12)
+    
+def test_normalize_properly_centers_and_scales_zscore_from_list_propagate(data):
+    data[0]['x'][10,1] = np.nan
+    norm_data = normalize(field=data['x'], method='zscore', nan_policy='propagate')
+    concat_norm_data = np.concatenate(norm_data, axis=0)
+    assert np.isnan(concat_norm_data.mean(0)[0])
+    
+def test_normalize_properly_centers_and_scales_zscore_from_list_omit(data):
+    data[0]['x'][10,1] = np.nan
+    norm_data = normalize(field=data['x'], method='zscore', nan_policy='propagate')
+    concat_norm_data = np.concatenate(norm_data, axis=0)
+    assert np.allclose(concat_norm_data.mean(0)[0], 0)
+    
+def test_normalize_properly_centers_and_scales_zscore_from_list_raise(data):
+    data[0]['x'][10,1] = np.nan
+    with pytest.raises(ValueError) as exc:
+        norm_data = normalize(field=data['x'], method='zscore', nan_policy='raise')
+    assert "nan found in data" in str(exc)
 
 def test_normalize_raises_typeerror_bad_input(data):
     with pytest.raises(TypeError):
