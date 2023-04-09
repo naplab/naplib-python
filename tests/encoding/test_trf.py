@@ -41,6 +41,12 @@ def test_1D_input_2D_output_trf(data):
     reshaped_coef = np.concatenate([data['coef'].reshape(1,1,2), data['coef'].reshape(1,1,2)], axis=1)
     assert np.allclose(reshaped_coef, model.coef_, rtol=1e-4)
 
+def test_1D_input_2D_output_trf_parallel(data):
+    model = TRF(tmin=0, tmax=0.01, sfreq=100, estimator=data['mdl'], n_jobs=2)
+    model.fit(X=data['X1'], y=data['y2'])
+    reshaped_coef = np.concatenate([data['coef'].reshape(1,1,2), data['coef'].reshape(1,1,2)], axis=1)
+    assert np.allclose(reshaped_coef, model.coef_, rtol=1e-4)
+
 def test_2D_input_1D_output_trf(data):
     model = TRF(tmin=0, tmax=0.01, sfreq=100, estimator=data['mdl'])
     model.fit(X=data['X2'], y=data['y1'])
