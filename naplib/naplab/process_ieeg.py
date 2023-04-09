@@ -183,6 +183,7 @@ def process_ieeg(
             raise ValueError(f'pkl data is not formatted correctly. Must be a pickled dict containing "data", "data_f", "wav", "wav_f" keys at least')
         if store_all_wav and 'labels_wav' not in raw_data:
             raise ValueError('store_all_wav is True, but to store wav channels in final output there must be the key "labels_wav" in the pickled data.')
+    
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
 
@@ -387,15 +388,14 @@ def process_ieeg(
     
     # # Put output Data all together
     final_output = nlData(final_output)
-    final_output.set_info({'channel_labels': raw_data.get('labels_data', None),
-                           'rereference_grid': rereference_grid})
+    final_output.set_info({
+        'channel_labels': raw_data.get('labels_data', None),
+        'rereference_grid': rereference_grid,
+        **raw_data.get('info', {})
+    })
     logging.info('All done!')
     return final_output
     
-
-    # # electrode localization
-    # elec_locs
-        
     
 def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
