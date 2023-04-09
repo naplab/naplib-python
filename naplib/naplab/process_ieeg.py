@@ -115,8 +115,10 @@ def process_ieeg(
     aud_fn : Optional[Union[str, Callable]], default='default'
         Function for computing spectrogram from trial stimulus sounds. If None or 'none', no spectrograms will be
         computed. If 'default', ``naplib.features.auditory_spectrogram`` will be used. If a callable ``f``, the
-        function will be applied to each stimulus audio in the form ``f(x, sr, **aud_kwargs)``, where ``x`` is
-        the 1-D audio data and ``sr`` is the sampling rate of the audio.
+        function will be applied to each stimulus audio and should have signature
+        ``(x: NDArray, sr: float, **aud_kwargs) -> NDArray``, where ``x`` is 1-D audio signal with shape
+        (in_samples,) and ``sr`` is the sampling rate of the audio. The returned array (spectrogram) should
+        have shape (n_samples, freq_bins).
     aud_kwargs : dict, default={}
         Keyword arguments to pass to ``aud_fn``. In case of the default function ``naplib.features.auditory_spectrogram``,
         it can include overrides for frame_len, tc, and factor.
@@ -126,7 +128,6 @@ def process_ieeg(
     log_level : str, default='INFO'
         In order of the amount that will be displayed from most to least, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
-        
         
     Returns
     -------
@@ -424,6 +425,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         between spectrums.
     debug : bool, default=False
         If True, plots the spectrum of each channel and the spectrum of the stimulus.
+
     Returns
     -------
     alignment_wav : np.ndarray
@@ -678,7 +680,9 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
     fs_out : int
         Sampling rate of output spectrograms
     aud_fn : Callable
-        Function for computing spectrogram from waveform
+        Function for computing spectrogram from waveform. The function should have signature
+        ``(x: NDArray, sr: float, **kwargs) -> NDArray`` where x has shape (in_samples,), sr
+        is the sampling rate of x, and the return value has shape (out_samples, freq_bins).
     aud_kwargs : dict, default={}
         Dictionary of kwargs for ``aud_fn``
     
