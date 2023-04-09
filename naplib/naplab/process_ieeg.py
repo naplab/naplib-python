@@ -1,7 +1,8 @@
 import logging
 import warnings
 import os
-from typing import Union, Tuple, List, Optional, Dict, Sequence
+from typing import Union, Tuple, List, Optional, Dict, Sequence, Callable
+from tqdm.auto import tqdm
 
 import numpy as np
 from scipy.signal import resample, welch, correlate
@@ -42,9 +43,9 @@ def process_ieeg(
     final_fs: int=100,
     alignment_kwargs: dict={},
     line_noise_kwargs: dict={},
-    store_spectrograms: bool=True,
     store_sounds: bool=False,
     store_all_wav: bool=False,
+    aud_fn: Optional[Union[str, Callable]]='default',
     aud_kwargs: dict={},
     n_jobs: int=1,
     log_level : str='INFO'
@@ -107,23 +108,27 @@ def process_ieeg(
         If provided, will be passed to naplib.naplab.align_stimulus_to_recording to override keyword arguments.
     line_noise_kwargs : dict, default={}
         Dict of kwargs to naplib.preprocessing.filter_line_noise
-    store_spectrograms : bool, default=True
-        If True, compute and store auditory spectrograms for each stimulus in stim_dirs in the output Data.
     store_sounds : bool, default=False
         If True, store raw sound wave for each stimulus in stim_dirs in the output Data.
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
+    aud_fn : Optional[Union[str, Callable]], default='default'
+        Function for computing spectrogram from trial stimulus sounds. If None or 'none', no spectrograms will be
+        computed. If 'default', ``naplib.features.auditory_spectrogram`` will be used. If a callable ``f``, the
+        function will be applied to each stimulus audio and should have signature
+        ``(x: NDArray, sr: float, **aud_kwargs) -> NDArray``, where ``x`` is 1-D audio signal with shape
+        (in_samples,) and ``sr`` is the sampling rate of the audio. The returned array (spectrogram) should
+        have shape (n_samples, freq_bins).
     aud_kwargs : dict, default={}
-        Keyword arguments to pass to ``naplib.features.auditory_spectrogram``. Can include overrides for frame_len,
-        tc, and factor.
+        Keyword arguments to pass to ``aud_fn``. In case of the default function ``naplib.features.auditory_spectrogram``,
+        it can include overrides for frame_len, tc, and factor.
     n_jobs : int, default=1
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
     log_level : str, default='INFO'
         In order of the amount that will be displayed from most to least, can be
         one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
-        
         
     Returns
     -------
@@ -135,6 +140,14 @@ def process_ieeg(
     root_logger.setLevel(LOG_LEVELS[log_level.upper()])
     handler = logging.FileHandler('Img_To_Local_Python.log', 'w', 'utf-8')
     root_logger.addHandler(handler)
+
+    # # infer spectrogram function
+    if aud_fn == 'default':
+        aud_fn = auditory_spectrogram
+    elif aud_fn == 'none':
+        aud_fn = None
+    elif aud_fn and not isinstance(aud_fn, Callable):
+        raise ValueError("Argument aud_fn should be either None, 'none', 'default', or a function")
 
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
@@ -181,7 +194,7 @@ def process_ieeg(
         stim_order = _load_stim_order(stim_order)
 
     data_f = raw_data['data_f']
-        
+    
     # # resample to intermediate_fs Hz
     if intermediate_fs is not None and data_f > intermediate_fs and intermediate_fs >= final_fs:
         new_len = int(intermediate_fs / float(data_f) * raw_data['data'].shape[0])
@@ -349,11 +362,11 @@ def process_ieeg(
                     'befaft': [befaft for _ in stim_order]}
 
     # extract spectrograms
-    if store_spectrograms:
+    if aud_fn:
         logging.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_kwargs=aud_kwargs)
+            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs, verbose=_verbosity(log_level) >= 1)
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
@@ -413,6 +426,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         between spectrums.
     debug : bool, default=False
         If True, plots the spectrum of each channel and the spectrum of the stimulus.
+
     Returns
     -------
     alignment_wav : np.ndarray
@@ -652,7 +666,7 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
+def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}, verbose=False):
     """
     Convert each stimulus in the stim_data_dict into a spectrogram, then return
     a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
@@ -666,8 +680,12 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
         but they can repeat.
     fs_out : int
         Sampling rate of output spectrograms
+    aud_fn : Callable
+        Function for computing spectrogram from waveform. The function should have signature
+        ``(x: NDArray, sr: float, **kwargs) -> NDArray`` where x has shape (in_samples,), sr
+        is the sampling rate of x, and the return value has shape (out_samples, freq_bins).
     aud_kwargs : dict, default={}
-        Dictionary of kwargs for naplib.features.auditory_spectrogram
+        Dictionary of kwargs for ``aud_fn``
     
     Returns
     -------
@@ -675,16 +693,17 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
         List of same length as stim_order containing the spectrogram for each stimulus
     """
     spec_dict = {}
-    for k, (fs, sig) in stim_data_dict.items():
+    stim_data_dict = stim_data_dict.items()
+    for k, (fs, sig) in tqdm(stim_data_dict, total=len(stim_data_dict)) if verbose else stim_data_dict:
         if k not in stim_order:
             continue # skip this stimulus if don't need it for stim_order
         if sig.ndim == 2:
             specs = []
             for ch in range(sig.shape[1]):
-                specs.append(auditory_spectrogram(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
+                specs.append(aud_fn(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
             spec = np.concatenate(specs, axis=-1)
         elif sig.ndim == 1:
-            spec = auditory_spectrogram(sig, fs, **aud_kwargs)
+            spec = aud_fn(sig, fs, **aud_kwargs)
         else:
             raise ValueError(f'Waveform to compute spectrogram for is more than 2 dimensional. Got {sig.ndim} dimensions')
         
