@@ -29,6 +29,7 @@ def test_single_stimuli_pipeline(small_data):
     data_out = process_ieeg(
         dir_path,
         dir_path,
+        stim_order=['trig_1.wav'],
         stim_dirs={'aud_copy': dir_path},
         bands=['raw', 'theta'],
         phase_amp='both',
