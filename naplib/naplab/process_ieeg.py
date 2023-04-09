@@ -291,9 +291,6 @@ def process_ieeg(
     logging.info('Chunking responses based on alignment...')
     data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
 
-    # print('split by trials')
-    # print(data_by_trials_raw['raw'][0].shape)
-
     # # extract frequency bands
     if 'raw' in bands:
         include_raw = True

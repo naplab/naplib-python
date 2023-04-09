@@ -178,7 +178,6 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
         
     if len(new_data) < len_con + len_cat:
         raise ValueError(f'cat_feats and con_feats have overlapping key names.')
-
         
     formula = ""
     for k in new_data.keys():
@@ -193,14 +192,10 @@ def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=Fal
         X = dmatrix(formula, new_data)
         names = X.design_info.column_names
 
-#     print(X)
-    
     X_df = pd.DataFrame(dict(zip(names, X.astype('float').T)))
     
     ols = sm.OLS(y, X_df)
     ols_result = ols.fit()
-    
-#     print(ols_result.summary())
     
     if test_type == 'rel' or test_type == '1_samp':
         tval = ols_result.tvalues['Intercept']
