@@ -3,9 +3,10 @@ import scipy.signal as sig
 from scipy import stats
 from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
+import logging
 
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
- use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0, verbose=1):
+    use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0):
     '''
     Find the times that correspond to the start and end time of each stimulus
     Parameters
@@ -30,8 +31,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     t_start_look : float, default=0
         What time of the recorded audio to begin the searching process.
         By default, uses 0 seconds, i.e. beginning of recorded audio
-    verbose : bool, default=True
-        Whether to print alignment results during alignment process
+
     Returns
     -------
     alignment_times: list of tuples
@@ -58,15 +58,19 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     useCh = None
 
     # Iterate over each stimulus provided in stim_order
-    for stim_name in tqdm(stim_order, total=len(stim_order), disable=verbose < 1):
+    for stim_name in tqdm(stim_order, total=len(stim_order), disable=logging.root.level >= logging.WARNING):
         # Get stimulus waveform and sampling rate
         stim_fs, stim_full = stim_dict[stim_name]
 
         # If stimulus is multi-channel, align each channnel and then find best
-        if len(stim_full.shape) > 1 and useCh == None:
+
+        if stim_full.ndim > 1 and stim_full.shape[1] == 1:
+            stim_full = stim_full.squeeze(1)
+
+        if stim_full.ndim == 1:
+            stims_curr, useCh = [stim_full], 0
+        elif stim_full.ndim > 1 and useCh is None:
             stims_curr = [stim_full[:,ch] for ch in range(stim_full.shape[1])]
-        elif len(stim_full.shape) == 1:
-            stims_curr = [stim_full]
         else:
             stims_curr = [stim_full[:,useCh]]
 
@@ -118,8 +122,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                             max_val = curr_corr
                             max_ind = pk
 
-                if verbose >= 2:
-                    print(f'Searching from t={n_start_look/rec_fs:.2f}, found segment with correlation={max_val:.4f}')
+                logging.debug(f'Searching from t={n_start_look/rec_fs:.2f}, found segment with correlation={max_val:.4f}')
 
                 if max_val > confidence_threshold:
                     FOUND = True
@@ -130,9 +133,6 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                         (n_start_look + max_ind + len(stim))/rec_fs
                         ))
                     max_corrs.append(max_val)
-
-                    if verbose >= 1:
-                        print(f'Found {stim_name} with correlation={max_val:.4f} @', possible_times)
 
                     # Jump ahead to 99th percentile of the found stimulus
                     n_start_look = n_start_look + max_ind + len(stim)*99//100
@@ -147,11 +147,12 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                 raise ValueError(f'Failed to find stimulus {stim_name} during alignment.')
 
         # Determine which stimulus channel was best, set useCh, save inds
-        if useCh is None and verbose >= 1:
-            print(f'Using channel {np.argmax(max_corrs)}')
-        useCh = np.argmax(max_corrs)
+        if useCh is None:
+            useCh = np.argmax(max_corrs)
+            logging.info(f'Using stimulus channel {useCh} for alignment')
         alignment_times.append(possible_times[useCh])
         alignment_confidence.append(np.amax(max_corrs))
-
+        
+        logging.info(f'Found {stim_name} with correlation={alignment_confidence[-1]:.4f} @ {alignment_times[-1]}')
 
     return alignment_times, alignment_confidence

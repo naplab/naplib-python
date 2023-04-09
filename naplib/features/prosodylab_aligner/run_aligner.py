@@ -48,22 +48,13 @@ MODEL = "eng.zip"
 LOGGING_FMT = "%(message)s"
 
 def run_aligner(aligner=False, configuration=False, dictionary=False, samplerate=False,
-                epochs=False, read=False, train=False, align=False,
-                write=False, verbose=False, extra_verbose=False):
+                epochs=False, read=False, train=False, align=False, write=False):
     
     args = locals() # get dictionary of args
 
     if 'dictionary' not in args:
         filedir_ = dirname(__file__)
         args['dictionary'] = [join_dirs(filedir_, DICTIONARY)]
-
-    # set up logging
-    loglevel = logging.WARNING
-    if extra_verbose:
-        loglevel = logging.DEBUG
-    elif verbose:
-        loglevel = logging.INFO
-    logging.basicConfig(format=LOGGING_FMT, level=loglevel)
 
     # input: pick one
     if train:

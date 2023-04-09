@@ -9,7 +9,7 @@ from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_data(filepath, strict=True, useloadmat=True, verbose=False):
+def import_data(filepath, strict=True, useloadmat=True):
     '''
     Import Data object from MATLAB (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
@@ -29,8 +29,6 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         2) Each trial must contain the exact same set of fields
     useloadmat : boolean, default=True
         If True, use hdf5storage.loadmat, else use custom h5py loader
-    verbose : boolean, default=False
-        If True, print trial number and field as it's loaded
 
     Returns
     -------
@@ -52,7 +50,7 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         for tt,trial in enumerate(loaded):
             trial_dict = {}
             for f, t in zip(fieldnames, trial):
-                if verbose: print(tt, f)
+                logging.debug(f'Loading trial #{tt}: {f}')
                 tmp_t = t.squeeze()
                 if f == 'resp' or f == 'aud':
                     if tmp_t.ndim > 1:
@@ -71,7 +69,7 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         for trial in range(n_trial):
             trial_dict = {}
             for fld in fieldnames:
-                if verbose: print(trial, fld)
+                logging.debug(f'Loading trial #{trial}: {fld}')
                 tmp = np.array(f[f['out'][fld][trial][0]])
                 # Pull out scalars
                 if np.prod(tmp.shape) == 1:
@@ -335,7 +333,7 @@ def read_bids(root,
     bids_path = BIDSPath(subject=subject, root=root, session=session, task=task,
                          suffix=suffix, datatype=datatype)
     
-    raw = read_raw_bids(bids_path=bids_path, verbose=False)
+    raw = read_raw_bids(bids_path=bids_path)
             
     raws = _crop_raw_bids(raw, crop_by, befaft)
     
@@ -350,7 +348,7 @@ def read_bids(root,
     for raw_trial in raws:
         raw_resp = raw_trial.copy().drop_channels(stim_channels)
         if resp_channels is not None:
-            raw_resp = raw_resp.pick_channels(resp_channels, verbose=0)
+            raw_resp = raw_resp.pick_channels(resp_channels)
         raw_responses.append(raw_resp)
         
         if raw_info is None:
@@ -358,7 +356,7 @@ def read_bids(root,
 
         # if any of the channels are 'stim' channels, store them separately from responses
         if 'stim' in raw_trial.get_channel_types():
-            raw_stims.append(raw_trial.pick_types(stim=True, verbose=0))
+            raw_stims.append(raw_trial.pick_types(stim=True))
         else:
             raw_stims.append(None)
     

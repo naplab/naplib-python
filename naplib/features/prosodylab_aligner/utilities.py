@@ -64,8 +64,7 @@ def splitname(fullname):
 
 
 def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate=False,
-                 epochs=False, read=False, train=False, align=False,
-                 write=False, verbose=False, extra_verbose=False):
+                 epochs=False, read=False, train=False, align=False, write=False):
     if configuration is None:
         logging.error("Configuration file not specified.")
         exit(1)

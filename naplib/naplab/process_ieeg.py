@@ -235,7 +235,7 @@ def process_ieeg(
     
     # # perform alignment
     alignment_times, alignment_confidence = align_stimulus_to_recording(
-        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=_verbosity(log_level), **alignment_kwargs
+        alignment_wav, raw_data['wav_f'], stim_data, stim_order, **alignment_kwargs
     )
     
     # truncate data around earliest and lastest time that we need
@@ -284,7 +284,6 @@ def process_ieeg(
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
                                                        in_place=True,
-                                                       verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
 
         
@@ -316,8 +315,7 @@ def process_ieeg(
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
                                                                fs_out=final_fs,
-                                                               n_jobs=n_jobs,
-                                                               verbose=_verbosity(log_level))
+                                                               n_jobs=n_jobs)
 
         logging.info(f'Storing response bands of interest...')
         # only keep amplitude or phase if that's what the user specified
@@ -366,7 +364,7 @@ def process_ieeg(
         logging.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs, verbose=_verbosity(log_level) >= 1)
+            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs)
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
@@ -666,7 +664,7 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}, verbose=False):
+def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}):
     """
     Convert each stimulus in the stim_data_dict into a spectrogram, then return
     a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
@@ -692,9 +690,13 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
     specs : list of np.ndarray
         List of same length as stim_order containing the spectrogram for each stimulus
     """
+    if logging.root.level <= logging.INFO:
+        stim_data_dict = tqdm(stim_data_dict.items(), total=len(stim_data_dict))
+    else:
+        stim_data_dict = stim_data_dict.items()
+
     spec_dict = {}
-    stim_data_dict = stim_data_dict.items()
-    for k, (fs, sig) in tqdm(stim_data_dict, total=len(stim_data_dict)) if verbose else stim_data_dict:
+    for k, (fs, sig) in stim_data_dict:
         if k not in stim_order:
             continue # skip this stimulus if don't need it for stim_order
         if sig.ndim == 2:
@@ -783,14 +785,4 @@ def _remove_buffer_time(data, fs, buffer_time=1):
         for field in data.fields:
             data[trial][field] = data[trial][field][buffer_samples:-buffer_samples]
     return data
-
-
-def _verbosity(log_level) -> int:
-    log_level = log_level.upper()
-    if log_level == 'DEBUG':
-        return 2
-    elif log_level == 'INFO':
-        return 1
-    else:
-        return 0
 
