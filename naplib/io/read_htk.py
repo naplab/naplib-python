@@ -1,5 +1,6 @@
 import struct
 import numpy as np
+import logging
 
 
 def read_htk(filename, return_codes=False):
@@ -159,7 +160,7 @@ def read_htk(filename, return_codes=False):
                 data.append(frame)
                 
         if "K" in qualifiers:
-            print("CRC checking not implememnted...")
+            logging.warn("CRC checking not implememnted...")
 
         data = np.array(data)
             
