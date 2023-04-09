@@ -36,7 +36,7 @@ def test_single_stimuli_pipeline(small_data):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        store_spectrograms=True,
+        aud_fn='default',
         log_level='CRITICAL',
         befaft=[1,1]
     )
@@ -89,7 +89,7 @@ def test_single_stimuli_spectrum_inference_method(small_data):
         aud_channel_infer_method='spectrum',
         store_all_wav=True,
         store_sounds=True,
-        store_spectrograms=True,
+        aud_fn='default',
         log_level='CRITICAL',
         befaft=[1,1]
     )
@@ -139,7 +139,7 @@ def test_single_stimuli_pipeline_with_rereference(small_data):
         intermediate_fs=100,
         final_fs=100,
         store_reference=True,
-        store_spectrograms=False,
+        aud_fn=None,
         log_level='CRITICAL',
         befaft=[1,1]
     )
@@ -174,7 +174,7 @@ def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
         final_fs = 10,
         bands=['raw'],
         store_reference=True,
-        store_spectrograms=False,
+        aud_fn=None,
         log_level='CRITICAL',
         befaft=[1,1]
     )
