@@ -2,6 +2,7 @@ import logging
 import warnings
 import os
 from typing import Union, Tuple, List, Optional, Dict, Sequence, Callable
+from tqdm.auto import tqdm
 
 import numpy as np
 from scipy.signal import resample, welch, correlate
@@ -365,7 +366,7 @@ def process_ieeg(
         logging.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs)
+            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs, verbose=_verbosity(log_level) >= 1)
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
@@ -665,7 +666,7 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}):
+def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}, verbose=False):
     """
     Convert each stimulus in the stim_data_dict into a spectrogram, then return
     a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
@@ -692,7 +693,8 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
         List of same length as stim_order containing the spectrogram for each stimulus
     """
     spec_dict = {}
-    for k, (fs, sig) in stim_data_dict.items():
+    stim_data_dict = stim_data_dict.items()
+    for k, (fs, sig) in tqdm(stim_data_dict, total=len(stim_data_dict)) if verbose else stim_data_dict:
         if k not in stim_order:
             continue # skip this stimulus if don't need it for stim_order
         if sig.ndim == 2:
