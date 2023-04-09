@@ -31,7 +31,7 @@ def test_1D_input_1D_output_trf_on_Data(data):
     assert score > 0.99
 
 def test_1D_input_1D_output_trf(data):
-    model = TRF(tmin=0, tmax=0.01, sfreq=100, estimator=data['mdl'])
+    model = TRF(tmin=0, tmax=0.01, sfreq=100, estimator=data['mdl'], show_progress=False)
     model.fit(X=data['X1'], y=data['y1'])
     assert np.allclose(data['coef'].reshape(1,1,2), model.coef_, rtol=1e-4)
 

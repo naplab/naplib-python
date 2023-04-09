@@ -170,14 +170,10 @@ class TRF(BaseEstimator):
             args.append((ch, X_delayed, y_single, copy.deepcopy(self.estimator)))
 
         with Pool(self.n_jobs) as p:
-            if self.show_progress:
-                with tqdm(total=len(y_delayed)) as pbar:
-                    for ch, model in p.imap_unordered(_fit_channel, args):
-                        self.models_[ch] = model
-                        pbar.update()
-            else:
+            with tqdm(total=len(y_delayed), disable=not self.show_progress) as pbar:
                 for ch, model in p.imap_unordered(_fit_channel, args):
                     self.models_[ch] = model
+                    pbar.update()
 
         return self
     
