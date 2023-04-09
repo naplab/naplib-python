@@ -146,8 +146,8 @@ def process_ieeg(
         aud_fn = auditory_spectrogram
     elif aud_fn == 'none':
         aud_fn = None
-    elif not isinstance(aud_fn, Callable):
-        raise ValueError("Argument aud_fn should be either 'none', 'default', or a function")
+    elif aud_fn and not isinstance(aud_fn, Callable):
+        raise ValueError("Argument aud_fn should be either None, 'none', 'default', or a function")
 
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
