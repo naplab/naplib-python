@@ -1,11 +1,10 @@
 import pickle
-import logging
-import warnings
 import numpy as np
 from tqdm.auto import tqdm
 from hdf5storage import loadmat, savemat
 import h5py
 
+from naplib import logger
 from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
@@ -51,7 +50,7 @@ def import_data(filepath, strict=True, useloadmat=True):
         for tt,trial in enumerate(loaded):
             trial_dict = {}
             for f, t in zip(fieldnames, trial):
-                logging.debug(f'Loading trial #{tt}: {f}')
+                logger.debug(f'Loading trial #{tt}: {f}')
                 tmp_t = t.squeeze()
                 if f == 'resp' or f == 'aud':
                     if tmp_t.ndim > 1:
@@ -70,7 +69,7 @@ def import_data(filepath, strict=True, useloadmat=True):
         for trial in range(n_trial):
             trial_dict = {}
             for fld in fieldnames:
-                logging.debug(f'Loading trial #{trial}: {fld}')
+                logger.debug(f'Loading trial #{trial}: {fld}')
                 tmp = np.array(f[f['out'][fld][trial][0]])
                 # Pull out scalars
                 if np.prod(tmp.shape) == 1:
@@ -130,7 +129,7 @@ def export_data(filepath, data, fmt='7.3'):
     
     '''
     if not filepath.endswith('.mat'):
-        warnings.warn(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
+        logger.warning(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
     
     FORMAT_OPTIONS = ['7.3','7','6']
     if fmt not in FORMAT_OPTIONS:
@@ -375,7 +374,7 @@ def read_bids(root,
         trial_data['befaft'] = befaft
         for info_key in info_include:
             if info_key not in info_include:
-                warnings.warn(f'info_include key "{info_key}" not found in raw info')
+                logger.warning(f'info_include key "{info_key}" not found in raw info')
             else:
                 trial_data[info_key] = raw_responses[trial].info[info_key]
         new_data.append(trial_data)  
@@ -422,7 +421,7 @@ def _crop_raw_bids(raw_instance, crop_by, befaft):
                 tmax = max_time
             else:
                 if befaft[1] > 0:
-                    warnings.warn('befaft[1] is positive, but crop_by is "onset", so the ending of each trial will include a portion of the next trial')
+                    logger.warning('befaft[1] is positive, but crop_by is "onset", so the ending of each trial will include a portion of the next trial')
                 tmax = raw_instance.annotations[i+1]["onset"] + befaft[1]
             tmax = min([tmax, max_time])
             raw_crop = raw_instance.copy().crop(onset, tmax)

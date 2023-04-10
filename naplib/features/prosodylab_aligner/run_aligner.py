@@ -23,7 +23,6 @@
 Function-version of the command-line driver for the prosodylab aligner module
 """
 
-import logging
 import os
 import sys
 import yaml
@@ -34,6 +33,7 @@ from bisect import bisect
 from shutil import copyfile
 from textgrid import MLF
 
+from . import logger
 from .corpus import Corpus
 from .aligner import Aligner
 from .archive import Archive
@@ -45,7 +45,6 @@ from argparse import ArgumentParser
 DICTIONARY = "eng.dict"
 MODEL = "eng.zip"
 
-LOGGING_FMT = "%(message)s"
 
 def run_aligner(aligner=False, configuration=False, dictionary=False, samplerate=False,
                 epochs=False, read=False, train=False, align=False, write=False):
@@ -59,28 +58,28 @@ def run_aligner(aligner=False, configuration=False, dictionary=False, samplerate
     # input: pick one
     if train:
         if read:
-            logging.error("Cannot train on persistent model.")
+            logger.error("Cannot train on persistent model.")
             raise RuntimeError('Cannot train on persistent model.')
-        logging.info("Preparing corpus '{}'.".format(args['train']))
+        logger.info("Preparing corpus '{}'.".format(args['train']))
         opts = resolve_opts(**args)
         corpus = Corpus(args['train'], opts)
-        logging.info("Preparing aligner.")
+        logger.info("Preparing aligner.")
         aligner = Aligner(opts)
-        logging.info("Training aligner on corpus '{}'.".format(args['train']))
+        logger.info("Training aligner on corpus '{}'.".format(args['train']))
         aligner.HTKbook_training_regime(corpus, opts["epochs"],
                                         flatstart=(args['read'] is None))
     else:
         if not read:
             args['read'] = MODEL
-        logging.info("Reading aligner from '{}'.".format(args['read']))
+        logger.info("Reading aligner from '{}'.".format(args['read']))
         # warn about irrelevant flags
         if configuration:
-            logging.warning("Ignoring config flag (-c/--configuration).")
+            logger.warning("Ignoring config flag (-c/--configuration).")
             configuration = None
         if epochs:
-            logging.warning("Ignoring epochs flag (-e/--epochs).")
+            logger.warning("Ignoring epochs flag (-e/--epochs).")
         if samplerate:
-            logging.warning("Ignoring samplerate flag (-s/--samplerate).")
+            logger.warning("Ignoring samplerate flag (-s/--samplerate).")
             args['samplerate'] = None
         # create archive from -r argument
         archive = Archive(read)
@@ -96,20 +95,20 @@ def run_aligner(aligner=False, configuration=False, dictionary=False, samplerate
         # check to make sure we're not aligning on the training data
         if (not args['train']) or (os.path.realpath(args['train']) !=
                                 os.path.realpath(args['align'])):
-            logging.info("Preparing corpus '{}'.".format(args['align']))
+            logger.info("Preparing corpus '{}'.".format(args['align']))
             corpus = Corpus(args['align'], opts)
-        logging.info("Aligning corpus '{}'.".format(args['align']))
+        logger.info("Aligning corpus '{}'.".format(args['align']))
         aligned = os.path.join(args['align'], ALIGNED)
         scores = os.path.join(args['align'], SCORES)
         aligner.align_and_score(corpus, aligned, scores)
-        logging.debug("Wrote MLF file to '{}'.".format(aligned))
-        logging.debug("Wrote likelihood scores to '{}'.".format(scores))
-        logging.info("Writing TextGrids.")
+        logger.debug("Wrote MLF file to '{}'.".format(aligned))
+        logger.debug("Wrote likelihood scores to '{}'.".format(scores))
+        logger.info("Writing TextGrids.")
         size = MLF(aligned).write(args['align'])
         if not size:
-            logging.error("No paths found!")
+            logger.error("No paths found!")
             raise RuntimeError('No paths found')
-        logging.debug("Wrote {} TextGrids.".format(size))
+        logger.debug("Wrote {} TextGrids.".format(size))
     elif args['write']:
         # create and populate archive
         (_, basename, _) = splitname(args['write'])
@@ -123,7 +122,8 @@ def run_aligner(aligner=False, configuration=False, dictionary=False, samplerate
             yaml.dump(opts, sink)
         (basename, _) = os.path.splitext(args['write'])
         archive_path = os.path.relpath(archive.dump(basename))
-        logging.info("Wrote aligner to '{}'.".format(archive_path))
+        logger.info("Wrote aligner to '{}'.".format(archive_path))
     # else unreachable
 
-    logging.info("Success!")
+    logger.info("Success!")
+

@@ -3,9 +3,10 @@ Global variables and helpers for forced alignment
 """
 
 import bisect
-import logging
 import os
 import yaml
+
+from . import logger
 
 # global variables
 
@@ -66,17 +67,17 @@ def splitname(fullname):
 def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate=False,
                  epochs=False, read=False, train=False, align=False, write=False):
     if configuration is None:
-        logging.error("Configuration file not specified.")
+        logger.error("Configuration file not specified.")
         exit(1)
     with open(configuration, "r") as source:
         try:
             opts = yaml.load(source, Loader=yaml.FullLoader)
         except yaml.YAMLError as err:
-            logging.error("Error in configuration file: %s", err)
+            logger.error("Error in configuration file: %s", err)
             exit(1)
     # command line only
     if not dictionary:
-        logging.error("Dictionary not specified.")
+        logger.error("Dictionary not specified.")
         exit(1)
     opts["dictionary"] = dictionary
     if not epochs:
@@ -86,7 +87,7 @@ def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate
     try:
         sr = samplerate if samplerate else opts["samplerate"]
     except KeyError:
-        logging.error("Samplerate (-s) not specified.")
+        logger.error("Samplerate (-s) not specified.")
         exit(1)
     if sr not in SAMPLERATES:
         i = bisect.bisect(SAMPLERATES, sr)
@@ -98,6 +99,6 @@ def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate
             i = i - 1
         # else keep `i` as is
         sr = SAMPLERATES[i]
-        logging.warning("Using {} Hz as samplerate".format(sr))
+        logger.warning("Using {} Hz as samplerate".format(sr))
     opts["samplerate"] = sr
     return opts

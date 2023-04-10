@@ -5,7 +5,7 @@ from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import logging
 
-from naplib import is_logging
+from naplib import logger
 
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0):
@@ -60,7 +60,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     useCh = None
 
     # Iterate over each stimulus provided in stim_order
-    for stim_name in tqdm(stim_order, total=len(stim_order), disable=not is_logging(logging.INFO)):
+    for stim_name in tqdm(stim_order, total=len(stim_order), disable=not logger.isEnabledFor(logging.INFO)):
         # Get stimulus waveform and sampling rate
         stim_fs, stim_full = stim_dict[stim_name]
 
@@ -124,7 +124,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
                             max_val = curr_corr
                             max_ind = pk
 
-                logging.debug(f'Searching from t={n_start_look/rec_fs:.2f}, found segment with correlation={max_val:.4f}')
+                logger.debug(f'Searching from t={n_start_look/rec_fs:.2f}, found segment with correlation={max_val:.4f}')
 
                 if max_val > confidence_threshold:
                     FOUND = True
@@ -151,10 +151,10 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
         # Determine which stimulus channel was best, set useCh, save inds
         if useCh is None:
             useCh = np.argmax(max_corrs)
-            logging.info(f'Using stimulus channel {useCh} for alignment')
+            logger.info(f'Using stimulus channel {useCh} for alignment')
         alignment_times.append(possible_times[useCh])
         alignment_confidence.append(np.amax(max_corrs))
         
-        logging.info(f'Found {stim_name} with correlation={alignment_confidence[-1]:.4f} @ {alignment_times[-1]}')
+        logger.info(f'Found {stim_name} with correlation={alignment_confidence[-1]:.4f} @ {alignment_times[-1]}')
 
     return alignment_times, alignment_confidence

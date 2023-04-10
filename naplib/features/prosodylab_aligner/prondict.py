@@ -24,10 +24,9 @@ Pronunciation dictionary utilities
 """
 
 
-import logging
-
 from collections import defaultdict
 
+from . import logger
 from .utilities import SIL, SP
 
 
@@ -48,7 +47,7 @@ class PronDict(object):
             try:
                 (word, pron) = line.split(None, 1)
             except ValueError:
-                logging.error("Formatting error in dictionary '{}' (ln. {}).".format(source.name, i))
+                logger.error("Formatting error in dictionary '{}' (ln. {}).".format(source.name, i))
                 exit(1)
             yield (i, word, pron.split())
 
@@ -58,7 +57,7 @@ class PronDict(object):
             for (i, word, pron) in PronDict.pronify(source):
                 for ph in pron:
                     if ph not in self.ps | self.SILENT_PHONES:
-                        logging.error("Unknown phone '{}' in dictionary '{}' (ln. {}).".format(ph, filename, i))
+                        logger.error("Unknown phone '{}' in dictionary '{}' (ln. {}).".format(ph, filename, i))
                         exit(1)
                 self.d[word].append(pron)
 

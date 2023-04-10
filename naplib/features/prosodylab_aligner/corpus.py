@@ -25,16 +25,14 @@ Corpus utilities
 
 
 import os
-import logging
-
 from re import match
 from glob import glob
 from shutil import rmtree
 from tempfile import mkdtemp
 import subprocess
-import warnings
 from subprocess import check_call
 
+from . import logger
 from .wavfile import WavFile
 from .prondict import PronDict
 from .utilities import splitname, mkdir_p, opts2cfg, \
@@ -66,7 +64,7 @@ class Corpus(object):
         self.phoneset = frozenset(opts["phoneset"])
         for phone in self.phoneset:
             if not match(VALID_PHONE, phone):
-                logging.error("Phone '{}': not /{}/.".format(phone,
+                logger.error("Phone '{}': not /{}/.".format(phone,
                                                       VALID_PHONE))
                 raise RuntimeError("Phone '{}': not /{}/.".format(phone, VALID_PHONE))
         # dictionaries
@@ -105,10 +103,10 @@ class Corpus(object):
         audiofiles = glob(os.path.join(dirname, "*.wav"))
         labelfiles = glob(os.path.join(dirname, "*.lab"))
         if not audiofiles:
-            logging.error("No .wav files in '{}'.".format(dirname))
+            logger.error("No .wav files in '{}'.".format(dirname))
             raise RuntimeError("No .wav files in '{}'. There may be an issue with sox or audio resampling.".format(dirname))
         elif not labelfiles:
-            logging.error("No .lab files in '{}'.".format(dirname))
+            logger.error("No .lab files in '{}'.".format(dirname))
             raise RuntimeError("No .lab files in '{}'. There may be a TextGrid issue.".format(dirname))
         audiobasenames = frozenset(splitname(audiofile)[1] for
                                    audiofile in audiofiles)
@@ -123,7 +121,7 @@ class Corpus(object):
             with open(MISSING, "w") as sink:
                 for filename in missing:
                     print(os.path.join(dirname, filename), file=sink)
-            logging.error("Missing data files: see '{}'.".format(MISSING))
+            logger.error("Missing data files: see '{}'.".format(MISSING))
         return (audiofiles, labelfiles)
 
     def _prepare_label(self, labelfiles):
@@ -164,7 +162,7 @@ class Corpus(object):
         if self.thedict.oov:
             with open(OOV, "w") as oov:
                 print("\n".join(sorted(self.thedict.oov)), file=oov)
-            logging.error("OOV word(s): see '{}'.".format(OOV))
+            logger.error("OOV word(s): see '{}'.".format(OOV))
             raise RuntimeError(f'Certain words in the transcripts were not present in the dictionary file. See {OOV} for the words which must be added to the dictionary file.')
         # make words
         with open(self.words, "w") as words:
@@ -216,7 +214,7 @@ DE {1}
                 if Fs != self.samplerate:
                     w = WavFile.from_file(audiofile)
                     new_wav = os.path.join(self.auddir, filename)
-                    logging.warning("Resampling '{}'.".format(audiofile))
+                    logger.warning("Resampling '{}'.".format(audiofile))
                     w.resample_bang(self.samplerate)
                     w.write(new_wav)
                 print('"{}" "{}"'.format(audiofile, featurefile),
