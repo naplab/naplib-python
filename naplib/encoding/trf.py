@@ -1,9 +1,9 @@
 import copy
-from contextlib import contextmanager,redirect_stderr,redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from os import devnull
+from multiprocessing import Pool
 
-import tqdm
-from tqdm.auto import tqdm as tqdm_
+from tqdm.auto import tqdm
 import numpy as np
 from sklearn.base import BaseEstimator
 from mne.decoding.receptive_field import _delay_time_series
@@ -47,12 +47,10 @@ class TRF(BaseEstimator):
         The default is sklearn.linear_model.RidgeCV() with alphas=np.logspace(-2, 5, 6),
         scoring='r2', cv=5. This trains ridge regularized regressors with built-in cross-validation
         over the regularization parameter using 5-fold cross validation.
-    verbose : int, default=1
-        Level of printing output desired.
-        0 prints nothing, 1 prints only a single tqdm progress bar for
-        the fitting over the n-outputs in .fit(), and 2 prints information about
-        cross-validation, such as the alpha value chosen and the corresponding scores,
-        during the fitting procedure for each output.
+    n_jobs : int, default=1
+        Number of parallel processes to use for fitting TRFs
+    show_progress : bool, default=True
+        Whether to show a tqdm progress bar for the fitting over the n-outputs in .fit()
 
     Attributes
     ----------
@@ -73,7 +71,8 @@ class TRF(BaseEstimator):
                  tmax,
                  sfreq,
                  estimator=None,
-                 verbose=1):
+                 n_jobs=1,
+                 show_progress=True):
         
         if tmin >= tmax:
             raise ValueError(f'tmin must be less than tmax, but got {tmin} and {tmax}')
@@ -85,7 +84,8 @@ class TRF(BaseEstimator):
             self.estimator = RidgeCV(alphas=np.logspace(-2, 5, 6), cv=5)
         else:
             self.estimator = estimator
-        self.verbose = verbose
+        self.n_jobs = n_jobs
+        self.show_progress = show_progress
         
     
     @property
@@ -108,11 +108,9 @@ class TRF(BaseEstimator):
         if not X.ndim == 2:
             raise ValueError(f'Each trial input must be 2 dimensional but got trial with shape {X.shape}')
         # X is now shape (n_times, n_feats, n_delays)
-        X = _delay_time_series(X, self.tmin, self.tmax, self.sfreq,
-                               fill_mean=False)
-        x_shape = X.shape
-        X = X.reshape(x_shape[0], -1)
-            
+        X = _delay_time_series(X, self.tmin, self.tmax, self.sfreq, fill_mean=False)
+        X = X.reshape(X.shape[0], -1)
+
         return X, y
 
     def fit(self, data=None, X='aud', y='resp'):
@@ -142,47 +140,41 @@ class TRF(BaseEstimator):
         Returns
         -------
         self : returns an instance of self
-        
         '''
         
-        X_, y_ = _parse_outstruct_args(data, copy.deepcopy(X), copy.deepcopy(y))
+        X, y = _parse_outstruct_args(data, X, y)
         
-        if y_[0].ndim == 1:
-            y_ = [yy[:,np.newaxis] for yy in y_]
+        if y[0].ndim == 1:
+            y = [yy[:,np.newaxis] for yy in y]
         
-        self.ndim_y_ = y_[0].ndim
-        
-        X_delayed, y_delayed = [], []
-        
-        self.X_feats_ = X_[0].shape[-1]
+        self.ndim_y_ = y[0].ndim
+        self.X_feats_ = X[0].shape[-1]
+        self.n_targets_ = y[0].shape[1]
+        self.y_feats_ = y[0].shape[-1] if self.ndim_y_==3 else 1
 
-        for xx, yy in zip(X_, y_):
+        X_delayed, y_delayed = [], []
+        for xx, yy in zip(X, y):
             X_tmp, y_tmp = self._delay_and_reshape(xx, yy)
             X_delayed.append(X_tmp)
             y_delayed.append(y_tmp)
         
         X_delayed = np.concatenate(X_delayed, axis=0)
         y_delayed = np.concatenate(y_delayed, axis=0)
-        
-        self.n_targets_ = y_[0].shape[1]
-        self.y_feats_ = y_[0].shape[-1] if self.ndim_y_==3 else 1
+        y_delayed = [yy.copy() for yy in y_delayed.swapaxes(0, 1)]
         
         # for each target variable, fit a TRF model
-        self.models_ = [copy.deepcopy(self.estimator) for _ in range(y_delayed.shape[1])]
+        self.models_ = [None] * len(y_delayed)
         
-        if self.verbose >= 1:
-            disable_tqdm = False
-        else:
-            disable_tqdm = True
+        args = []
+        for ch, y_single in enumerate(y_delayed):
+            args.append((ch, X_delayed, y_single, copy.deepcopy(self.estimator)))
 
-        for target_idx in tqdm_(range(y_delayed.shape[1]), disable=disable_tqdm):
-            y_thistarget = y_delayed[:,target_idx]
-            if self.verbose >= 2:
-                print(f'Fitting model for output variable {target_idx}...')
-            # if self.ndim_y_ == 2:
-            #     y_thistarget = y_thistarget[:,np.newaxis]
-            self.models_[target_idx].fit(X_delayed, y_thistarget)
-             
+        with Pool(self.n_jobs) as p:
+            with tqdm(total=len(y_delayed), disable=not self.show_progress) as pbar:
+                for ch, model in p.imap_unordered(_fit_channel, args):
+                    self.models_[ch] = model
+                    pbar.update()
+
         return self
     
     @property
@@ -358,4 +350,9 @@ class TRF(BaseEstimator):
             scores.append(np.corrcoef(y_thistarget, pred)[0,1])
         
         return np.array(scores)
-        
+
+
+def _fit_channel(args):
+    ch, X, y, model = args
+    return ch, model.fit(X, y)
+

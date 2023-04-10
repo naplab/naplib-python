@@ -4,6 +4,7 @@ import array
 import numpy as np
 from math import ceil, floor
 from typing import Iterable, Dict
+from datetime import datetime
 
 
 def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
@@ -35,6 +36,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     """
 
     with open(path, 'rb') as fin:
+        # read header
         version = int(fin.read(8).decode('ascii'))
         patient = fin.read(80).decode('ascii').strip()
         recording = fin.read(80).decode('ascii').strip()
@@ -43,13 +45,16 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         header_size = int(fin.read(8).decode('ascii'))
         _ = fin.seek(44, 1)
 
+        # current implementation only supports original EDF format
         if version != 0:
             raise ValueError('EDF with version != 0 not yet supported.')
 
+        # number of lengths of signals
         num_records = int(fin.read(8).decode('ascii'))
         record_dur = float(fin.read(8).decode('ascii'))
         num_signals = int(fin.read(4).decode('ascii'))
 
+        # channel metadata
         labels = np.array([fin.read(16).decode('ascii').strip() for _ in range(num_signals)])
         transducer = np.array([fin.read(80).decode('ascii').strip()  for _ in range(num_signals)])
         physical_dim = np.array([fin.read(8).decode('ascii').strip()  for _ in range(num_signals)])
@@ -65,17 +70,21 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
             raise RuntimeError('The load_edf function does not support heterogeneous `samples` per record.')
         samples = samples[0]
 
+        # compute sampling rate
         sampling_rate = samples / record_dur
 
+        # only process part of recording that falls between the specified time range (t1, t2)
         min_record = floor(t1 / record_dur)
         max_record = ceil(t2 / record_dur) if t2 > 0.0 else num_records
         fin.seek(min_record * samples * num_signals * 2, 1)
         num_records = max_record - min_record
         
+        # scale recordings from digital to physical units
         scale = (physical_max - physical_min) / (digital_max - digital_min)
         def rescale(x):
             return (x - digital_min) * scale + physical_min
 
+        # read actual neural data
         aux_signals = _aux_channels(labels)
         num_aux_signals = sum(aux_signals)
         num_data_signals = num_signals - num_aux_signals
@@ -89,6 +98,16 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
             data[i*samples:(i+1)*samples] = buffer[:, ~aux_signals]
             aux_data[i*samples:(i+1)*samples] = buffer[:, aux_signals]
     
+    # Convert start_date and start_time to python objects
+    try:
+        start_date = datetime.strptime(start_date, '%m.%d.%y').date()
+    except:
+        start_date = None
+    try:
+        start_time = datetime.strptime(start_time, '%H.%M.%S').time()
+    except:
+        start_time = None
+
     return {
         'data': data,
         'data_f': sampling_rate,
@@ -96,6 +115,15 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         'wav_f': sampling_rate,
         'labels_data': labels[~aux_signals],
         'labels_wav': labels[aux_signals],
+        'info': {
+            'start_date': start_date,
+            'start_time': start_time,
+            'patient': patient,
+            'version': version,
+            'transducer': transducer,
+            'physical_unit': physical_dim,
+            'prefilt': prefilt,
+        },
     }
 
 
