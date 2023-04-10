@@ -20,7 +20,6 @@ from naplib import is_logging, Data as nlData
 from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
-LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
 BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering doesn't produce edge effects
 
 
@@ -47,7 +46,6 @@ def process_ieeg(
     aud_fn: Optional[Union[str, Callable]]='default',
     aud_kwargs: dict={},
     n_jobs: int=1,
-    log_level : str='INFO'
 ):
     """
     data_path : str path-like
@@ -125,20 +123,12 @@ def process_ieeg(
     n_jobs : int, default=1
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
-    log_level : str, default='INFO'
-        In order of the amount that will be displayed from most to least, can be
-        one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
         
     Returns
     -------
     data : nl.Data
         Data object containing all requested fields after preprocessing.
     """
-
-    root_logger = logging.getLogger()
-    root_logger.setLevel(LOG_LEVELS[log_level.upper()])
-    handler = logging.FileHandler('Img_To_Local_Python.log', 'w', 'utf-8')
-    root_logger.addHandler(handler)
 
     # # infer spectrogram function
     if aud_fn == 'default':
@@ -219,7 +209,7 @@ def process_ieeg(
                                                          raw_data.get('wav_labels', None),
                                                          list(stim_data.values()),
                                                          method=aud_channel_infer_method,
-                                                         debug=log_level.upper()=='DEBUG')
+                                                         debug=is_logging(logging.DEBUG))
         logging.info(f'Inferred alignment channel is {alignment_ch}.')
     else:
         if raw_data['wav'].ndim > 1:
@@ -385,11 +375,7 @@ def process_ieeg(
                            'rereference_grid': rereference_grid})
     logging.info('All done!')
     return final_output
-    
 
-    # # electrode localization
-    # elec_locs
-        
     
 def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
