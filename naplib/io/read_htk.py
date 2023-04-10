@@ -160,7 +160,7 @@ def read_htk(filename, return_codes=False):
                 data.append(frame)
                 
         if "K" in qualifiers:
-            logging.warn("CRC checking not implememnted...")
+            logging.warning("CRC checking not implememnted...")
 
         data = np.array(data)
             
