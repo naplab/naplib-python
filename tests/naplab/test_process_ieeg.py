@@ -167,7 +167,7 @@ def test_single_stimuli_pipeline_with_custom_rereference(small_data):
     data_out = process_ieeg(
         dir_path,
         dir_path,
-        data_labels=os.path.join(dir_path, 'channel_labels.txt'),
+        elec_names=os.path.join(dir_path, 'channel_labels.txt'),
         rereference_grid='array',
         rereference_method='avg',
         bands=['raw'],
@@ -188,7 +188,7 @@ def test_single_stimuli_pipeline_with_custom_rereference(small_data):
     data_out = process_ieeg(
         dir_path,
         dir_path,
-        data_labels=['A1', 'B1'],
+        elec_names=['A1', 'B1'],
         rereference_grid='array',
         rereference_method='avg',
         bands=['raw'],
@@ -209,7 +209,7 @@ def test_single_stimuli_pipeline_with_custom_rereference(small_data):
     data_out = process_ieeg(
         dir_path,
         dir_path,
-        data_labels=['A1', 'B1'],
+        elec_names=['A1', 'B1'],
         rereference_grid='subject',
         rereference_method='avg',
         bands=['raw'],
