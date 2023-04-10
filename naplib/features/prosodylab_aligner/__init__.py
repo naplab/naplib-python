@@ -6,9 +6,6 @@ logger.setLevel(logging.WARNING)
 
 _console = logging.StreamHandler()
 _console.setLevel(logging.WARNING)
-
-formatter = logging.Formatter("%(levelname)s: %(message)s")
-_console.setFormatter(formatter)
 logger.addHandler(_console)
 
 def set_logging(level: Union[int, str]):
