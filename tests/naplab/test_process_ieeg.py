@@ -159,6 +159,91 @@ def test_single_stimuli_pipeline_with_rereference(small_data):
     assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
 
 
+def test_single_stimuli_pipeline_with_custom_rereference(small_data):
+
+    dir_path = small_data['path']
+    true_data = small_data['data_dict']
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        elec_names=os.path.join(dir_path, 'channel_labels.txt'),
+        rereference_grid='array',
+        rereference_method='avg',
+        bands=['raw'],
+        intermediate_fs=100,
+        final_fs=100,
+        store_reference=True,
+        aud_fn=None,
+        befaft=[1,1]
+    )
+
+    # check label loading
+    assert tuple(data_out.info['channel_labels']) == ('Ch1', 'Ch2')
+
+    # check extracted data is correctly rereferenced
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+    assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
+    
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        elec_names=['A1', 'B1'],
+        rereference_grid='array',
+        rereference_method='avg',
+        bands=['raw'],
+        intermediate_fs=100,
+        final_fs=100,
+        store_reference=True,
+        aud_fn=None,
+        befaft=[1,1]
+    )
+
+    # check label loading
+    assert tuple(data_out.info['channel_labels']) == ('A1', 'B1')
+
+    # check extracted data is correctly rereferenced
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+    assert np.allclose(data_out[0]['reference'], true_data['data'][1900:3100])
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        elec_names=['A1', 'B1'],
+        rereference_grid='subject',
+        rereference_method='avg',
+        bands=['raw'],
+        intermediate_fs=100,
+        final_fs=100,
+        store_reference=True,
+        aud_fn=None,
+        befaft=[1,1]
+    )
+
+    # check extracted data is correctly rereferenced
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+    assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        elec_inds=[1],
+        elec_names=['B1'],
+        rereference_grid='subject',
+        rereference_method='avg',
+        bands=['raw'],
+        intermediate_fs=100,
+        final_fs=100,
+        store_reference=True,
+        aud_fn=None,
+        befaft=[1,1]
+    )
+
+    # check extracted data is correctly rereferenced
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+    assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100,1])
+
+
 def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
     """This data has a sampling rate of 50, which is different from wav file stimulus"""
     dir_path = small_data_fs50['path']
