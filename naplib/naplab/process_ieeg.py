@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 
 from hdf5storage import loadmat
 
+from naplib import preprocessing, logger, Data as nlData
 from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
-from naplib import preprocessing
 from naplib.features import auditory_spectrogram
-from naplib import logger, Data as nlData
+from naplib.preprocessing import make_contact_rereference_arr
 from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
@@ -29,7 +29,8 @@ def process_ieeg(
     stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
-    rereference_grid: Optional[np.ndarray]=None,
+    elec_names: Optional[Union[str, Sequence[str]]]=None,
+    rereference_grid: Optional[Union[np.ndarray, str]]=None,
     rereference_method: str='avg',
     store_reference: bool=False,
     aud_channel: Union[str, int]='infer',
@@ -65,7 +66,12 @@ def process_ieeg(
         as those within ``stim_dir``. E.g. {'aud': './stimuli', 'aud_spk1': './stimuli_spk1', 'aud_spk2': './stimuli_spk2'}
     data_type : str, default='infer'
         One of {'edf', 'tdt', 'nwb', 'pkl', 'infer'}. The data type of the raw neural data to load.
-    rereference_grid : Optional[np.ndarray], default=None
+    elec_names: Optional[Union[str, Sequence[str]]] path-like or sequence of strings, default=None
+        Electrode labels for all data channels read from ``data_path``. Should either be the path to a text file where
+        each line is the label of an electrode contact, or a list of strings where each element is the label of an electrode
+        contact. In both cases, the number of labels provided should match the number of data channels in ``data_path``. If
+        None, the labels included in the data file will be used.
+    rereference_grid : Optional[Union[np.ndarray, str]], default=None
         If not None, then data are re-referenced based on this referencing scheme. If a numpy array, then
         should specify categorical groupings of which electrodes to be grouped together for re-referencing,
         and must be the same length as the number of electrodes in the raw data.
@@ -83,7 +89,7 @@ def process_ieeg(
         maximum. 'spectrum' compares the power spectra of each wav channel to that of the stimulus and chooses
         the maximum (which is not very robust when using certain alignment stimuli like triggers).
         'interactive' prints the name of each wav channel and asks the user to specify which one
-        should be used for alignment. This is only an option when wav_labels are present, which is
+        should be used for alignment. This is only an option when labels_wav are present, which is
         only for some data types (like edf).
     bands : Union[str, list[str], list[np.ndarray], list[float], np.ndarray], default=['highgamma']
         Frequency bands, specified as either strings or array-likes of length 2 giving the lower
@@ -176,6 +182,19 @@ def process_ieeg(
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
 
+    # # set electrode labels
+    if isinstance(elec_names, str):
+        elec_names = _load_elec_names(elec_names)
+    
+    if elec_names:
+        if len(elec_names) != raw_data['data'].shape[1]:
+            raise ValueError('List of electrode labels should have same size as number of data channels')
+        
+        if 'labels_data' in raw_data:
+            logger.warning('Overriding original electrode labels with user-specified values')
+
+        raw_data['labels_data'] = elec_names
+
     # # load StimOrder
     logger.info('Loading StimOrder...')
     if stim_order is None:
@@ -198,7 +217,6 @@ def process_ieeg(
     stim_data = load_wav_dir(alignment_dir, rescale=True, subset=set(stim_order))
     if stim_dirs is not None:
         extra_stim_data = {k: load_wav_dir(stim_dir2, rescale=True, subset=set(stim_order)) for k, stim_dir2 in stim_dirs.items()}
-
     else:
         extra_stim_data = {'aud': stim_data}
 
@@ -207,7 +225,7 @@ def process_ieeg(
         logger.info(f'Inferring alignment channel from wav channels...')
         alignment_wav, alignment_ch = _infer_aud_channel(raw_data['wav'],
                                                          raw_data['wav_f'],
-                                                         raw_data.get('wav_labels', None),
+                                                         raw_data.get('labels_wav', None),
                                                          list(stim_data.values()),
                                                          method=aud_channel_infer_method,
                                                          debug=logger.isEnabledFor(logging.DEBUG))
@@ -253,11 +271,19 @@ def process_ieeg(
                 stim_data_dict_[wavname_] = wavdata_[0], np.pad(wavdata_[1], (bef_zeros,aft_zeros))
             else:
                 stim_data_dict_[wavname_] = wavdata_[0], np.pad(wavdata_[1], ((bef_zeros,aft_zeros), (0,0)))
-
     
     # # preprocessing
     
     # # common referencing
+    if rereference_grid == 'array':
+        if 'labels_data' not in raw_data:
+            raise ValueError('Implicit array-based rereferencing not allowed when electrode labels are not specified')
+        rereference_grid = make_contact_rereference_arr(raw_data['labels_data'])
+    elif rereference_grid == 'subject':
+        rereference_grid = np.ones((raw_data['data'].shape[1],) * 2, dtype=int)
+    elif isinstance(rereference_grid, str):
+        raise ValueError(f'Unknown rereference_grid mode: {rereference_grid}')
+
     if rereference_grid is not None:
         logger.info(f'Performing commong rereferencing using "{rereference_method}" method...')
         if store_reference:
@@ -380,7 +406,29 @@ def process_ieeg(
     logger.info('All done!')
     return final_output
 
+
+def _load_elec_names(elec_names_path: str) -> List[str]:
+    """
+    Load txt file containg list of electrode labels, one per line, returning it as a list of strings.
+    Empty lines in file will be skipped, so empty labels are not possible in this file.
     
+    Parameter
+    ---------
+    elec_names_path : str
+        Path to file
+    
+    Returns
+    -------
+    elec_names : List[str]
+        Stimulus order as a list of stimulus names
+    """
+
+    with open(elec_names_path, 'r') as infile:
+        lines = [x.strip() for x in infile.readlines() if not x.isspace()]
+
+    return lines
+
+
 def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
                        method: str='crosscorr', min_freq=20, debug=False):
