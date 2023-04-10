@@ -128,10 +128,10 @@ def segment_around_label_transitions(data=None, field=None, labels=None, prechan
 
     x, labels = _parse_outstruct_args(data, field, labels)
 
-    if any([dd is None for dd in x]):
+    if any(dd is None for dd in x):
         raise ValueError(f'None found in field')
 
-    if any([lab is None for lab in labels]):
+    if any(lab is None for lab in labels):
         raise ValueError(f'None found in labels')
 
     
