@@ -14,6 +14,16 @@ _console.setFormatter(formatter)
 logger.addHandler(_console)
 
 def set_logging(level: Union[int, str]):
+    '''
+    Sets the log level at the module level. All functions within this module
+    by default use this log level, except when a submodule has its own separate
+    log level.
+
+    Parameters
+    ----------
+    level : string or int
+        Any log level that is recognized by python's built-in ``logging`` module
+    '''
     if not isinstance(level, (int, str)):
         raise ValueError('Level must be of type int or str')
     
