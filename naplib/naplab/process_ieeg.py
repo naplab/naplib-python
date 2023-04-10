@@ -184,6 +184,8 @@ def process_ieeg(
             raise ValueError(f'pkl data is not formatted correctly. Must be a pickled dict containing "data", "data_f", "wav", "wav_f" keys at least')
         if store_all_wav and 'labels_wav' not in raw_data:
             raise ValueError('store_all_wav is True, but to store wav channels in final output there must be the key "labels_wav" in the pickled data.')
+        if 'labels_data' in raw_data:
+            raw_data['labels_data'] = np.asarray(raw_data['labels_data'])
     
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
@@ -211,7 +213,7 @@ def process_ieeg(
         if 'labels_data' in raw_data:
             logger.warning('Overriding original electrode labels with user-specified values')
 
-        raw_data['labels_data'] = elec_names
+        raw_data['labels_data'] = np.asarray(elec_names)
 
     # # load StimOrder
     logger.info('Loading StimOrder...')
