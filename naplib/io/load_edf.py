@@ -101,7 +101,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     # Convert start_date and start_time to python objects
     try:
         start_date = datetime.strptime(start_date, '%m.%d.%y').date()
-    except ValueError:
+    except:
         start_date = None
     try:
         start_time = datetime.strptime(start_time, '%H.%M.%S').time()
