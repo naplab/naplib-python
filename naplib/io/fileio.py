@@ -216,6 +216,9 @@ def load(filename):
     with open(filename, 'rb') as inp:
         output = pickle.load(inp)
 
+    if 'labels_data' in output:
+        output['labels_data'] = np.array(output['labels_data'])
+
     return output
 
 
