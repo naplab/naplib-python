@@ -113,7 +113,6 @@ def test_single_label_segment_transitions_bigpostchange(outstruct):
                           [10, 11],
                           [12, 13],
                           [14, 15]]])
-    print((labels, prior_labels))
     assert np.array_equal(segments, expected)
     assert np.array_equal(labels, np.array([1]))
     assert np.array_equal(prior_labels, np.array([0]))
@@ -153,3 +152,33 @@ def test_single_label_segment_transitions_withlags_multiplelabels(outstruct):
     assert np.array_equal(labels[0], np.array([3,0]))
     assert np.array_equal(labels[1], labs2_ex)
     assert np.array_equal(prior_labels, np.array([1,2]))
+
+def test_electrode_lags_fratio():
+    rng = np.random.default_rng(1)
+    labs = np.zeros(50,)
+    labs[::2] = 1
+    data = Data({'resp': [rng.uniform(size=(50,2))], 'lab': [labs]})
+    lags, fratios = electrode_lags_fratio(
+        data, field='resp', labels='lab', max_lag=3, return_fratios=True
+    )
+    assert np.allclose(lags, np.array([1,1]))
+    assert np.allclose(fratios, np.array([[0.01886274, 0.11040603, 0.03642117],
+                                          [0.44325853, 0.8626185,  0.70390361]])
+    )
+
+def test_electrode_lags_fratio_no_labels_or_field_passed():
+    rng = np.random.default_rng(1)
+    labs = np.zeros(50,)
+    labs[::2] = 1
+    data = Data({'resp': [rng.uniform(size=(50,2))], 'lab': [labs]})
+    with pytest.raises(ValueError) as exc:
+        lags = electrode_lags_fratio(
+            data, field='resp', max_lag=3
+        )
+    assert 'None found in labels' in str(exc)
+
+    with pytest.raises(ValueError) as exc:
+        lags = electrode_lags_fratio(
+            data, labels='lab', max_lag=3
+        )
+    assert 'None found in field' in str(exc)

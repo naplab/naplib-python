@@ -27,7 +27,7 @@ def get_label_change_points(x):
 
     if not isinstance(x, np.ndarray):
         assert TypeError(f'input must be numpy array but got {type(x)}')
-    
+
     diff_x = np.concatenate([np.array([0]), np.diff(x)])
     locs = np.argwhere(diff_x!=0).squeeze()
     labels = x[locs]
@@ -125,8 +125,15 @@ def segment_around_label_transitions(data=None, field=None, labels=None, prechan
             [7, 8, 9]]))
 
     '''
-    
+
     x, labels = _parse_outstruct_args(data, field, labels)
+
+    if any(dd is None for dd in x):
+        raise ValueError(f'None found in field')
+
+    if any(lab is None for lab in labels):
+        raise ValueError(f'None found in labels')
+
     
     if isinstance(labels, tuple):
         labels, other_labels = labels[0], labels[1:]
@@ -134,7 +141,7 @@ def segment_around_label_transitions(data=None, field=None, labels=None, prechan
     else:
         other_labels = (labels,)
         return_multiple_labels = False
-    
+
     segments = []
     new_labels = []
     prior_labels = []
