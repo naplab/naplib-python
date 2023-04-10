@@ -29,6 +29,7 @@ def process_ieeg(
     stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
+    elec_inds: Optional[Union[np.ndarray, Sequence[int]]]=None,
     elec_names: Optional[Union[str, Sequence[str]]]=None,
     rereference_grid: Optional[Union[np.ndarray, str]]=None,
     rereference_method: str='avg',
@@ -66,7 +67,10 @@ def process_ieeg(
         as those within ``stim_dir``. E.g. {'aud': './stimuli', 'aud_spk1': './stimuli_spk1', 'aud_spk2': './stimuli_spk2'}
     data_type : str, default='infer'
         One of {'edf', 'tdt', 'nwb', 'pkl', 'infer'}. The data type of the raw neural data to load.
-    elec_names: Optional[Union[str, Sequence[str]]] path-like or sequence of strings, default=None
+    elec_inds : Optional[Union[np.ndarray, Sequence[int]]], default=None
+        If not None, the sorted indices of the data recording channels to keep. Important to note that this filtering is done
+        prior to manual setting of elec_names and rereferencing, so it might affect their results.
+    elec_names : Optional[Union[str, Sequence[str]]] path-like or sequence of strings, default=None
         Electrode labels for all data channels read from ``data_path``. Should either be the path to a text file where
         each line is the label of an electrode contact, or a list of strings where each element is the label of an electrode
         contact. In both cases, the number of labels provided should match the number of data channels in ``data_path``. If
@@ -74,7 +78,9 @@ def process_ieeg(
     rereference_grid : Optional[Union[np.ndarray, str]], default=None
         If not None, then data are re-referenced based on this referencing scheme. If a numpy array, then
         should specify categorical groupings of which electrodes to be grouped together for re-referencing,
-        and must be the same length as the number of electrodes in the raw data.
+        and must be the same length as the number of electrodes in the raw data. If 'array', electrodes on
+        the same electrode array will be grouped together (e.g., RT1, RT2, RT3). If 'subject', all electrodes
+        will fall in the same group, which is equivalent to an NxN matrix of ones.
     rereference_method : Optional[str], default='avg'
         If provided, must specify a method for common rereferencing, either 'avg' (average), 'pca' (PCA),
         or 'med' (median). Only used if ``rereference_grid`` is not None.
@@ -182,6 +188,18 @@ def process_ieeg(
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
 
+    # # filter electrodes
+    if elec_inds:
+        elec_inds = np.asarray(elec_inds, dtype=int)
+
+        # make sure array is strictly increasing
+        for i in range(len(elec_inds)-1):
+            if elec_inds[i] >= elec_inds[i+1]:
+                raise ValueError('elec_inds must be strictly increasing sequence of ints')
+        
+        raw_data['data'] = raw_data['data'][:, elec_inds]
+        raw_data['labels_data'] = raw_data['labels_data'][elec_inds]
+
     # # set electrode labels
     if isinstance(elec_names, str):
         elec_names = _load_elec_names(elec_names)
@@ -285,7 +303,7 @@ def process_ieeg(
         raise ValueError(f'Unknown rereference_grid mode: {rereference_grid}')
 
     if rereference_grid is not None:
-        logger.info(f'Performing commong rereferencing using "{rereference_method}" method...')
+        logger.info(f'Performing common rereferencing using "{rereference_method}" method...')
         if store_reference:
             rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=True)
         else:
