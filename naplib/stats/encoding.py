@@ -73,7 +73,7 @@ def dprime(D, L):
     fs = np.std(len(labels)*tmpb / tmpw.sum(), ddof=1) / np.sqrt(len(labels))
     
     return allf, f, fs
-        
+
 def fratio(D, L, elec_mode='all'):
     '''
     F ratio over time.
