@@ -117,7 +117,7 @@ def make_contact_rereference_arr(channelnames, extent=None):
     ----------
     channelnames : list or array-like
         Channelname of each electrode. They must follow the following scheme: 1) All channelnames must be
-        be alphanumerica, with any numbers only being on the right. 2) The numeric portion specifies a
+        be alphanumeric, with any numbers only being on the right. 2) The numeric portion specifies a
         different electrode number, while the character portion in the left of the channelname specifies the
         contact name. E.g. ['RT1','RT2','RT3','Ls1','Ls2'] indicates two contacts, the first with 3 electrodes
         and the second with 2 electrodes. 3) Electrodes from the same contact must be contiguous.
@@ -137,11 +137,11 @@ def make_contact_rereference_arr(channelnames, extent=None):
     --------
     rereference
     """
-    contact_names = [x.rstrip('0123456789') for x in channelnames]
-
-    dummies = pd.get_dummies([x for x in contact_names])
-
-    connections = (dummies.T.corr()==1).values.astype('float') # square matrix
+    contact_arrays = pd.Series([x.rstrip('0123456789') for x in channelnames])
+    connections = np.zeros((len(contact_arrays),) * 2, dtype=float)
+    for _, inds in contact_arrays.groupby(contact_arrays):
+        for i in inds.index:
+            connections[i, inds.index] = 1.0
     
     # remove longer than extent if desired
     if extent is not None:
