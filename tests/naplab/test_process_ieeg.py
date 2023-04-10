@@ -39,7 +39,6 @@ def test_single_stimuli_pipeline(small_data):
         store_all_wav=True,
         store_sounds=True,
         aud_fn='default',
-        log_level='CRITICAL',
         befaft=[1,1]
     )
 
@@ -92,7 +91,6 @@ def test_single_stimuli_spectrum_inference_method(small_data):
         store_all_wav=True,
         store_sounds=True,
         aud_fn='default',
-        log_level='CRITICAL',
         befaft=[1,1]
     )
 
@@ -142,7 +140,6 @@ def test_single_stimuli_pipeline_with_rereference(small_data):
         final_fs=100,
         store_reference=True,
         aud_fn=None,
-        log_level='CRITICAL',
         befaft=[1,1]
     )
 
@@ -177,7 +174,6 @@ def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
         bands=['raw'],
         store_reference=True,
         aud_fn=None,
-        log_level='CRITICAL',
         befaft=[1,1]
     )
 
@@ -214,7 +210,6 @@ def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
         store_sounds=True,
         aud_fn=lambda x, sr, **kwargs: scipy.signal.spectrogram(x, sr, **kwargs)[2].T,
         aud_kwargs={'nperseg': 256, 'noverlap': 96},
-        log_level='CRITICAL',
         befaft=[1,1]
     )
 

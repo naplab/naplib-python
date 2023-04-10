@@ -1,9 +1,10 @@
 from os.path import dirname, join
 import math
-import logging
 import numpy as np
 from scipy.signal import resample, lfilter
 from hdf5storage import loadmat
+
+from naplib import logger
 
 
 # read in cochlear filter from file
@@ -100,7 +101,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
 
     # If x is not sampled at 16KHz, resample
     if sfreq != 16_000:
-        logging.warning(f"Resampling audio from {round(sfreq)/1000:g}KHz to 16KHz")
+        logger.warning(f"Resampling audio from {round(sfreq)/1000:g}KHz to 16KHz")
         x, sfreq = resample(x, round(len(x) / sfreq * 16_000)), 16_000
 
     L_x = x.shape[0]

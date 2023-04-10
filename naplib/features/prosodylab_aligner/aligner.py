@@ -24,13 +24,12 @@ Aligner utilities
 """
 
 import os
-import logging
-
 from re import match
 from tempfile import mkdtemp
 from shutil import copyfile, rmtree
 from subprocess import check_call, Popen, CalledProcessError, PIPE
 
+from . import logger
 from .utilities import opts2cfg, mkdir_p, \
                        HMMDEFS, MACROS, PROTO, SP, SIL, TEMP, VFLOORS
 
@@ -132,7 +131,7 @@ class Aligner(object):
         Perform one or more rounds of estimation
         """
         for _ in range(epochs):
-            logging.debug("Training iteration {}.".format(self.epochs))
+            logger.debug("Training iteration {}.".format(self.epochs))
             check_call(["HERest", "-C", self.HERest_cfg,
                         "-S", corpus.feature_scp,
                         "-I", corpus.phon_mlf,
@@ -196,7 +195,7 @@ IS {0} {0}
                             "-d", corpus.taskdict,
                             "-i", corpus.phon_mlf,
                             temp, corpus.word_mlf])
-        logging.debug("(Skipping an iteration number).")
+        logger.debug("(Skipping an iteration number).")
         self._nxtdir()
 
     def align(self, corpus, mlf):
@@ -261,16 +260,16 @@ IS {0} {0}
 
     def HTKbook_training_regime(self, corpus, epochs, flatstart=True):
         if flatstart:
-            logging.info("Flat start training.")
+            logger.info("Flat start training.")
             self.flatstart(corpus)
         self.train(corpus, epochs)
-        logging.info("Modeling silence.")
+        logger.info("Modeling silence.")
         self.small_pause(corpus)
-        logging.info("Additional training.")
+        logger.info("Additional training.")
         self.train(corpus, epochs)
-        logging.info("Realigning.")
+        logger.info("Realigning.")
         self.realign(corpus)
-        logging.info("Final training.")
+        logger.info("Final training.")
         self.train(corpus, epochs)
 
     def __del__(self):
