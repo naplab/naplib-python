@@ -5,6 +5,8 @@ from tqdm.auto import tqdm
 import matplotlib.pyplot as plt
 import logging
 
+from naplib import is_logging
+
 def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     use_hilbert=True, confidence_threshold=0.2, t_search=120, t_start_look=0):
     '''
@@ -58,7 +60,7 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
     useCh = None
 
     # Iterate over each stimulus provided in stim_order
-    for stim_name in tqdm(stim_order, total=len(stim_order), disable=logging.root.level >= logging.WARNING):
+    for stim_name in tqdm(stim_order, total=len(stim_order), disable=not is_logging(logging.INFO)):
         # Get stimulus waveform and sampling rate
         stim_fs, stim_full = stim_dict[stim_name]
 

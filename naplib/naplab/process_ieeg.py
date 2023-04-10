@@ -16,7 +16,7 @@ from hdf5storage import loadmat
 from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
-from naplib import Data as nlData
+from naplib import is_logging, Data as nlData
 from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
@@ -686,7 +686,7 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
     specs : list of np.ndarray
         List of same length as stim_order containing the spectrogram for each stimulus
     """
-    if logging.root.level <= logging.INFO:
+    if is_logging(logging.INFO):
         stim_data_dict = tqdm(stim_data_dict.items(), total=len(stim_data_dict))
     else:
         stim_data_dict = stim_data_dict.items()

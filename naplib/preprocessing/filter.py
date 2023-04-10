@@ -3,6 +3,8 @@ from scipy import signal as sig
 from tqdm.auto import tqdm
 import logging
 
+from naplib import is_logging
+
 from ..data import Data
 from ..utils import _parse_outstruct_args
 
@@ -53,7 +55,7 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
     # params for firwin2
     fs_ = float(fs[0])
     
-    for x, trial_fs in tqdm(zip(field, fs), total=len(field), disable=logging.root.level >= logging.WARNING):
+    for x, trial_fs in tqdm(zip(field, fs), total=len(field), disable=not is_logging(logging.INFO)):
         
         multiplier = 1
 
@@ -128,7 +130,7 @@ def filter_butter(data=None, field='resp', btype='bandpass', Wn=[70,150], fs='da
     
     filters = []
     
-    for trial_data, trial_fs in tqdm(zip(field, fs), total=len(field), disable=logging.root.level >= logging.WARNING):
+    for trial_data, trial_fs in tqdm(zip(field, fs), total=len(field), disable=not is_logging(logging.INFO)):
     
         b, a = sig.butter(order, Wn, btype=btype, fs=trial_fs, output='ba')
         

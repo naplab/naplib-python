@@ -6,6 +6,7 @@ from scipy.signal import resample
 from tqdm.auto import tqdm, trange
 import logging
 
+from naplib import is_logging
 from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
@@ -92,7 +93,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
         phase_amplitude_data[freq_band_name] = []
     
     # loop through trials
-    for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=logging.root.level >= logging.WARNING):
+    for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=not is_logging(logging.INFO)):
         phase_mean, amp_mean, _ = filter_hilbert(trial, fs_trial, Wn, n_jobs=n_jobs)
 
         # resample frequency band outputs to fs_out if necessary
@@ -250,7 +251,7 @@ def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1):
 
     # process channels sequentially
     if n_jobs == 1:
-        for chn in trange(x.shape[1], disable=logging.root.level >= logging.INFO):
+        for chn in trange(x.shape[1], disable=not is_logging(logging.DEBUG)):
             hilb_phase[:,chn], hilb_amp[:,chn] = extract_channel(Xf[:,chn])
     # process channels in parallel
     else:
@@ -393,7 +394,7 @@ def filterbank_hilbert(x, fs, Wn=[70,150], n_jobs=1):
 
     # process channels sequentially
     if n_jobs == 1:
-        for chn in trange(x.shape[1], disable=logging.root.level >= logging.INFO):
+        for chn in trange(x.shape[1], disable=not is_logging(logging.DEBUG)):
             hilb_phase[:,chn], hilb_amp[:,chn] = extract_channel(Xf[:,chn])
     # process channels in parallel
     else:
