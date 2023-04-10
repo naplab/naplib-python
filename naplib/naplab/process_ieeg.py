@@ -716,6 +716,7 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
     output = [spec_dict[stim_name] for stim_name in stim_order]
     return output
     
+    
 def _load_stim_order(stim_order_path: str) -> List[str]:
     """
     Load either StimOrder.mat or StimOrder.txt file and return stimulus order as list of names
@@ -755,7 +756,7 @@ def _load_stim_order(stim_order_path: str) -> List[str]:
         return stim_order
     else:
         with open(good_filepath, 'r') as infile:
-            lines = [x.strip() for x in infile.readlines()]
+            lines = [x.strip() for x in infile.readlines() if not x.isspace()]
         return lines
 
     
@@ -775,6 +776,7 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time
         output[field] = split_field
     
     return nlData(output)
+
 
 def _remove_buffer_time(data, fs, buffer_time=1):
     output = {}
