@@ -48,7 +48,6 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
     See Also
     --------
     make_contact_rereference_arr
-
     """
     if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
         raise ValueError(f'arr must be a square matrix, but got arr of shape {arr.shape}')
@@ -60,13 +59,13 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
 
     def _rereference(data_arr, method='avg', return_ref=False):
         """Helper function to perform rereferencing on single array"""
-        if data_arr.ndim < 2 or data_arr.shape[1] == 1:
+        if data_arr.ndim < 2:
             return data_arr
 
         re_ref_data = np.empty(data_arr.shape)
         for channel in range(arr.shape[0]):
-            ref_channels = arr[channel,:][np.newaxis,:] # now a 1D array of shape (1, channels)
-            weighted_data = data_arr[:,ref_channels.squeeze()!=0]
+            ref_channels = arr[channel] # now a 1D array of shape (channels,)
+            weighted_data = data_arr[:,ref_channels!=0]
 
             if method == 'avg':
                 ref = np.nanmean(weighted_data, axis=1)
@@ -79,8 +78,8 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
                 u, _, _ = svd(weighted_data.T @ weighted_data)
                 ref = u[:,0] * (weighted_data @ u[:,0][:,np.newaxis])
                 data_arr_tmp = (data_arr - data_arr.mean(1, keepdims=True)) / data_arr.std(1, keepdims=True)
-                ref_channels[0,channel] = 1
-                nonzero_channel_indices = np.argwhere(ref_channels.squeeze()!=0).squeeze()
+                ref_channels[channel] = 1
+                nonzero_channel_indices = np.argwhere(ref_channels!=0).squeeze()
                 this_ref_which_index = list(nonzero_channel_indices).index(channel)
                 if return_ref:
                     re_ref_data[:,channel] = ref[:,this_ref_which_index]
@@ -97,8 +96,6 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
                 raise ValueError(f'Invalid rereference method. Got "{method}"')
 
         return re_ref_data
-
-    
         
     data_rereferenced = concat_apply(data_, _rereference, function_kwargs=dict(method=method))
 
