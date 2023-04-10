@@ -207,8 +207,6 @@ class Data(Iterable):
             else:
                 return Data([self.data[i] for i in index], strict=False)
         try:
-            # TODO: change this to return a type Data if you do slicing - problem with trying to
-            # print because it says KeyError for self.data[0] for key 0
             return self.data[index]
         except IndexError:
             raise IndexError(f'Index invalid for this data. Tried to index {index} but length is {len(self)}.')

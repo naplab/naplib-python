@@ -4,12 +4,14 @@ from numpy.typing import NDArray
 from scipy.fft import fft, ifft
 from scipy.signal import resample
 from tqdm.auto import tqdm, trange
+import logging
 
+from naplib import logger
 from naplib.data import Data
 from naplib.utils import _parse_outstruct_args
 
 
-def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]], bandnames=None, fs_out=None, n_jobs=1, verbose=0):
+def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]], bandnames=None, fs_out=None, n_jobs=1):
     '''
     Extract phase and amplitude (envelope) from a frequency band or a set of frequency bands all
     at once.
@@ -45,9 +47,6 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
         Number of jobs to use to compute filterbank across channels in parallel in filterbank_hilbert.
         Using n_jobs != 1 is memory intensive, so it will not necessarily improve performance if working
         with a large dataset.
-    verbose : int, default=0
-        Level of output verbosity. If >= 1 displays progress over trials. If >= 2 also displays progress
-        over channels for each trial, only if n_jobs == 1.
 
     Returns
     -------
@@ -94,8 +93,8 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
         phase_amplitude_data[freq_band_name] = []
     
     # loop through trials
-    for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=verbose < 1):
-        phase_mean, amp_mean, _ = filter_hilbert(trial, fs_trial, Wn, n_jobs=n_jobs, verbose=verbose)
+    for trial, fs_trial in tqdm(zip(field, fs), total=len(field), disable=not logger.isEnabledFor(logging.INFO)):
+        phase_mean, amp_mean, _ = filter_hilbert(trial, fs_trial, Wn, n_jobs=n_jobs)
 
         # resample frequency band outputs to fs_out if necessary
         if fs_out is not None and fs_out < fs_trial:
@@ -110,7 +109,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     return Data(phase_amplitude_data, strict=False)
     
     
-def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1, verbose=1):
+def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1):
     '''
     Compute the phase and amplitude (envelope) of a signal over multiple frequency bands,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -252,7 +251,7 @@ def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1, verbose=1):
 
     # process channels sequentially
     if n_jobs == 1:
-        for chn in trange(x.shape[1], disable=verbose < 2):
+        for chn in trange(x.shape[1], disable=not logger.isEnabledFor(logging.DEBUG)):
             hilb_phase[:,chn], hilb_amp[:,chn] = extract_channel(Xf[:,chn])
     # process channels in parallel
     else:
@@ -263,7 +262,7 @@ def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1, verbose=1):
     return hilb_phase, hilb_amp, cfs
 
 
-def filterbank_hilbert(x, fs, Wn=[70,150], n_jobs=1, verbose=1):
+def filterbank_hilbert(x, fs, Wn=[70,150], n_jobs=1):
     '''
     Compute the phase and amplitude (envelope) of a signal for a single frequency band,
     as in [#edwards]_. This is done using a filter bank of gaussian shaped filters with
@@ -395,7 +394,7 @@ def filterbank_hilbert(x, fs, Wn=[70,150], n_jobs=1, verbose=1):
 
     # process channels sequentially
     if n_jobs == 1:
-        for chn in trange(x.shape[1], disable=verbose < 2):
+        for chn in trange(x.shape[1], disable=not logger.isEnabledFor(logging.DEBUG)):
             hilb_phase[:,chn], hilb_amp[:,chn] = extract_channel(Xf[:,chn])
     # process channels in parallel
     else:

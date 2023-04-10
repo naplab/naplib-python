@@ -1,7 +1,7 @@
 import logging
-import warnings
 import os
-from typing import Union, Tuple, List, Optional, Dict, Sequence
+from typing import Union, Tuple, List, Optional, Dict, Sequence, Callable
+from tqdm.auto import tqdm
 
 import numpy as np
 from scipy.signal import resample, welch, correlate
@@ -16,18 +16,17 @@ from hdf5storage import loadmat
 from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
 from naplib import preprocessing
 from naplib.features import auditory_spectrogram
-from naplib import Data as nlData
+from naplib import logger, Data as nlData
 from .alignment import align_stimulus_to_recording
 
 ACCEPTED_DATA_TYPES = ['edf', 'tdt', 'nwb', 'pkl']
-LOG_LEVELS = {'DEBUG': logging.DEBUG, 'INFO': logging.INFO, 'WARNING': logging.WARNING, 'ERROR': logging.ERROR, 'CRITICAL': logging.CRITICAL}
 BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering doesn't produce edge effects
 
 
 def process_ieeg(
     data_path: str,
     alignment_dir: str,
-    stim_order_path: Optional[str]=None,
+    stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     rereference_grid: Optional[np.ndarray]=None,
@@ -42,23 +41,22 @@ def process_ieeg(
     final_fs: int=100,
     alignment_kwargs: dict={},
     line_noise_kwargs: dict={},
-    store_spectrograms: bool=True,
     store_sounds: bool=False,
     store_all_wav: bool=False,
+    aud_fn: Optional[Union[str, Callable]]='default',
     aud_kwargs: dict={},
     n_jobs: int=1,
-    log_level : str='INFO'
 ):
     """
     data_path : str path-like
         String specifying data directory (for TDT) or file path for raw data file
     alignment_dir : str path-like
         Directory containing a set of stimulus waveforms as .wav files for alignment. This will be called 'aud'.
-    stim_order_path : Optional[str] path-like, defaults to ``alignment_dir``
-        If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
-        stimuli names as lines in the file, which should correspond to the names of the .wav files in ``alignment_dir``. If a
-        directory, the directory must contain such a file. If None, will search for such a file within
-        ``alignment_dir``.
+    stim_order : Optional[Union[str, Sequence[str]]] path-like or sequence of strings, defaults to ``alignment_dir``
+        If a sequence of strings, must contain the order of the stimuli names corresponding to the names of the .wav files in
+        ``alignment_dir``. If a file, must be either a StimOrder.mat file, or StimOrder.txt file containing the order of the
+        stimuli names as lines in the file. If a directory, the directory must contain such a file. If None, will search for
+        such a file within ``alignment_dir``.
     stim_dirs : Optional[Dict[str, str]], defaults to ``alignment_dir``
         If not provided, alignment_dir is assumed to contain the stimulus as well.
         If provided, can be used to specify additional paths from which to load sounds which will be converted to the
@@ -107,23 +105,24 @@ def process_ieeg(
         If provided, will be passed to naplib.naplab.align_stimulus_to_recording to override keyword arguments.
     line_noise_kwargs : dict, default={}
         Dict of kwargs to naplib.preprocessing.filter_line_noise
-    store_spectrograms : bool, default=True
-        If True, compute and store auditory spectrograms for each stimulus in stim_dirs in the output Data.
     store_sounds : bool, default=False
         If True, store raw sound wave for each stimulus in stim_dirs in the output Data.
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
+    aud_fn : Optional[Union[str, Callable]], default='default'
+        Function for computing spectrogram from trial stimulus sounds. If None or 'none', no spectrograms will be
+        computed. If 'default', ``naplib.features.auditory_spectrogram`` will be used. If a callable ``f``, the
+        function will be applied to each stimulus audio and should have signature
+        ``(x: NDArray, sr: float, **aud_kwargs) -> NDArray``, where ``x`` is 1-D audio signal with shape
+        (in_samples,) and ``sr`` is the sampling rate of the audio. The returned array (spectrogram) should
+        have shape (n_samples, freq_bins).
     aud_kwargs : dict, default={}
-        Keyword arguments to pass to ``naplib.features.auditory_spectrogram``. Can include overrides for frame_len,
-        tc, and factor.
+        Keyword arguments to pass to ``aud_fn``. In case of the default function ``naplib.features.auditory_spectrogram``,
+        it can include overrides for frame_len, tc, and factor.
     n_jobs : int, default=1
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
-    log_level : str, default='INFO'
-        In order of the amount that will be displayed from most to least, can be
-        one of {'DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'}
-        
         
     Returns
     -------
@@ -131,32 +130,35 @@ def process_ieeg(
         Data object containing all requested fields after preprocessing.
     """
 
-    root_logger = logging.getLogger()
-    root_logger.setLevel(LOG_LEVELS[log_level.upper()])
-    handler = logging.FileHandler('Img_To_Local_Python.log', 'w', 'utf-8')
-    root_logger.addHandler(handler)
+    # # infer spectrogram function
+    if aud_fn == 'default':
+        aud_fn = auditory_spectrogram
+    elif aud_fn == 'none':
+        aud_fn = None
+    elif aud_fn and not isinstance(aud_fn, Callable):
+        raise ValueError("Argument aud_fn should be either None, 'none', 'default', or a function")
 
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
         data_type, data_path = _infer_data_type(data_path)
-        logging.info(f'Inferred data type to be {data_type} from the data directory')
+        logger.info(f'Inferred data type to be {data_type} from the data directory')
     
     if len(befaft) != 2:
         raise ValueError(f'befaft must be a list or array of length 2.')
     
     # # load data and aud channels
     if data_type == 'tdt':
-        logging.info(f'Loading tdt data...')
+        logger.info(f'Loading tdt data...')
         raw_data = load_tdt(data_path)
         
     elif data_type == 'nwb':
-        logging.info(f'Loading nwb data...')
+        logger.info(f'Loading nwb data...')
         if not data_path.endswith(('.nwb', '.NWB')):
             raise ValueError(f'data_type is nwb but data_path is not a nwb file: {data_path}')
         raw_data = load_nwb(data_path)
 
     elif data_type == 'edf':
-        logging.info(f'Loading edf data...')
+        logger.info(f'Loading edf data...')
         if not data_path.endswith(('.edf', '.EDF')):
             raise ValueError(f'data_type is edf but data_path is not an edf file: {data_path}')
         raw_data = load_edf(data_path)
@@ -164,34 +166,35 @@ def process_ieeg(
     elif data_type == 'pkl':
         if not data_path.endswith(('.pkl', '.p')):
             raise ValueError(f'data_type is pkl but data_path is not a pkl file: {data_path}')
-        logging.info(f'Loading pkl data...')
+        logger.info(f'Loading pkl data...')
         raw_data = load(data_path)
         if not isinstance(raw_data, dict) or ('data' not in raw_data or 'data_f' not in raw_data or 'wav' not in raw_data or 'wav_f' not in raw_data):
             raise ValueError(f'pkl data is not formatted correctly. Must be a pickled dict containing "data", "data_f", "wav", "wav_f" keys at least')
         if store_all_wav and 'labels_wav' not in raw_data:
             raise ValueError('store_all_wav is True, but to store wav channels in final output there must be the key "labels_wav" in the pickled data.')
+    
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
 
     # # load StimOrder
-    logging.info('Loading StimOrder...')
-    if stim_order_path is not None:
-        stim_order = _load_stim_order(stim_order_path)
-    else:
+    logger.info('Loading StimOrder...')
+    if stim_order is None:
         stim_order = _load_stim_order(alignment_dir)
+    elif isinstance(stim_order, str):
+        stim_order = _load_stim_order(stim_order)
 
     data_f = raw_data['data_f']
-        
+    
     # # resample to intermediate_fs Hz
     if intermediate_fs is not None and data_f > intermediate_fs and intermediate_fs >= final_fs:
         new_len = int(intermediate_fs / float(data_f) * raw_data['data'].shape[0])
-        logging.info(f'Resampling data to {intermediate_fs} Hz')
+        logger.info(f'Resampling data to {intermediate_fs} Hz')
         raw_data['data'] = resample(raw_data['data'], new_len, axis=0)
         data_f = intermediate_fs
         raw_data['data_f'] = intermediate_fs
 
     # # load stimuli files
-    logging.info('Loading stimuli...')
+    logger.info('Loading stimuli...')
     stim_data = load_wav_dir(alignment_dir, rescale=True, subset=set(stim_order))
     if stim_dirs is not None:
         extra_stim_data = {k: load_wav_dir(stim_dir2, rescale=True, subset=set(stim_order)) for k, stim_dir2 in stim_dirs.items()}
@@ -201,14 +204,14 @@ def process_ieeg(
 
     # # figure out which channel is used for alignment
     if aud_channel == 'infer':
-        logging.info(f'Inferring alignment channel from wav channels...')
+        logger.info(f'Inferring alignment channel from wav channels...')
         alignment_wav, alignment_ch = _infer_aud_channel(raw_data['wav'],
                                                          raw_data['wav_f'],
                                                          raw_data.get('wav_labels', None),
                                                          list(stim_data.values()),
                                                          method=aud_channel_infer_method,
-                                                         debug=log_level.upper()=='DEBUG')
-        logging.info(f'Inferred alignment channel is {alignment_ch}.')
+                                                         debug=logger.isEnabledFor(logging.DEBUG))
+        logger.info(f'Inferred alignment channel is {alignment_ch}.')
     else:
         if raw_data['wav'].ndim > 1:
             if not isinstance(aud_channel, int):
@@ -222,7 +225,7 @@ def process_ieeg(
     
     # # perform alignment
     alignment_times, alignment_confidence = align_stimulus_to_recording(
-        alignment_wav, raw_data['wav_f'], stim_data, stim_order, verbose=_verbosity(log_level), **alignment_kwargs
+        alignment_wav, raw_data['wav_f'], stim_data, stim_order, **alignment_kwargs
     )
     
     # truncate data around earliest and lastest time that we need
@@ -256,7 +259,7 @@ def process_ieeg(
     
     # # common referencing
     if rereference_grid is not None:
-        logging.info(f'Performing commong rereferencing using "{rereference_method}" method...')
+        logger.info(f'Performing commong rereferencing using "{rereference_method}" method...')
         if store_reference:
             rereferenced_data, reference_to_store = preprocessing.rereference(rereference_grid, field=[raw_data['data']], method=rereference_method, return_reference=True)
         else:
@@ -267,20 +270,16 @@ def process_ieeg(
         reference_to_store = None
     
     # filter line noise (after this, raw_data['data'] is a list of length 1)
-    logging.info('Filtering line noise...')
+    logger.info('Filtering line noise...')
     raw_data['data'] = preprocessing.filter_line_noise(field=[raw_data['data']],
                                                        fs=raw_data['data_f'],
                                                        in_place=True,
-                                                       verbose=_verbosity(log_level),
                                                        **line_noise_kwargs)
 
         
     # # Cut raw data up into blocks based on alignment
-    logging.info('Chunking responses based on alignment...')
+    logger.info('Chunking responses based on alignment...')
     data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
-
-    # print('split by trials')
-    # print(data_by_trials_raw['raw'][0].shape)
 
     # # extract frequency bands
     if 'raw' in bands:
@@ -298,15 +297,14 @@ def process_ieeg(
     
 
     if len(Wn) > 0:
-        logging.info(f'Extracting frequency bands: {Wn} ...')
+        logger.info(f'Extracting frequency bands: {Wn} ...')
         data_by_trials = preprocessing.phase_amplitude_extract(field=data_by_trials_raw['raw'],
                                                                fs=raw_data['data_f'],
                                                                Wn=Wn, bandnames=bandnames,
                                                                fs_out=final_fs,
-                                                               n_jobs=n_jobs,
-                                                               verbose=_verbosity(log_level))
+                                                               n_jobs=n_jobs)
 
-        logging.info(f'Storing response bands of interest...')
+        logger.info(f'Storing response bands of interest...')
         # only keep amplitude or phase if that's what the user specified
         if phase_amp == 'amp':
             fields_to_keep = [xx for xx in data_by_trials.fields if ' amp' in xx]
@@ -336,7 +334,7 @@ def process_ieeg(
     data_by_trials = _remove_buffer_time(data_by_trials, final_fs, buffer_time=BUFFER_TIME)
 
     if store_all_wav:
-        logging.info('Chunking wav channels based on alignment...')
+        logger.info('Chunking wav channels based on alignment...')
         wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
 
     # final output dict to be made into naplib.Data object
@@ -349,11 +347,11 @@ def process_ieeg(
                     'befaft': [befaft for _ in stim_order]}
 
     # extract spectrograms
-    if store_spectrograms:
-        logging.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
+    if aud_fn:
+        logger.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_kwargs=aud_kwargs)
+            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs)
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
@@ -374,15 +372,14 @@ def process_ieeg(
     
     # # Put output Data all together
     final_output = nlData(final_output)
-    final_output.set_info({'channel_labels': raw_data.get('labels_data', None),
-                           'rereference_grid': rereference_grid})
-    logging.info('All done!')
+    final_output.set_info({
+        'channel_labels': raw_data.get('labels_data', None),
+        'rereference_grid': rereference_grid,
+        **raw_data.get('info', {})
+    })
+    logger.info('All done!')
     return final_output
-    
 
-    # # electrode localization
-    # elec_locs
-        
     
 def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[str],
                        stim_data: List[Tuple[float, np.ndarray]],
@@ -413,6 +410,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         between spectrums.
     debug : bool, default=False
         If True, plots the spectrum of each channel and the spectrum of the stimulus.
+
     Returns
     -------
     alignment_wav : np.ndarray
@@ -513,7 +511,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
             stim_data = resample(stim_data, desired_len, axis=0)
 
         if stim_data.ndim > 1 and stim_data.shape[1] > 1:
-            logging.warning('Performing alignment with stereo audio stimuli is not recommended.'
+            logger.warning('Performing alignment with stereo audio stimuli is not recommended.'
                             ' It is recommended to use mono-channel audio for alignment, and any'
                             ' additional stimuli (including stereo audio) desired in the final '
                             ' Data object can be specified as extra stimulus directories.')
@@ -532,7 +530,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
             scores.append(score)
 
         if debug:
-            logging.info(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
+            logger.info(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
 
         best_ch_idx = np.nanargmax(scores)
 
@@ -652,7 +650,7 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
+def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}):
     """
     Convert each stimulus in the stim_data_dict into a spectrogram, then return
     a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
@@ -666,25 +664,34 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
         but they can repeat.
     fs_out : int
         Sampling rate of output spectrograms
+    aud_fn : Callable
+        Function for computing spectrogram from waveform. The function should have signature
+        ``(x: NDArray, sr: float, **kwargs) -> NDArray`` where x has shape (in_samples,), sr
+        is the sampling rate of x, and the return value has shape (out_samples, freq_bins).
     aud_kwargs : dict, default={}
-        Dictionary of kwargs for naplib.features.auditory_spectrogram
+        Dictionary of kwargs for ``aud_fn``
     
     Returns
     -------
     specs : list of np.ndarray
         List of same length as stim_order containing the spectrogram for each stimulus
     """
+    if logger.isEnabledFor(logging.INFO):
+        stim_data_dict = tqdm(stim_data_dict.items(), total=len(stim_data_dict))
+    else:
+        stim_data_dict = stim_data_dict.items()
+
     spec_dict = {}
-    for k, (fs, sig) in stim_data_dict.items():
+    for k, (fs, sig) in stim_data_dict:
         if k not in stim_order:
             continue # skip this stimulus if don't need it for stim_order
         if sig.ndim == 2:
             specs = []
             for ch in range(sig.shape[1]):
-                specs.append(auditory_spectrogram(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
+                specs.append(aud_fn(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
             spec = np.concatenate(specs, axis=-1)
         elif sig.ndim == 1:
-            spec = auditory_spectrogram(sig, fs, **aud_kwargs)
+            spec = aud_fn(sig, fs, **aud_kwargs)
         else:
             raise ValueError(f'Waveform to compute spectrogram for is more than 2 dimensional. Got {sig.ndim} dimensions')
         
@@ -696,6 +703,7 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_kwargs={}):
     
     output = [spec_dict[stim_name] for stim_name in stim_order]
     return output
+    
     
 def _load_stim_order(stim_order_path: str) -> List[str]:
     """
@@ -736,7 +744,7 @@ def _load_stim_order(stim_order_path: str) -> List[str]:
         return stim_order
     else:
         with open(good_filepath, 'r') as infile:
-            lines = [x.strip() for x in infile.readlines()]
+            lines = [x.strip() for x in infile.readlines() if not x.isspace()]
         return lines
 
     
@@ -757,6 +765,7 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time
     
     return nlData(output)
 
+
 def _remove_buffer_time(data, fs, buffer_time=1):
     output = {}
     buffer_samples = round(fs*buffer_time)
@@ -764,14 +773,4 @@ def _remove_buffer_time(data, fs, buffer_time=1):
         for field in data.fields:
             data[trial][field] = data[trial][field][buffer_samples:-buffer_samples]
     return data
-
-
-def _verbosity(log_level) -> int:
-    log_level = log_level.upper()
-    if log_level == 'DEBUG':
-        return 2
-    elif log_level == 'INFO':
-        return 1
-    else:
-        return 0
 

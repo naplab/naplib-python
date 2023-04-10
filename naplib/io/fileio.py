@@ -1,15 +1,15 @@
 import pickle
-import warnings
 import numpy as np
 from tqdm.auto import tqdm
 from hdf5storage import loadmat, savemat
 import h5py
 
+from naplib import logger
 from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def import_data(filepath, strict=True, useloadmat=True, verbose=False):
+def import_data(filepath, strict=True, useloadmat=True):
     '''
     Import Data object from MATLAB (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
@@ -29,8 +29,6 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         2) Each trial must contain the exact same set of fields
     useloadmat : boolean, default=True
         If True, use hdf5storage.loadmat, else use custom h5py loader
-    verbose : boolean, default=False
-        If True, print trial number and field as it's loaded
 
     Returns
     -------
@@ -52,7 +50,7 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         for tt,trial in enumerate(loaded):
             trial_dict = {}
             for f, t in zip(fieldnames, trial):
-                if verbose: print(tt, f)
+                logger.debug(f'Loading trial #{tt}: {f}')
                 tmp_t = t.squeeze()
                 if f == 'resp' or f == 'aud':
                     if tmp_t.ndim > 1:
@@ -71,7 +69,7 @@ def import_data(filepath, strict=True, useloadmat=True, verbose=False):
         for trial in range(n_trial):
             trial_dict = {}
             for fld in fieldnames:
-                if verbose: print(trial, fld)
+                logger.debug(f'Loading trial #{trial}: {fld}')
                 tmp = np.array(f[f['out'][fld][trial][0]])
                 # Pull out scalars
                 if np.prod(tmp.shape) == 1:
@@ -131,7 +129,7 @@ def export_data(filepath, data, fmt='7.3'):
     
     '''
     if not filepath.endswith('.mat'):
-        warnings.warn(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
+        logger.warning(f'The filepath does not end with ".mat". Saving anyway. However, the .mat extension may be needed to open the file in MATLAB.')
     
     FORMAT_OPTIONS = ['7.3','7','6']
     if fmt not in FORMAT_OPTIONS:
@@ -335,7 +333,7 @@ def read_bids(root,
     bids_path = BIDSPath(subject=subject, root=root, session=session, task=task,
                          suffix=suffix, datatype=datatype)
     
-    raw = read_raw_bids(bids_path=bids_path, verbose=False)
+    raw = read_raw_bids(bids_path=bids_path)
             
     raws = _crop_raw_bids(raw, crop_by, befaft)
     
@@ -350,7 +348,7 @@ def read_bids(root,
     for raw_trial in raws:
         raw_resp = raw_trial.copy().drop_channels(stim_channels)
         if resp_channels is not None:
-            raw_resp = raw_resp.pick_channels(resp_channels, verbose=0)
+            raw_resp = raw_resp.pick_channels(resp_channels)
         raw_responses.append(raw_resp)
         
         if raw_info is None:
@@ -358,7 +356,7 @@ def read_bids(root,
 
         # if any of the channels are 'stim' channels, store them separately from responses
         if 'stim' in raw_trial.get_channel_types():
-            raw_stims.append(raw_trial.pick_types(stim=True, verbose=0))
+            raw_stims.append(raw_trial.pick_types(stim=True))
         else:
             raw_stims.append(None)
     
@@ -376,7 +374,7 @@ def read_bids(root,
         trial_data['befaft'] = befaft
         for info_key in info_include:
             if info_key not in info_include:
-                warnings.warn(f'info_include key "{info_key}" not found in raw info')
+                logger.warning(f'info_include key "{info_key}" not found in raw info')
             else:
                 trial_data[info_key] = raw_responses[trial].info[info_key]
         new_data.append(trial_data)  
@@ -423,7 +421,7 @@ def _crop_raw_bids(raw_instance, crop_by, befaft):
                 tmax = max_time
             else:
                 if befaft[1] > 0:
-                    warnings.warn('befaft[1] is positive, but crop_by is "onset", so the ending of each trial will include a portion of the next trial')
+                    logger.warning('befaft[1] is positive, but crop_by is "onset", so the ending of each trial will include a portion of the next trial')
                 tmax = raw_instance.annotations[i+1]["onset"] + befaft[1]
             tmax = min([tmax, max_time])
             raw_crop = raw_instance.copy().crop(onset, tmax)

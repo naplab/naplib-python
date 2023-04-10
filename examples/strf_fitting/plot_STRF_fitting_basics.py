@@ -66,12 +66,8 @@ tmin = 0 # receptive field begins at time=0
 tmax = 0.3 # receptive field ends at a lag of 0.4 seconds
 sfreq = 100 # sampling frequency of data
 
-# For the sake of the cleanliness of this notebook, we set verbose=1
-# Setting verbose=2 would print lots of information
-# about the cross-validation procedure while the STRFs are being computed,
-# and verbose=0 would print nothing during fitting
-strf_model = nl.encoding.TRF(tmin, tmax, sfreq, estimator=Ridge(10), verbose=1)
-
+# setting show_progress=False would disable the progress bar
+strf_model = nl.encoding.TRF(tmin, tmax, sfreq, estimator=Ridge(10), show_progress=True)
 
 # leave out 1 trial for testing
 data_train = data[:-1]
@@ -90,7 +86,7 @@ strf_model.fit(data=data_train, X='spec_32', y='resp')
 # define the estimator to be used in this TRF model
 estimator = ElasticNet(l1_ratio=0.01)
 
-strf_model_2 = nl.encoding.TRF(tmin, tmax, sfreq, estimator=estimator, verbose=1)
+strf_model_2 = nl.encoding.TRF(tmin, tmax, sfreq, estimator=estimator)
 strf_model_2.fit(data=data_train, X='spec_32', y='resp')
 
 

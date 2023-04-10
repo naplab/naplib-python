@@ -1,17 +1,16 @@
 import os
-from os.path import isfile, join, isdir, dirname
-import sys
+from os.path import join, isdir, dirname
 import unicodedata
 import string
 import shutil
 import subprocess
-import warnings
 
 import numpy as np
 from scipy.io.wavfile import write as write_wavfile
 from scipy.io.wavfile import read as read_wavfile
 from scipy.signal import resample as scipy_resample
 
+from naplib import logger
 from .alignment_extras import create_wrd_dict, get_phoneme_label_vector, get_word_label_vector
 from ..utils import _parse_outstruct_args
 from ..data import Data
@@ -46,12 +45,8 @@ class Aligner():
     tmp_dir : string, path-like, optional
         Directory to hold temporary files that are created. If not provided, creates
         a folder called `data_/` in the current working directory and uses that.
-    verbose : int, default=1
-            Integer specifying the level of verbosity of print statements and messages
-            while the function is running. 0 indicates no output, and higher values
-            generate more output.
     '''
-    def __init__(self, output_dir, dictionary_file=None, tmp_dir=None, verbose=1):
+    def __init__(self, output_dir, dictionary_file=None, tmp_dir=None):
 
         os.makedirs(output_dir, exist_ok=True)
         if tmp_dir is None:
@@ -69,7 +64,6 @@ class Aligner():
         if dictionary_file is None:
             dictionary_file = join(self.filedir_, 'prosodylab_aligner', 'eng.dict')
         self.dictionary_file = dictionary_file
-        self.verbose = verbose
 
         try:
             import yaml
@@ -294,8 +288,7 @@ class Aligner():
         if names is not None and not isinstance(names, list):
             raise TypeError(f'names argument must be a list, or None, but got {type(names)}')
 
-        if self.verbose >= 1:
-            print(f'Resampling audio and putting in {self.tmp_dir} directory...')
+        logger.info(f'Resampling audio and putting in {self.tmp_dir} directory...')
 
         resample_path = join(self.filedir_, 'resample.sh')
 
@@ -306,7 +299,7 @@ class Aligner():
             subprocess.run(['sox', wavefilepath_, wavefilepath_], check=True, capture_output=True)
             os.system(f'{resample_path} -s 16000 -r {audio_dir} -w {self.tmp_dir}')
         except (OSError, subprocess.SubprocessError, subprocess.CalledProcessError):
-            warnings.warn('Could not find sox. Using scipy to resample and save .wav files instead')
+            logger.warning('Could not find sox. Using scipy to resample and save .wav files instead')
             # don't have sox, so use scipy instead
             wavfiles = [fname_ for fname_ in os.listdir(audio_dir) if fname_.endswith(".wav")]
             for wavfile_ in wavfiles:
@@ -318,23 +311,20 @@ class Aligner():
                     write_wavfile(join(self.tmp_dir, wavfile_), 16000, wavdata)
             
 
-        if self.verbose >= 1:
-            print(f'Converting text files to ascii in {self.tmp_dir} directory...')
+        logger.info(f'Converting text files to ascii in {self.tmp_dir} directory...')
 
         for root, dirs, files in os.walk(text_dir, topdown=False):
             for name in files:
                 if '.txt' in name:
                     self._convert_text_to_ascii(name, root)
 
-        if self.verbose >= 1:
-            print('Performing alignment...')
+        logger.info('Performing alignment...')
 
         # perform alignment using ProsodyLab-Aligner
         eng_zip_file = join(self.filedir_, 'prosodylab_aligner', 'eng.zip')
         run_aligner(align=self.tmp_dir, dictionary=[self.dictionary_file], read=eng_zip_file)
 
-        if self.verbose >= 1:
-            print(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')
+        logger.info(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')
 
         # Convert textgrid files to .phn and .wrd files in output_dir
         for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
@@ -376,9 +366,7 @@ class Aligner():
 
                     wrd_file.close()
 
-
-        if self.verbose >= 1:
-            print('Finished creating alignment files.')
+            logger.info('Finished creating alignment files.')
 
     def get_label_vecs_from_files(self, data=None, name='name',
                                   dataf='dataf', length='length',
@@ -468,8 +456,7 @@ class Aligner():
 
         alignment_results = []
 
-        if self.verbose >= 1:
-            print(f'Creating label vectors for phonemes, manner of articulation, and words.')
+        logger.info(f'Creating label vectors for phonemes, manner of articulation, and words.')
 
         for n in range(len(names)):
 
