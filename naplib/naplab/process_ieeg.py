@@ -124,12 +124,13 @@ def process_ieeg(
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
     aud_fn : optional callable or dict, default=naplib.features.auditory_spectrogram
-        Function for computing spectrogram from trial stimulus sounds. If None, no spectrograms will be computed.
-        By default, `naplib.features.auditory_spectrogram` will be used. If a callable `f`, the function `f` will be
-        applied to each stimulus audio and should have signature `(x: NDArray, sr: float, **kwargs) -> NDArray`,
-        where `x` is 1-D audio signal with shape (in_samples,) and `sr` is the sampling rate of the audio. The returned
-        array (spectrogram) should have shape (n_samples, freq_bins). If a dictionary, the keys will be used in field
-        names in the output Data object, and the values should be callable.
+        Function(s) to be applied to each stimulus sound. If None, no audio transforms will be computed. By default,
+        `naplib.features.auditory_spectrogram` will be used to compute an auditory spectrogram. If a callable `f`,
+        the function `f` will be applied to each stimulus audio and should have signature
+        `(x: NDArray, sr: float, **kwargs) -> NDArray`, where `x` is 1-D audio signal with shape (in_samples,) and
+        `sr` is the sampling rate of the audio. The returned tensor should have shape (n_samples, n_features). If a
+        dictionary, the keys should be strings and will be used in field names of the output Data object, and the
+        values should be callable.
     aud_kwargs : optional dict, default=None
         Optional dictionary of extra arguments to be passed to `aud_fn`. Only used when `aud_fn` is a single callable.
         If `aud_kwargs` is not None and `aud_fn` is not a single callable, an error will be raised.
