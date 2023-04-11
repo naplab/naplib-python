@@ -733,7 +733,6 @@ def _prep_aud_fn(aud_fn: Optional[Union[Callable, Dict]], aud_kwargs: Optional[D
                 raise ValueError('aud_fn dictionary keys should be of type string')
             if not isinstance(f, Callable):
                 raise ValueError("aud_fn dictionary values should be callable")
-            aud_fn[k] = partial(f, **aud_kwargs) if aud_kwargs else f
 
         return aud_fn
 
