@@ -27,7 +27,9 @@ BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering does
 def process_ieeg(
     data_path: str,
     alignment_dir: str,
+    /,
     stim_order: Optional[Union[str, Sequence[str]]]=None,
+    *,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
     elec_inds: Optional[Union[np.ndarray, Sequence[int]]]=None,
