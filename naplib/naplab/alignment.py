@@ -150,10 +150,13 @@ def align_stimulus_to_recording(rec_audio, rec_fs, stim_dict, stim_order,
 
         # Determine which stimulus channel was best, set useCh, save inds
         if useCh is None:
-            useCh = np.argmax(max_corrs)
+            useCh = np.nanargmax(max_corrs)
             logger.info(f'Using stimulus channel {useCh} for alignment')
-        alignment_times.append(possible_times[useCh])
-        alignment_confidence.append(np.amax(max_corrs))
+            alignment_times.append(possible_times[useCh])
+            alignment_confidence.append(max_corrs[useCh])
+        else:
+            alignment_times.append(possible_times[0])
+            alignment_confidence.append(max_corrs[0])
         
         logger.info(f'Found {stim_name} with correlation={alignment_confidence[-1]:.4f} @ {alignment_times[-1]}')
 
