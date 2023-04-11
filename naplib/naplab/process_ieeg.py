@@ -1,6 +1,7 @@
 import logging
 import os
 from typing import Union, Tuple, List, Optional, Dict, Sequence, Callable
+from functools import partial
 from tqdm.auto import tqdm
 
 import numpy as np
@@ -45,8 +46,7 @@ def process_ieeg(
     line_noise_kwargs: dict={},
     store_sounds: bool=False,
     store_all_wav: bool=False,
-    aud_fn: Optional[Union[str, Callable]]='default',
-    aud_kwargs: dict={},
+    aud_fn: Optional[Union[str, tuple[str, dict], Callable, tuple[Callable, dict], dict]]='default',
     n_jobs: int=1,
 ):
     """
@@ -122,20 +122,19 @@ def process_ieeg(
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
-    aud_fn : Optional[Union[str, Callable]], default='default'
-        Function for computing spectrogram from trial stimulus sounds. If None or 'none', no spectrograms will be
-        computed. If 'default', ``naplib.features.auditory_spectrogram`` will be used. If a callable ``f``, the
-        function will be applied to each stimulus audio and should have signature
-        ``(x: NDArray, sr: float, **aud_kwargs) -> NDArray``, where ``x`` is 1-D audio signal with shape
-        (in_samples,) and ``sr`` is the sampling rate of the audio. The returned array (spectrogram) should
-        have shape (n_samples, freq_bins).
-    aud_kwargs : dict, default={}
-        Keyword arguments to pass to ``aud_fn``. In case of the default function ``naplib.features.auditory_spectrogram``,
-        it can include overrides for frame_len, tc, and factor.
+    aud_fn : Optional[Union[str, tuple[str, dict], Callable, tuple[Callable, dict], dict]], default='default'
+        Function for computing spectrogram from trial stimulus sounds. If None, no spectrograms will be computed.
+        If `'default'`, `naplib.features.auditory_spectrogram` will be used. If a callable `f`, the function `f`
+        will be applied to each stimulus audio and should have signature `(x: NDArray, sr: float, **kwargs) -> NDArray`,
+        where `x` is 1-D audio signal with shape (in_samples,) and `sr` is the sampling rate of the audio. The returned
+        array (spectrogram) should have shape (n_samples, freq_bins). If a dictionary, the keys will be used in field
+        names in the output Data object, and the values should be either 'default' or a callable. In all cases,
+        `'default'` or callable `f` can be specified as a tuple `('default', kwargs)` or `(f, kwargs)` where `kwargs`
+        is a dictionary containing extra argument values for the function to be applied to the audio.
     n_jobs : int, default=1
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
-        
+    
     Returns
     -------
     data : nl.Data
@@ -143,12 +142,19 @@ def process_ieeg(
     """
 
     # # infer spectrogram function
-    if aud_fn == 'default':
-        aud_fn = auditory_spectrogram
-    elif aud_fn == 'none':
-        aud_fn = None
-    elif aud_fn and not isinstance(aud_fn, Callable):
-        raise ValueError("Argument aud_fn should be either None, 'none', 'default', or a function")
+    if aud_fn is None:
+        aud_fn = {}
+    elif isinstance(aud_fn, (str, Callable, tuple)):
+        aud_fn = {'': _infer_aud_fn(aud_fn)}
+    elif isinstance(aud_fn, dict):
+        for k, f in aud_fn.items():
+            if not isinstance(k, str):
+                raise ValueError('aud_fn dictionary keys should be of type string')
+            if not isinstance(f, (str, Callable, tuple)):
+                raise ValueError("aud_fn dictionary values should be None, str, callable, or tuple")
+            aud_fn[k] = _infer_aud_fn(f)
+    else:
+        raise ValueError("aud_fn should be either None, str, callable, tuple, or dict")
 
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
@@ -397,7 +403,10 @@ def process_ieeg(
         logger.info(f'Computing auditory spectrogram for each stimulus set in stim_dirs ...')
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
-            final_output[k] = _spectrograms_from_stims(stim_data_dict, stim_order, final_fs, aud_fn, aud_kwargs)
+            for name, fn in aud_fn.items():
+                final_output[f'{k} {name}' if name else k] = _spectrograms_from_stims(
+                    stim_data_dict, stim_order, final_fs, fn,
+                )
     
     if store_sounds:
         for k, stim_data_dict in extra_stim_data.items():
@@ -718,7 +727,25 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwargs={}):
+def _infer_aud_fn(f):
+    # separate kwargs
+    if isinstance(f, tuple):
+        if len(f) != 2:
+            raise ValueError('If `f` is a tuple, it should have a length of 2')
+        f, kwargs = f
+    else:
+        kwargs = {}
+
+    # convert to callable
+    if f == 'default':
+        f = auditory_spectrogram
+    elif not isinstance(f, Callable):
+        raise ValueError(f"`f` should be 'default' or a callable. It was: {f}")
+
+    return partial(f, **kwargs)
+
+
+def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn):
     """
     Convert each stimulus in the stim_data_dict into a spectrogram, then return
     a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
@@ -736,8 +763,6 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
         Function for computing spectrogram from waveform. The function should have signature
         ``(x: NDArray, sr: float, **kwargs) -> NDArray`` where x has shape (in_samples,), sr
         is the sampling rate of x, and the return value has shape (out_samples, freq_bins).
-    aud_kwargs : dict, default={}
-        Dictionary of kwargs for ``aud_fn``
     
     Returns
     -------
@@ -756,10 +781,10 @@ def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn, aud_kwa
         if sig.ndim == 2:
             specs = []
             for ch in range(sig.shape[1]):
-                specs.append(aud_fn(sig[:,ch], fs, **aud_kwargs)[:,:,np.newaxis])
+                specs.append(aud_fn(sig[:,ch], fs)[:,:,np.newaxis])
             spec = np.concatenate(specs, axis=-1)
         elif sig.ndim == 1:
-            spec = aud_fn(sig, fs, **aud_kwargs)
+            spec = aud_fn(sig, fs)
         else:
             raise ValueError(f'Waveform to compute spectrogram for is more than 2 dimensional. Got {sig.ndim} dimensions')
         
