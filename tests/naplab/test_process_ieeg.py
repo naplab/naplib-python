@@ -2,6 +2,7 @@ import os
 import numpy as np
 import pytest
 import scipy.signal
+from functools import partial
 
 from naplib.io import load
 from naplib.naplab import process_ieeg
@@ -38,7 +39,6 @@ def test_single_stimuli_pipeline(small_data):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        aud_fn='default',
         befaft=[1,1]
     )
 
@@ -90,7 +90,6 @@ def test_single_stimuli_spectrum_inference_method(small_data):
         aud_channel_infer_method='spectrum',
         store_all_wav=True,
         store_sounds=True,
-        aud_fn='default',
         befaft=[1,1]
     )
 
@@ -283,28 +282,11 @@ def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
     dir_path = small_data_fs50['path']
     true_data = small_data_fs50['data_dict']
 
-    data_out = process_ieeg(
-        dir_path,
-        dir_path,
-        stim_dirs={'aud_copy': dir_path},
-        bands=['raw', 'theta'],
-        phase_amp='both',
-        intermediate_fs=100,
-        final_fs=100,
-        store_all_wav=True,
-        store_sounds=True,
-        aud_fn=lambda x, sr, **kwargs: scipy.signal.spectrogram(x, sr, **kwargs)[2].T,
-        aud_kwargs={'nperseg': 256, 'noverlap': 96},
-        befaft=[1,1]
-    )
+    func = lambda x, sr, **kwargs: scipy.signal.spectrogram(x, sr, **kwargs)[2].T
+    func_kwargs = {'nperseg': 256, 'noverlap': 96}
+    partial_func = partial(func, **func_kwargs)
 
-    spec = data_out['aud_copy'][0]
-
-    # check custom spectrogram shape
-    assert spec.shape == (1200, 129)
-
-    # shape content of custom spectrogram
-    assert np.allclose(spec.max(0), np.array([
+    result = np.array([
         0.00000000e+00, 5.52224112e-04, 2.14351760e-03, 4.58641676e-03,
         7.59611558e-03, 1.08276187e-02, 1.39198815e-02, 1.65406112e-02,
         1.84254330e-02, 1.94061846e-02, 1.94249656e-02, 1.85327381e-02,
@@ -338,5 +320,63 @@ def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
         1.78736984e-04, 1.22661353e-04, 7.57407543e-05, 4.08680280e-05,
         1.83328120e-05, 6.22197967e-06, 1.29176203e-06, 8.31724165e-08,
         0.00000000e+00,
-    ]))
+    ])
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        stim_dirs={'aud_copy': dir_path},
+        bands=['raw', 'theta'],
+        phase_amp='both',
+        intermediate_fs=100,
+        final_fs=100,
+        store_all_wav=True,
+        store_sounds=True,
+        aud_fn=func,
+        aud_kwargs=func_kwargs,
+        befaft=[1,1]
+    )
+
+    # check custom spectrogram shape and content
+    spec = data_out['aud_copy'][0]
+    assert spec.shape == (1200, 129)
+    assert np.allclose(spec.max(0), result)
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        stim_dirs={'aud_copy': dir_path},
+        bands=['raw', 'theta'],
+        phase_amp='both',
+        intermediate_fs=100,
+        final_fs=100,
+        store_all_wav=True,
+        store_sounds=True,
+        aud_fn=partial_func,
+        befaft=[1,1]
+    )
+
+    # check custom spectrogram shape and content
+    spec = data_out['aud_copy'][0]
+    assert spec.shape == (1200, 129)
+    assert np.allclose(spec.max(0), result)
+
+    data_out = process_ieeg(
+        dir_path,
+        dir_path,
+        stim_dirs={'aud_copy': dir_path},
+        bands=['raw', 'theta'],
+        phase_amp='both',
+        intermediate_fs=100,
+        final_fs=100,
+        store_all_wav=True,
+        store_sounds=True,
+        aud_fn={'ext': partial_func},
+        befaft=[1,1]
+    )
+
+    # check custom spectrogram shape and content
+    spec = data_out['aud_copy ext'][0]
+    assert spec.shape == (1200, 129)
+    assert np.allclose(spec.max(0), result)
 
