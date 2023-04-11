@@ -46,7 +46,8 @@ def process_ieeg(
     line_noise_kwargs: dict={},
     store_sounds: bool=False,
     store_all_wav: bool=False,
-    aud_fn: Optional[Union[str, Callable, tuple, dict]]='default',
+    aud_fn: Optional[Union[Callable, dict]]=auditory_spectrogram,
+    aud_kwargs: Optional[dict]=None,
     n_jobs: int=1,
 ):
     """
@@ -122,15 +123,16 @@ def process_ieeg(
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
-    aud_fn : Optional[Union[str, Callable, tuple, dict]], default='default'
+    aud_fn : optional callable or dict, default=naplib.features.auditory_spectrogram
         Function for computing spectrogram from trial stimulus sounds. If None, no spectrograms will be computed.
-        If `'default'`, `naplib.features.auditory_spectrogram` will be used. If a callable `f`, the function `f`
-        will be applied to each stimulus audio and should have signature `(x: NDArray, sr: float, **kwargs) -> NDArray`,
+        By default, `naplib.features.auditory_spectrogram` will be used. If a callable `f`, the function `f` will be
+        applied to each stimulus audio and should have signature `(x: NDArray, sr: float, **kwargs) -> NDArray`,
         where `x` is 1-D audio signal with shape (in_samples,) and `sr` is the sampling rate of the audio. The returned
         array (spectrogram) should have shape (n_samples, freq_bins). If a dictionary, the keys will be used in field
-        names in the output Data object, and the values should be either 'default' or a callable. In all cases,
-        `'default'` or callable `f` can be specified as a tuple `('default', kwargs)` or `(f, kwargs)` where `kwargs`
-        is a dictionary containing extra argument values for the function to be applied to the audio.
+        names in the output Data object, and the values should be callable.
+    aud_kwargs : optional dict, default=None
+        Optional dictionary of extra arguments to be passed to `aud_fn`. Only used when `aud_fn` is a single callable.
+        If `aud_kwargs` is not None and `aud_fn` is not a single callable, an error will be raised.
     n_jobs : int, default=1
         Number of CPU cores to use for the parallelizable processes. Higher number of jobs also uses higher memory,
         so there might even be a negative effect when working with large datasets.
@@ -141,21 +143,9 @@ def process_ieeg(
         Data object containing all requested fields after preprocessing.
     """
 
-    # # infer spectrogram function
-    if aud_fn is None:
-        aud_fn = {}
-    elif isinstance(aud_fn, (str, Callable, tuple)):
-        aud_fn = {'': _infer_aud_fn(aud_fn)}
-    elif isinstance(aud_fn, dict):
-        for k, f in aud_fn.items():
-            if not isinstance(k, str):
-                raise ValueError('aud_fn dictionary keys should be of type string')
-            if not isinstance(f, (str, Callable, tuple)):
-                raise ValueError("aud_fn dictionary values should be None, str, callable, or tuple")
-            aud_fn[k] = _infer_aud_fn(f)
-    else:
-        raise ValueError("aud_fn should be either None, str, callable, tuple, or dict")
-
+    # # Check aud_fn
+    aud_fn = _prep_aud_fn(aud_fn, aud_kwargs)
+    
     # # infer data type
     if data_type is None or data_type not in ACCEPTED_DATA_TYPES:
         data_type, data_path = _infer_data_type(data_path)
@@ -615,8 +605,7 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
     
     else:
         raise ValueError(f'Unsupported method argument: {method}')
-        
-            
+
     
 def _infer_freq_bands(
     bands: Union[str, List[str], List[np.ndarray], List[float], np.ndarray]
@@ -667,7 +656,8 @@ def _infer_freq_bands(
             new_bands.append(list(bands))
     
     return new_bands
-    
+
+
 def _infer_data_type(data_path: str):
     """
     Infer which data loader to use based on what files are in the directory or the file extension
@@ -727,22 +717,27 @@ def _infer_data_type(data_path: str):
     raise ValueError(f'Could not infer data type from directory.')
 
 
-def _infer_aud_fn(f):
-    # separate kwargs
-    if isinstance(f, tuple):
-        if len(f) != 2:
-            raise ValueError('If `f` is a tuple, it should have a length of 2')
-        f, kwargs = f
-    else:
-        kwargs = {}
+def _prep_aud_fn(aud_fn: Optional[Union[Callable, Dict]], aud_kwargs: Optional[Dict]) -> Dict:
+    if aud_kwargs is not None and not isinstance(aud_fn, Callable):
+        raise ValueError('aud_kwargs only supported when aud_fn is a single callable')
 
-    # convert to callable
-    if f == 'default':
-        f = auditory_spectrogram
-    elif not isinstance(f, Callable):
-        raise ValueError(f"`f` should be 'default' or a callable. It was: {f}")
+    if aud_fn is None:
+        return {}
 
-    return partial(f, **kwargs)
+    if isinstance(aud_fn, Callable):
+        return {'': partial(aud_fn, **aud_kwargs) if aud_kwargs else aud_fn}
+
+    if isinstance(aud_fn, dict):
+        for k, f in aud_fn.items():
+            if not isinstance(k, str):
+                raise ValueError('aud_fn dictionary keys should be of type string')
+            if not isinstance(f, Callable):
+                raise ValueError("aud_fn dictionary values should be callable")
+            aud_fn[k] = partial(f, **aud_kwargs) if aud_kwargs else f
+
+        return aud_fn
+
+    raise ValueError("aud_fn should be either None, callable, or dict")
 
 
 def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn):

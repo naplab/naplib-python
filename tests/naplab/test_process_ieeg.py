@@ -39,7 +39,6 @@ def test_single_stimuli_pipeline(small_data):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        aud_fn='default',
         befaft=[1,1]
     )
 
@@ -91,7 +90,6 @@ def test_single_stimuli_spectrum_inference_method(small_data):
         aud_channel_infer_method='spectrum',
         store_all_wav=True,
         store_sounds=True,
-        aud_fn='default',
         befaft=[1,1]
     )
 
@@ -334,7 +332,8 @@ def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        aud_fn=(func, func_kwargs),
+        aud_fn=func,
+        aud_kwargs=func_kwargs,
         befaft=[1,1]
     )
 
@@ -372,7 +371,7 @@ def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
         final_fs=100,
         store_all_wav=True,
         store_sounds=True,
-        aud_fn={'ext': (func, func_kwargs)},
+        aud_fn={'ext': partial_func},
         befaft=[1,1]
     )
 
