@@ -395,7 +395,7 @@ def process_ieeg(
         # mapping from name (like 'aud') to list of spectrograms
         for k, stim_data_dict in extra_stim_data.items():
             for name, fn in aud_fn.items():
-                final_output[f'{k} {name}' if name else k] = _spectrograms_from_stims(
+                final_output[f'{k} {name}' if name else k] = _transform_stims(
                     stim_data_dict, stim_order, final_fs, fn,
                 )
     
@@ -740,10 +740,10 @@ def _prep_aud_fn(aud_fn: Optional[Union[Callable, Dict]], aud_kwargs: Optional[D
     raise ValueError("aud_fn should be either None, callable, or dict")
 
 
-def _spectrograms_from_stims(stim_data_dict, stim_order, fs_out, aud_fn):
+def _transform_stims(stim_data_dict, stim_order, fs_out, aud_fn):
     """
-    Convert each stimulus in the stim_data_dict into a spectrogram, then return
-    a list of spectrograms ordered by stim_order (stimuli can repeat in stim_order).
+    Transform each stimulus in `stim_data_dict` using the provided function `aud_fn`,
+    then return a list of the resulting tensors ordered by stim_order (stimuli can repeat in stim_order).
     
     Parameters
     ----------
