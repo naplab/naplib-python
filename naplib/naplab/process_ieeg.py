@@ -46,7 +46,7 @@ def process_ieeg(
     line_noise_kwargs: dict={},
     store_sounds: bool=False,
     store_all_wav: bool=False,
-    aud_fn: Optional[Union[str, tuple[str, dict], Callable, tuple[Callable, dict], dict]]='default',
+    aud_fn: Optional[Union[str, Callable, tuple, dict]]='default',
     n_jobs: int=1,
 ):
     """
@@ -122,7 +122,7 @@ def process_ieeg(
     store_all_wav : bool, default=False
         If True, store all recorded wav channels that were stored by the neural recording hardware. This may include
         any other signals that were hooked up at the same time, such as EKG, triggers, etc.
-    aud_fn : Optional[Union[str, tuple[str, dict], Callable, tuple[Callable, dict], dict]], default='default'
+    aud_fn : Optional[Union[str, Callable, tuple, dict]], default='default'
         Function for computing spectrogram from trial stimulus sounds. If None, no spectrograms will be computed.
         If `'default'`, `naplib.features.auditory_spectrogram` will be used. If a callable `f`, the function `f`
         will be applied to each stimulus audio and should have signature `(x: NDArray, sr: float, **kwargs) -> NDArray`,
