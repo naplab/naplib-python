@@ -594,12 +594,12 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         for c in range(wav_data.shape[1]):
             if stim_data.ndim == 1 or stim_data.shape[1] == 1:
                 pos = np.nanargmax(correlate(wav_data[:, c], stim_data.squeeze(), 'valid'))
-                score = pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())[0]
+                score = _pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())
             else:
                 pos_left = np.nanargmax(correlate(wav_data[:, c], stim_data[:,0], 'valid'))
-                score_left = pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])[0]
+                score_left = _pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])
                 pos_right = np.nanargmax(correlate(wav_data[:, c], stim_data[:,1], 'valid'))
-                score_right = pearsonr(wav_data[pos_right:pos_right+len(stim_data), c], stim_data[:,1])[0]
+                score_right = _pearsonr(wav_data[pos_right:pos_right+len(stim_data), c], stim_data[:,1])
                 score = np.nanmax([score_left, score_right])
             scores.append(score)
 
@@ -612,6 +612,15 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
     
     else:
         raise ValueError(f'Unsupported method argument: {method}')
+
+
+def _pearsonr(x, y):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', module='scipy.stats')
+        warnings.filterwarnings('ignore', module='scipy.stats')
+        return pearsonr(x, y)[0]
 
     
 def _infer_freq_bands(
