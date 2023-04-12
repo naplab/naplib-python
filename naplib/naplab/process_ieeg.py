@@ -789,7 +789,7 @@ def _transform_stims(stim_data_dict, stim_order, fs_out, aud_fn):
         desired_len = int(fs_out / fs * len(sig))
         if desired_len != spec.shape[0]:
             logger.warning(
-                f"Resampling transform '{aud_fn.__name__}' of stimulus '{k}' from {len(spec)} to {desired_len} samples"
+                f"Resampling transform '{aud_fn}' of stimulus '{k}' from {len(spec)} to {desired_len} samples"
             )
             spec = resample(spec, desired_len, axis=0)
         spec_dict[k] = spec
