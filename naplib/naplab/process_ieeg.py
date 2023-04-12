@@ -27,6 +27,8 @@ BUFFER_TIME = 2 # seconds of buffer in addition to befaft so that filtering does
 def process_ieeg(
     data_path: str,
     alignment_dir: str,
+    /,
+    *,
     stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
@@ -46,7 +48,7 @@ def process_ieeg(
     line_noise_kwargs: dict={},
     store_sounds: bool=False,
     store_all_wav: bool=False,
-    aud_fn: Optional[Union[Callable, dict]]=auditory_spectrogram,
+    aud_fn: Optional[Union[Callable, Dict[str, Callable]]]=auditory_spectrogram,
     aud_kwargs: Optional[dict]=None,
     n_jobs: int=1,
 ):
@@ -786,6 +788,9 @@ def _transform_stims(stim_data_dict, stim_order, fs_out, aud_fn):
         # resample to fs_out
         desired_len = int(fs_out / fs * len(sig))
         if desired_len != spec.shape[0]:
+            logger.warning(
+                f"Resampling transform '{aud_fn}' of stimulus '{k}' from {len(spec)} to {desired_len} samples"
+            )
             spec = resample(spec, desired_len, axis=0)
         spec_dict[k] = spec
     
