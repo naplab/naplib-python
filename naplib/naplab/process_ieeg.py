@@ -426,8 +426,6 @@ def process_ieeg(
 
     del extra_stim_data
     
-    final_output['data_type'] = [data_type for _ in stim_order]
-    
     for fieldname in data_by_trials.fields:
         final_output[fieldname] = data_by_trials[fieldname]
         
@@ -441,6 +439,7 @@ def process_ieeg(
     final_output.set_info({
         'channel_labels': raw_data.get('labels_data', None),
         'rereference_grid': rereference_grid,
+        'data_type': data_type,
         **raw_data.get('info', {})
     })
     logger.info('All done!')
