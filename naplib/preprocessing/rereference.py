@@ -71,18 +71,18 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
         re_ref_data = np.zeros(data_arr.shape, dtype=data_arr.dtype)
         for channel in range(arr.shape[0]):
             ref_channels = arr[channel] # now a 1D array of shape (channels,)
-            weighted_data = data_arr[:,ref_channels!=0]
-
             is_cached = cached_ref is not None and np.allclose(ref_channels, arr[channel-1])
 
             if method == 'avg':
                 if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
                     cached_ref = np.nanmean(weighted_data, axis=1)
 
                 ref = cached_ref
 
             elif method == 'pca':
                 if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
                     weighted_data = (weighted_data - weighted_data.mean(1, keepdims=True)) / weighted_data.std(1, keepdims=True)
                     u, _, _ = svd(weighted_data.T @ weighted_data)
                     cached_ref = u[:,0] * (weighted_data @ u[:,0][:,np.newaxis])
@@ -94,6 +94,7 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
 
             elif method == 'med':
                 if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
                     cached_ref = np.nanmedian(weighted_data, axis=1)
 
                 ref = cached_ref
