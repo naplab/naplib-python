@@ -14,7 +14,7 @@ AUTHOR = (
 )
 AUTHOR_EMAIL = "gm2944@columbia.edu"
 URL = "https://github.com/naplab/naplib-python"
-MINIMUM_PYTHON_VERSION = 3, 5  # Minimum of Python 3.5
+PYTHON_VERSION = '>=3.8'  # Minimum Python version
 with open("./requirements.txt", "r") as f:
     REQUIRED_PACKAGES = f.read()
 
@@ -23,11 +23,6 @@ PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 for line in open(os.path.join(PROJECT_PATH, "naplib", "__init__.py")):
     if line.startswith("__version__ = "):
         VERSION = line.strip().split()[2][1:-1]
-
-def check_python_version():
-    """Exit when the Python version is too low."""
-    if sys.version_info < MINIMUM_PYTHON_VERSION:
-        sys.exit("Python {}.{}+ is required.".format(*MINIMUM_PYTHON_VERSION))
 
 non_python_files = ['features/*.mat',
                     'features/eng.*',
@@ -38,8 +33,6 @@ non_python_files = ['features/*.mat',
                     'features/test.wav',
                     ]
 
-check_python_version()
-
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
@@ -49,6 +42,7 @@ setup(
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     install_requires=REQUIRED_PACKAGES,
+    python_requires=PYTHON_VERSION,
     url=URL,
     project_urls={
       'Source': URL,
