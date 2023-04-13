@@ -49,6 +49,7 @@ setup(
     author=AUTHOR,
     author_email=AUTHOR_EMAIL,
     install_requires=REQUIRED_PACKAGES,
+    python_requires='>=3.8',
     url=URL,
     project_urls={
       'Source': URL,
