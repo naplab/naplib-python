@@ -75,9 +75,10 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
 
         # only process part of recording that falls between the specified time range (t1, t2)
         min_record = floor(t1 / record_dur)
-        max_record = ceil(t2 / record_dur) if t2 > 0.0 else num_records
+        max_record = ceil(t2 / record_dur) if 0 < t2 < num_records*record_dur else num_records
         fin.seek(min_record * samples * num_signals * 2, 1)
         num_records = max_record - min_record
+        t_skip = min_record * record_dur
         
         # scale recordings from digital to physical units
         scale = (physical_max - physical_min) / (digital_max - digital_min)
@@ -115,6 +116,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         'wav_f': sampling_rate,
         'labels_data': labels[~aux_signals],
         'labels_wav': labels[aux_signals],
+        't_skip': t_skip,
         'info': {
             'start_date': start_date,
             'start_time': start_time,

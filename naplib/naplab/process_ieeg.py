@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 
 from hdf5storage import loadmat
 
-from naplib import preprocessing, logger, Data as nlData
+from naplib import preprocessing, logger, Data
 from naplib.io import load_tdt, load_nwb, load_edf, load, load_wav_dir
 from naplib.features import auditory_spectrogram
 from naplib.preprocessing import make_contact_rereference_arr
@@ -32,6 +32,7 @@ def process_ieeg(
     stim_order: Optional[Union[str, Sequence[str]]]=None,
     stim_dirs: Optional[Dict[str, str]]=None,
     data_type: str='infer',
+    time_range: Union[float, Tuple[float, float]]=0,
     elec_inds: Optional[Union[np.ndarray, Sequence[int]]]=None,
     elec_names: Optional[Union[str, Sequence[str]]]=None,
     rereference_grid: Optional[Union[np.ndarray, str]]=None,
@@ -70,6 +71,9 @@ def process_ieeg(
         as those within ``stim_dir``. E.g. {'aud': './stimuli', 'aud_spk1': './stimuli_spk1', 'aud_spk2': './stimuli_spk2'}
     data_type : str, default='infer'
         One of {'edf', 'tdt', 'nwb', 'pkl', 'infer'}. The data type of the raw neural data to load.
+    time_range : float or (float, float), default=0
+        If a single float, the amount of time in seconds to skip at the start of the recording. If a 2-tuple `(start, end)`,
+        the time range of the recording to read between.
     elec_inds : Optional[Union[np.ndarray, Sequence[int]]], default=None
         If not None, the sorted indices of the data recording channels to keep. Important to note that this filtering is done
         prior to manual setting of elec_names and rereferencing, so it might affect their results.
@@ -156,11 +160,18 @@ def process_ieeg(
     
     if len(befaft) != 2:
         raise ValueError(f'befaft must be a list or array of length 2.')
+
+    if isinstance(time_range, (int, float)):
+        t_start, t_end = time_range, 0
+    elif isinstance(time_range, tuple) and len(time_range) == 2:
+        t_start, t_end = time_range
+    else:
+        raise ValueError('time_range should be a float or a 2-tuple of floats')
     
     # # load data and aud channels
     if data_type == 'tdt':
         logger.info(f'Loading tdt data...')
-        raw_data = load_tdt(data_path)
+        raw_data = load_tdt(data_path, t1=t_start, t2=t_end)
         
     elif data_type == 'nwb':
         logger.info(f'Loading nwb data...')
@@ -172,7 +183,7 @@ def process_ieeg(
         logger.info(f'Loading edf data...')
         if not data_path.endswith(('.edf', '.EDF')):
             raise ValueError(f'data_type is edf but data_path is not an edf file: {data_path}')
-        raw_data = load_edf(data_path)
+        raw_data = load_edf(data_path, t1=t_start, t2=t_end)
         
     elif data_type == 'pkl':
         if not data_path.endswith(('.pkl', '.p')):
@@ -188,6 +199,9 @@ def process_ieeg(
     
     else:
         raise ValueError(f'Invalid data_type parameter. Must be one of {ACCEPTED_DATA_TYPES}')
+
+    # # check if any data skipped
+    t_skip = raw_data.get('t_skip', 0)
 
     # # filter electrodes
     if elec_inds:
@@ -330,7 +344,7 @@ def process_ieeg(
     
     # # Cut raw data up into blocks based on alignment
     logger.info('Chunking responses based on alignment...')
-    data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
+    data_by_trials_raw = _split_data_on_alignment(Data({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
 
     # # extract frequency bands
     if 'raw' in bands:
@@ -377,20 +391,20 @@ def process_ieeg(
         data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
 
     if reference_to_store is not None:
-        reference_to_store = _split_data_on_alignment(nlData({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
+        reference_to_store = _split_data_on_alignment(Data({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
         data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store['ref'], desired_lens)]
     
     data_by_trials = _remove_buffer_time(data_by_trials, final_fs, buffer_time=BUFFER_TIME)
 
     if store_all_wav:
         logger.info('Chunking wav channels based on alignment...')
-        wav_data_chunks = _split_data_on_alignment(nlData({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
+        wav_data_chunks = _split_data_on_alignment(Data({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
 
     # final output dict to be made into naplib.Data object
     alignment_times = np.asarray(alignment_times)
     final_output = {'name': stim_order,
-                    'alignment_start': list(alignment_times[:,0] + earliest_time),
-                    'alignment_end': list(alignment_times[:,1] + earliest_time),
+                    'alignment_start': list(alignment_times[:,0] + earliest_time + t_skip),
+                    'alignment_end': list(alignment_times[:,1] + earliest_time + t_skip),
                     'alignment_confidence': alignment_confidence,
                     'dataf': [final_fs for _ in stim_order],
                     'befaft': [befaft for _ in stim_order]}
@@ -423,7 +437,7 @@ def process_ieeg(
             final_output[wav_ch_name] = [xx[:,ww] for xx in wav_data_chunks['wav']]
     
     # # Put output Data all together
-    final_output = nlData(final_output)
+    final_output = Data(final_output)
     final_output.set_info({
         'channel_labels': raw_data.get('labels_data', None),
         'rereference_grid': rereference_grid,
@@ -869,7 +883,7 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time
             split_field.append(data[0][field][start_sample:end_sample])
         output[field] = split_field
     
-    return nlData(output)
+    return Data(output)
 
 
 def _remove_buffer_time(data, fs, buffer_time=1):
