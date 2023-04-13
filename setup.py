@@ -14,7 +14,7 @@ AUTHOR = (
 )
 AUTHOR_EMAIL = "gm2944@columbia.edu"
 URL = "https://github.com/naplab/naplib-python"
-MINIMUM_PYTHON_VERSION = 3, 5  # Minimum of Python 3.5
+MINIMUM_PYTHON_VERSION = 3, 8  # Minimum of Python 3.8
 with open("./requirements.txt", "r") as f:
     REQUIRED_PACKAGES = f.read()
 
