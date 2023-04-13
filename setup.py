@@ -33,8 +33,6 @@ non_python_files = ['features/*.mat',
                     'features/test.wav',
                     ]
 
-check_python_version()
-
 setup(
     name=PACKAGE_NAME,
     version=VERSION,
