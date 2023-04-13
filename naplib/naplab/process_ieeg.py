@@ -221,16 +221,6 @@ def process_ieeg(
     elif isinstance(stim_order, str):
         stim_order = _load_stim_order(stim_order)
 
-    data_f = raw_data['data_f']
-    
-    # # resample to intermediate_fs Hz
-    if intermediate_fs is not None and data_f > intermediate_fs and intermediate_fs >= final_fs:
-        new_len = int(intermediate_fs / float(data_f) * raw_data['data'].shape[0])
-        logger.info(f'Resampling data to {intermediate_fs} Hz')
-        raw_data['data'] = resample(raw_data['data'], new_len, axis=0)
-        data_f = intermediate_fs
-        raw_data['data_f'] = intermediate_fs
-
     # # load stimuli files
     logger.info('Loading stimuli...')
     stim_data = load_wav_dir(alignment_dir, rescale=True, subset=set(stim_order))
@@ -249,6 +239,7 @@ def process_ieeg(
                                                          method=aud_channel_infer_method,
                                                          debug=logger.isEnabledFor(logging.DEBUG))
         logger.info(f'Inferred alignment channel is {alignment_ch}.')
+
     else:
         if raw_data['wav'].ndim > 1:
             if not isinstance(aud_channel, int):
@@ -271,15 +262,31 @@ def process_ieeg(
     if befaft[0] > alignment_times[0][0]:
         raise ValueError(f"Not enough data to use befaft[0]={befaft[0]}. First stimulus aligned to {alignment_times[0][0]} sec")
 
-    if befaft[1] > raw_data['data'].shape[0] / data_f - alignment_times[-1][1]:
+    if befaft[1] > raw_data['data'].shape[0] / raw_data['data_f'] - alignment_times[-1][1]:
         raise ValueError(f"Not enough data to use befaft[1]={befaft[1]}. Last stimulus alignment ends at {alignment_times[-1][1]} sec but"
-                         f" only have {raw_data['data'].shape[0] / data_f} sec of data")
+                         f" only have {raw_data['data'].shape[0] / raw_data['data_f']} sec of data")
     
     alignment_times = np.asarray(alignment_times) - earliest_time # shift times back since we are going to truncate the data
-    earliest_sample = int(raw_data['data_f'] * earliest_time)
-    latest_sample = int(raw_data['data_f'] * latest_time)
-    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample].copy()
-    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample].copy()
+    earliest_sample, latest_sample = (int(raw_data['data_f'] * t) for t in (earliest_time, latest_time))
+    raw_data['data'] = raw_data['data'][earliest_sample:latest_sample]
+    earliest_sample, latest_sample = (int(raw_data['wav_f'] * t) for t in (earliest_time, latest_time))
+    raw_data['wav'] = raw_data['wav'][earliest_sample:latest_sample]
+
+    # # resample to intermediate_fs Hz
+    if intermediate_fs is not None and final_fs <= intermediate_fs < raw_data['data_f']:
+        new_len = int(intermediate_fs / raw_data['data_f'] * raw_data['data'].shape[0])
+        logger.info(f'Resampling data to {intermediate_fs} Hz')
+        channels = range(raw_data['data'].shape[1])
+        for ch in tqdm(channels) if logger.isEnabledFor(logging.INFO) else channels:
+            raw_data['data'][:new_len, ch] = resample(raw_data['data'][:, ch], new_len)
+        raw_data['data'] = raw_data['data'][:new_len]
+        raw_data['data_f'] = intermediate_fs
+
+    # # Make a copy if arrays are views
+    if raw_data['data'].base is not None:
+        raw_data['data'] = raw_data['data'].copy()
+    if raw_data['wav'].base is not None:
+        raw_data['wav'] = raw_data['wav'].copy()
 
     # # append befaft zeros to the stims which were not used for alignment as well as the one which was (if it's in the dict too)
     for stim_data_name, stim_data_dict_ in extra_stim_data.items():
@@ -320,8 +327,7 @@ def process_ieeg(
                                                        fs=raw_data['data_f'],
                                                        in_place=True,
                                                        **line_noise_kwargs)
-
-        
+    
     # # Cut raw data up into blocks based on alignment
     logger.info('Chunking responses based on alignment...')
     data_by_trials_raw = _split_data_on_alignment(nlData({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
@@ -339,7 +345,6 @@ def process_ieeg(
             bandnames.append(band)
         else:
             bandnames.append(str(wn_))
-    
 
     if len(Wn) > 0:
         logger.info(f'Extracting frequency bands: {Wn} ...')
@@ -367,7 +372,6 @@ def process_ieeg(
         data_by_trials = data_by_trials_raw
 
     desired_lens = [round(final_fs / raw_data['data_f'] * len(xx)) for xx in data_by_trials_raw['raw']]
-
 
     if 'raw' in data_by_trials.fields:
         data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
@@ -590,17 +594,17 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
         for c in range(wav_data.shape[1]):
             if stim_data.ndim == 1 or stim_data.shape[1] == 1:
                 pos = np.nanargmax(correlate(wav_data[:, c], stim_data.squeeze(), 'valid'))
-                score = pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())[0]
+                score = _pearsonr(wav_data[pos:pos+len(stim_data), c], stim_data.squeeze())
             else:
                 pos_left = np.nanargmax(correlate(wav_data[:, c], stim_data[:,0], 'valid'))
-                score_left = pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])[0]
+                score_left = _pearsonr(wav_data[pos_left:pos_left+len(stim_data), c], stim_data[:,0])
                 pos_right = np.nanargmax(correlate(wav_data[:, c], stim_data[:,1], 'valid'))
-                score_right = pearsonr(wav_data[pos_right:pos_right+len(stim_data), c], stim_data[:,1])[0]
+                score_right = _pearsonr(wav_data[pos_right:pos_right+len(stim_data), c], stim_data[:,1])
                 score = np.nanmax([score_left, score_right])
             scores.append(score)
 
         if debug:
-            logger.info(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
+            logger.debug(f'Alignment xcorr scores: {", ".join(str(s) for s in scores)}')
 
         best_ch_idx = np.nanargmax(scores)
 
@@ -608,6 +612,15 @@ def _infer_aud_channel(wav_data: np.ndarray, wav_fs: int, wav_labels: Sequence[s
     
     else:
         raise ValueError(f'Unsupported method argument: {method}')
+
+
+def _pearsonr(x, y):
+    import warnings
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore', module='scipy.stats')
+        warnings.filterwarnings('ignore', module='scipy.stats')
+        return pearsonr(x, y)[0]
 
     
 def _infer_freq_bands(
