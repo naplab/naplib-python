@@ -62,38 +62,50 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
         if data_arr.ndim < 2:
             return data_arr
 
-        re_ref_data = np.empty(data_arr.shape)
+        cached_ref = None
+        if method == 'pca':
+            data_to_use = (data_arr - data_arr.mean(1, keepdims=True)) / data_arr.std(1, keepdims=True)
+        else:
+            data_to_use = data_arr
+
+        re_ref_data = np.zeros(data_arr.shape, dtype=data_arr.dtype)
         for channel in range(arr.shape[0]):
             ref_channels = arr[channel] # now a 1D array of shape (channels,)
-            weighted_data = data_arr[:,ref_channels!=0]
+            is_cached = cached_ref is not None and np.allclose(ref_channels, arr[channel-1])
 
             if method == 'avg':
-                ref = np.nanmean(weighted_data, axis=1)
-                if return_ref:
-                    re_ref_data[:,channel] = ref
-                else:
-                    re_ref_data[:,channel] = data_arr[:,channel] - ref
-            elif method == 'pca':
-                weighted_data = (weighted_data - weighted_data.mean(1, keepdims=True)) / weighted_data.std(1, keepdims=True)
-                u, _, _ = svd(weighted_data.T @ weighted_data)
-                ref = u[:,0] * (weighted_data @ u[:,0][:,np.newaxis])
-                data_arr_tmp = (data_arr - data_arr.mean(1, keepdims=True)) / data_arr.std(1, keepdims=True)
-                ref_channels[channel] = 1
-                nonzero_channel_indices = np.argwhere(ref_channels!=0).squeeze()
-                this_ref_which_index = list(nonzero_channel_indices).index(channel)
-                if return_ref:
-                    re_ref_data[:,channel] = ref[:,this_ref_which_index]
-                else:
-                    re_ref_data[:,channel] = data_arr_tmp[:,channel] - ref[:,this_ref_which_index]
-            elif method == 'med':
-                ref = np.nanmedian(weighted_data, axis=1)
+                if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
+                    cached_ref = np.nanmean(weighted_data, axis=1)
 
-                if return_ref:
-                    re_ref_data[:,channel] = ref
-                else:
-                    re_ref_data[:,channel] = data_arr[:,channel] - ref
+                ref = cached_ref
+
+            elif method == 'pca':
+                if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
+                    weighted_data = (weighted_data - weighted_data.mean(1, keepdims=True)) / weighted_data.std(1, keepdims=True)
+                    u, _, _ = svd(weighted_data.T @ weighted_data)
+                    cached_ref = u[:,0] * (weighted_data @ u[:,0][:,np.newaxis])
+
+                ref_channels[channel] = 1
+                nonzero_channel_indices = np.argwhere(ref_channels != 0).squeeze()
+                this_ref_which_index = list(nonzero_channel_indices).index(channel)
+                ref = cached_ref[:,this_ref_which_index]
+
+            elif method == 'med':
+                if not is_cached:
+                    weighted_data = data_arr[:,ref_channels!=0]
+                    cached_ref = np.nanmedian(weighted_data, axis=1)
+
+                ref = cached_ref
+
             else:
                 raise ValueError(f'Invalid rereference method. Got "{method}"')
+            
+            if return_ref:
+                re_ref_data[:,channel] = ref
+            else:
+                re_ref_data[:,channel] = data_to_use[:,channel] - ref
 
         return re_ref_data
         
