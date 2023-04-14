@@ -123,7 +123,7 @@ def auditory_spectrogram(x, sfreq, frame_len=8, tc=4, factor='linear'):
     M = COCHBA.shape[1]
     x = np.pad(x, (0, N*L_frm-L_x))
     indexer = np.arange(L_frm-1, N*L_frm, L_frm)
-    output = np.zeros((N, M-1))
+    output = np.zeros((N, M-1), dtype='float32')
     
     # do last channel first (highest frequency)
     
