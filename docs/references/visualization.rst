@@ -6,22 +6,22 @@ Visualization
 Shaded Error Plot
 -----------------
 
-.. autofunction:: shadederrorplot
+.. autofunction:: shaded_error_plot
 
 Kernel Density and Histogram
-------------------------
+----------------------------
 
-.. autofunction:: kdeplot
+.. autofunction:: kde_plot
 
 Hierarchical Cluster Plot
 -------------------------
 
-.. autofunction:: hierarchicalclusterplot
+.. autofunction:: hierarchical_cluster_plot
 
-imSTRF
-------
+STRF Plot
+---------
 
-.. autofunction:: imSTRF
+.. autofunction:: strf_plot
 
 Frequency Response
 ------------------

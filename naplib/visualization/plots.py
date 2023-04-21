@@ -10,7 +10,7 @@ import seaborn as sns
 from copy import deepcopy
 
 
-def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
+def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     """
     Plot kernel density estimate of distribution for data, along with histogram underneath.
     Can plot multiple densities, one per grouping. See Examples below for a depiction.
@@ -53,7 +53,7 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
         
     Examples
     --------
-    >>> from naplib.visualization import kdeplot
+    >>> from naplib.visualization import kde_plot
     >>> import numpy as np
     >>> rng = np.random.default_rng(1)
     >>> rng = np.random.default_rng(1)
@@ -62,22 +62,22 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     >>> groupings = np.array(['G0'] * 100) # define grouping vector
     >>> groupings[50:] = 'G1' # set a different label for the samples we shifted
     >>> # plot the density for each group, as well as a histogram underneath each
-    >>> ax = kdeplot(data, groupings=groupings, bw_method=0.25, bins=15, color=['k','r'])
+    >>> ax = kde_plot(data, groupings=groupings, bw_method=0.25, bins=15, color=['k','r'])
 
     .. figure:: /figures/kdeplot1.png
         :width: 400px
-        :alt: kdeplot figure
+        :alt: kde_plot figure
         :align: center
 
     >>> # plot the exact same figure from a list of arrays and grouping labels of same length
     >>> data_list = [data[:50],data[50:]]
-    >>> kdeplot(data_list, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
+    >>> kde_plot(data_list, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
     >>> # plot the exact same figure from a 2D numpy array
     >>> data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
-    >>> kdeplot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
+    >>> kde_plot(data_mat, groupings=['G0','G1'], bw_method=0.25, bins=15, color=['k','r'])
     >>> # if we don't pass in groupings but data is still a 2D array or a list,
     >>> # then there just won't be a legend, but the plot will be the same
-    >>> kdeplot(data_mat, bw_method=0.25, bins=15, color=['k','r'])
+    >>> kde_plot(data_mat, bw_method=0.25, bins=15, color=['k','r'])
 
     """
     if 'ax' in kwargs:
@@ -176,7 +176,7 @@ def kdeplot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     return ax
 
 
-def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
+def shaded_error_plot(*args, ax=None, reduction='mean', err_method='stderr', color=None, alpha=0.4, plt_args={}, shade_args={}, nan_policy='omit'):
     '''
     Plot the average/median value at each time point and a shaded region indicating error or confidence
     level above and below the line. See Examples below for a depiction.
@@ -227,7 +227,7 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
 
     Examples
     --------
-    >>> from naplib.visualization import shadederrorplot as sep
+    >>> from naplib.visualization import shaded_error_plot as sep
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> rng = np.random.default_rng(1)
@@ -240,7 +240,7 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
 
     .. figure:: /figures/shadederrorplot1.png
         :width: 400px
-        :alt: shadederrorplot figure
+        :alt: shaded_error_plot figure
         :align: center
     
     Raises
@@ -342,7 +342,7 @@ def shadederrorplot(*args, ax=None, reduction='mean', err_method='stderr', color
 
     return ax
 
-def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
+def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
     '''
     Perform hierarchical clustering and plot dendrogram and clustered values as an
     image underneath. See Examples below for a depiction.
@@ -375,7 +375,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
 
     Examples
     --------
-    >>> from naplib.visualization import hierarchicalclusterplot as hcp
+    >>> from naplib.visualization import hierarchical_cluster_plot as hcp
     >>> import matplotlib.pyplot as plt
     >>> import numpy as np
     >>> rng = np.random.default_rng(10)
@@ -387,7 +387,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
 
     .. figure:: /figures/hierarchicalclusterplot1.png
         :width: 400px
-        :alt: hierarchicalclusterplot figure
+        :alt: hierarchical_cluster_plot figure
         :align: center
 
     '''
@@ -425,7 +425,7 @@ def hierarchicalclusterplot(data, axes=None, varnames=None, cmap='bwr', n_cluste
     return dend, cluster_labels
 
 
-def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=None):
+def strf_plot(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=None):
     '''
     Plot STRF weights as image. Colormap is automatically centered at 0 so
     that 0 corresponds to white, positive values are red, and negative values
@@ -457,7 +457,7 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
 
     Examples
     --------
-    >>> from naplib.visualization import imSTRF
+    >>> from naplib.visualization import strf_plot
     >>> import numpy as np
     >>> from scipy.stats import multivariate_normal
     >>> # generate example STRF weights following mne's example:
@@ -479,11 +479,11 @@ def imSTRF(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax=No
     >>> gauss_high = multivariate_normal.pdf(grid, means_high, cov)
     >>> gauss_low = -1 * multivariate_normal.pdf(grid, means_low, cov)
     >>> weights = gauss_high + gauss_low  # Combine to create the "true" STRF
-    >>> imSTRF(weights, tmin=tmin, tmax=tmax)
+    >>> strf_plot(weights, tmin=tmin, tmax=tmax)
 
     .. figure:: /figures/imSTRF1.png
         :width: 400px
-        :alt: imSTRF figure
+        :alt: strf_plot figure
         :align: center
 
     '''
