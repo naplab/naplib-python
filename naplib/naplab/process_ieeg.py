@@ -271,8 +271,8 @@ def process_ieeg(
     )
     
     # truncate data around earliest and lastest time that we need
-    earliest_time = max([alignment_times[0][0] - BUFFER_TIME-1, 0])
-    latest_time = alignment_times[-1][1] + BUFFER_TIME+1
+    earliest_time = max(alignment_times[0][0] - befaft[0] - BUFFER_TIME, 0)
+    latest_time = alignment_times[-1][1] + befaft[1] + BUFFER_TIME
     if befaft[0] > alignment_times[0][0]:
         raise ValueError(f"Not enough data to use befaft[0]={befaft[0]}. First stimulus aligned to {alignment_times[0][0]} sec")
 
