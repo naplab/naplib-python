@@ -1,5 +1,4 @@
 import os
-import sys
 from setuptools import setup, find_packages
 
 
@@ -7,12 +6,9 @@ PACKAGE_NAME = "naplib"
 DESCRIPTION = "Tools and functions for neural data processing and analysis in python"
 with open("README.md", "r") as f:
     LONG_DESCRIPTION = f.read()
-AUTHOR = (
-    "Gavin Mischler",
-    "Vinay Raghavan",
-    "Menoua Keshishian"
-)
-AUTHOR_EMAIL = "gm2944@columbia.edu"
+AUTHOR = "Gavin Mischler, Vinay Raghavan, Menoua Keshishian"
+MAINTAINER = "Gavin Mischler"
+MAINTAINER_EMAIL = "gm2944@columbia.edu"
 URL = "https://github.com/naplab/naplib-python"
 PYTHON_VERSION = '>=3.8'  # Minimum Python version
 with open("./requirements.txt", "r") as f:
@@ -40,7 +36,8 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type="text/markdown",
     author=AUTHOR,
-    author_email=AUTHOR_EMAIL,
+    maintainer=MAINTAINER,
+    maintainer_email=MAINTAINER_EMAIL,
     install_requires=REQUIRED_PACKAGES,
     python_requires=PYTHON_VERSION,
     url=URL,
