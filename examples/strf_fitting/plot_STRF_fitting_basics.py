@@ -20,7 +20,7 @@ from scipy.signal import resample
 from sklearn.linear_model import Ridge, ElasticNet
 
 import naplib as nl
-from naplib.visualization import imSTRF
+from naplib.visualization import strf_plot
 
 
 ###############################################################################
@@ -114,9 +114,9 @@ elec = 9
 model_1_coef, model_2_coef, score_model_1, score_model_2 = coef_ridge[elec], coef_elastic[elec], scores[elec], scores_2[elec]
 
 fig, axes = plt.subplots(1,2,figsize=(6,2.5))
-imSTRF(model_1_coef, tmin=tmin, tmax=tmax, freqs=freqs, ax=axes[0])
+strf_plot(model_1_coef, tmin=tmin, tmax=tmax, freqs=freqs, ax=axes[0])
 axes[0].set_title('Ridge, corr={:2.3f}'.format(score_model_1))
-imSTRF(model_2_coef, tmin=tmin, tmax=tmax, freqs=freqs, ax=axes[1])
+strf_plot(model_2_coef, tmin=tmin, tmax=tmax, freqs=freqs, ax=axes[1])
 axes[1].set_title('ElasticNet, corr={:2.3f}'.format(score_model_2))
 fig.suptitle(f'Electrode {elec}')
 fig.tight_layout()

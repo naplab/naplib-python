@@ -2,45 +2,45 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 
-from naplib.visualization import shadederrorplot
+from naplib.visualization import shaded_error_plot
 
 def test_errorplot_bad_fmt_type_error():
 
     fig, ax = plt.subplots(1,1)
 
     with pytest.raises(TypeError):
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), {'fmt': 'bad'}, ax=ax, err_method='stderr')
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), {'fmt': 'bad'}, ax=ax, err_method='stderr')
 
 def test_errorplot_no_args_error():
 
     with pytest.raises(ValueError):
-        shadederrorplot()
+        shaded_error_plot()
 
 def test_errorplot_too_many_args_error():
 
     fig, ax = plt.subplots(1,1)
 
     with pytest.raises(ValueError):
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), 'r--', 'bad_arg', ax=ax, err_method='stderr')
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), 'r--', 'bad_arg', ax=ax, err_method='stderr')
 
 def test_errorplot_bad_err_method():
 
     fig, ax = plt.subplots(1,1)
 
     with pytest.raises(ValueError) as err:
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method='not an option')
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method='not an option')
     assert 'is a string but is not one of' in str(err)
 
     with pytest.raises(ValueError) as err:
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method=-0.1)
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method=-0.1)
     assert 'is a float then it must be in the range (0, 1]' in str(err)
 
     with pytest.raises(ValueError) as err:
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method=1.2)
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method=1.2)
     assert 'is a float then it must be in the range (0, 1]' in str(err)
 
     with pytest.raises(ValueError) as err:
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method={})
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), ax=ax, err_method={})
     assert ' must be either a string or a float' in str(err)
 
 def test_errorplot_bad_reduction():
@@ -48,7 +48,7 @@ def test_errorplot_bad_reduction():
     fig, ax = plt.subplots(1,1)
 
     with pytest.raises(ValueError) as err:
-        shadederrorplot([0,1,2,3], np.random.rand(4,2), ax=ax, reduction='bad')
+        shaded_error_plot([0,1,2,3], np.random.rand(4,2), ax=ax, reduction='bad')
     assert 'reduction must be either' in str(err)
 
 def test_errorplot_error_region_median():
@@ -62,7 +62,7 @@ def test_errorplot_error_region_median():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, reduction='median', ax=ax, err_method='stderr')
+    shaded_error_plot(x, y, reduction='median', ax=ax, err_method='stderr')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -79,7 +79,7 @@ def test_errorplot_error_region_median_propogate():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, reduction='median', ax=ax, err_method='stderr', nan_policy='propogate')
+    shaded_error_plot(x, y, reduction='median', ax=ax, err_method='stderr', nan_policy='propogate')
     nan_mask = np.isnan(y_mean)
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1][~nan_mask], y_mean[~nan_mask], atol=1e-10)
@@ -97,7 +97,7 @@ def test_errorplot_error_region_percentile_propogate():
     y_region = [y_err1, y_err2]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, ax=ax, err_method=0.95, nan_policy='propogate')
+    shaded_error_plot(x, y, ax=ax, err_method=0.95, nan_policy='propogate')
     nan_mask = np.isnan(y_mean)
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1][~nan_mask], y_mean[~nan_mask], atol=1e-10)
@@ -115,7 +115,7 @@ def test_errorplot_error_region_percentile_omit():
     y_region = [y_err1, y_err2]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, ax=ax, err_method=0.95, nan_policy='omit')
+    shaded_error_plot(x, y, ax=ax, err_method=0.95, nan_policy='omit')
     nan_mask = np.isnan(y_mean)
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -131,7 +131,7 @@ def test_errorplot_error_region_stderr():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, ax=ax, err_method='stderr')
+    shaded_error_plot(x, y, ax=ax, err_method='stderr')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -147,7 +147,7 @@ def test_errorplot_error_region_percentile_no_x_given():
     y_region = [y_err1, y_err2]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(y, ax=ax, err_method=0.95)
+    shaded_error_plot(y, ax=ax, err_method=0.95)
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -163,7 +163,7 @@ def test_errorplot_error_region_stderr_no_x_given():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(y, ax=ax, err_method='stderr')
+    shaded_error_plot(y, ax=ax, err_method='stderr')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -178,7 +178,7 @@ def test_errorplot_error_region_stderr_no_x_given_with_fmt_string():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(y, 'r--*', ax=ax, err_method='stderr')
+    shaded_error_plot(y, 'r--*', ax=ax, err_method='stderr')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -194,7 +194,7 @@ def test_errorplot_error_region_stderr_with_fmt_string():
     y_region = [y_mean - y_err, y_mean+y_err]
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, 'r--*', ax=ax, err_method='stderr')
+    shaded_error_plot(x, y, 'r--*', ax=ax, err_method='stderr')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([-1,0,1,2,3]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -207,7 +207,7 @@ def test_errorplot_error_region_std_withnan_omit():
     y_mean = np.nanmean(y,1)
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, ax=ax, err_method='std', nan_policy='omit')
+    shaded_error_plot(x, y, ax=ax, err_method='std', nan_policy='omit')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     assert np.allclose(ax.lines[0].get_data()[1], y_mean, atol=1e-10)
@@ -220,7 +220,7 @@ def test_errorplot_error_region_std_withnan_propogate():
     y_mean = np.mean(y,1)
 
     fig, ax = plt.subplots(1,1)
-    shadederrorplot(x, y, ax=ax, err_method='std', nan_policy='propogate')
+    shaded_error_plot(x, y, ax=ax, err_method='std', nan_policy='propogate')
 
     assert np.allclose(ax.lines[0].get_data()[0], np.array([0,1,2,3,4]), atol=1e-10)
     nan_mask = np.isnan(y_mean)
@@ -236,6 +236,6 @@ def test_errorplot_error_region_std_withnan_raise():
 
     fig, ax = plt.subplots(1,1)
     with pytest.raises(ValueError) as err:
-        shadederrorplot(x, y, ax=ax, err_method='std', nan_policy='raise')
+        shaded_error_plot(x, y, ax=ax, err_method='std', nan_policy='raise')
     assert 'Found nan in input' in str(err)
 
