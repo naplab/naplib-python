@@ -63,3 +63,11 @@ def test_discriminability_wilks_lambda_elecmode_all():
     f_stat, pval = discriminability(D, L, elec_mode='all', method='wilks-lambda')
     assert np.allclose(f_stat, np.array([0.08261644, 0.12792341]), atol=1e-8)
     assert np.allclose(pval, np.array([1., 1.]), atol=1e-8)
+
+def test_discriminability_wilks_lambda_same_as_lda_elecmode_individual():
+    rng = np.random.default_rng(1)
+    D = np.arange(0, 10, 1/1000).reshape(10,2,500) + rng.normal(size=(10,2,500))
+    L = np.concatenate([np.array([1,2,3,4.]) for _ in range(125)], axis=0)
+    f_stat1, _ = discriminability(D, L, elec_mode='individual', method='wilks-lambda')
+    f_stat2 = discriminability(D, L, elec_mode='individual', method='lda-discriminability')
+    assert np.allclose(f_stat1, f_stat2, atol=1e-8)
