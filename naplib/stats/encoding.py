@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 
+
 def wilks_lambda_discriminability(D, L):
     '''
     Compute Wilks' Lambda F-ratio and p-value for a single data matrix (not over time).
@@ -25,7 +26,6 @@ def wilks_lambda_discriminability(D, L):
     lda_discriminability
 
     '''
-
     N, K = D.shape
     n_classes = len(np.unique(L))
 
@@ -37,11 +37,11 @@ def wilks_lambda_discriminability(D, L):
     S_B = np.zeros((K, K))
     S_W = np.zeros((K, K))
 
-    for ii, c in enumerate(np.unique(L)):
+    for i, c in enumerate(np.unique(L)):
         n_c = (L == c).sum()
-        mean_diff = (class_means[ii] - overall_mean).reshape(K, 1)
+        mean_diff = (class_means[i] - overall_mean).reshape(K, 1)
         S_B += n_c * mean_diff @ mean_diff.T
-        class_diff = D[L == c] - class_means[ii]
+        class_diff = D[L == c] - class_means[i]
         S_W += class_diff.T @ class_diff
 
     # Step 1: Calculate Wilks' Lambda
@@ -50,12 +50,16 @@ def wilks_lambda_discriminability(D, L):
     # Step 2: Compute the F-statistic based on Wilks' Lambda
     numerator_df = (n_classes - 1) * K
     denominator_df = N - n_classes
-    F_statistic = ((1 - wilks_lambda ** (1 / K)) / (wilks_lambda ** (1 / K))) * (denominator_df / numerator_df)
+    f_stat = (
+        (1 - wilks_lambda ** (1 / K)) / (wilks_lambda ** (1 / K))
+        * (denominator_df / numerator_df)
+    )
 
     # Step 3: Calculate the p-value using the F-distribution
-    p_value = 1 - stats.f.cdf(F_statistic, numerator_df, denominator_df)
+    p_value = 1 - stats.f.cdf(f_stat, numerator_df, denominator_df)
 
-    return F_statistic, p_value
+    return f_stat, p_value
+
 
 def lda_discriminability(D, L):
     '''
@@ -70,12 +74,12 @@ def lda_discriminability(D, L):
     
     Returns
     -------
-    allf : np.ndarray
-        Allf
+    f_all : np.ndarray
+        All F-statistics.
     f_stat : float
         F-statistic.
     f_std : float
-        Standard dev of allf.
+        Standard dev of f_all.
 
     See Also
     --------
@@ -83,61 +87,43 @@ def lda_discriminability(D, L):
     wilks_lambda_discriminability
 
     '''
-    D = D.T
-    
-    labels = np.unique(L).squeeze()
+    labels = list(np.unique(L))
         
-    Dtot = []
-    Ltot = []
+    D = np.concatenate([D[np.argwhere(L==label)] for label in labels])
+    L = np.concatenate([L[np.argwhere(L==label)] for label in labels])
     
-    for i in range(len(labels)):
-        Dtot.append(D[:, np.argwhere(L==labels[i])])
-        Ltot.append(L[np.argwhere(L==labels[i])])
-        
-    D = np.concatenate(Dtot, axis=1).squeeze(-1)
-    L = np.concatenate(Ltot, axis=0).squeeze()
+    global_mean = D.mean(0)
     
-    
-    xh = D.mean(-1).squeeze()
+    sbs = np.zeros(len(labels))
+    sws = np.zeros(len(labels))
     total = 0.0
+    for i, label in enumerate(labels):
+        # Between class variability
+        index = np.argwhere(L==label).flatten()
+        group_mean = D[index].mean(0)
+        sbs[i] = np.linalg.norm(group_mean - global_mean, 2)**2 * len(index)
         
-    
-    sbs = []
-    sws = []
-    
-    for cnt1, cnt2 in enumerate(labels):
-        # first, between class variability
-        index = np.argwhere(L==cnt2)
-        index = index.flatten()
-        dc = D[:, index].mean(1)
-        sb = np.linalg.norm(dc - xh, 2)**2
+        # Within class variability
+        for j in index:
+            sws[i] += np.linalg.norm(D[j] - group_mean, 2)**2
         
-        # now, within class variability
-        sw = 0.0
-        for cnt3 in index:
-            sw += np.linalg.norm(D[:, cnt3] - dc, 2)**2
-        
-        sbs.append(sb * len(index))
-        sws.append(sw)
         total += len(index)
-        
-    sbs = np.array(sbs)
-    sws = np.array(sws)
-        
-    if np.min(sws) == 0:
-        sws[sws==0] = 1e-6
     
-    tmpb = sbs / (len(labels)-1)
-    tmpw = sws / (total - len(labels))
-    allf = np.divide(tmpb, tmpw)
+    # Set zeros to epsilon for numerical reasons
+    sws[sws == 0] = 1e-6
     
-    f = tmpb.sum() / tmpw.sum()
-    
-    fs = np.std(len(labels)*tmpb / tmpw.sum(), ddof=1) / np.sqrt(len(labels))
-    
-    return allf, f, fs
+    # Normalize
+    sbs /= (len(labels) - 1)
+    sws /= (total - len(labels))
 
-def discriminability(D, L, elec_mode='all', method='lda-discriminability'):
+    f_all = np.divide(sbs, sws)
+    f_stat = sbs.sum() / sws.sum()
+    f_std = np.std(len(labels)*sbs / sws.sum(), ddof=1) / np.sqrt(len(labels))
+
+    return f_all, f_stat, f_std
+
+
+def discriminability(D, L, elec_mode='all', method='lda'):
     '''
     Compute discriminability of classes over time. Can use multiple electrodes jointly,
     or compute the discriminability by each electrode individually. Multiple methods
@@ -156,9 +142,8 @@ def discriminability(D, L, elec_mode='all', method='lda-discriminability'):
         f-ratio of shape (time,)
         if 'individual', computes f-ratio for each electrode individually
         and returns f-ratio of shape (electrodes, time)
-    method : string, default='lda-discriminability'
-        Method for computing discriminability. Options are 'lda-discriminability',
-        'wilks-lambda'.
+    method : string, default='lda'
+        Method for computing discriminability. Options are 'lda', 'wilks-lambda'.
 
     Returns
     -------
@@ -186,53 +171,40 @@ def discriminability(D, L, elec_mode='all', method='lda-discriminability'):
     array([5.65679222e-07, 5.38811997e-08, 1.01531199e-07, 1.00551882e-06, 2.35186401e-07]))
 
     '''
-    if L.ndim > 1:
-        ndim_L = L.squeeze(0).ndim
-    else:
-        ndim_L = L.ndim
-    
-    label = np.unique(L)
-
     def _compute_discrim(x_data, labels_data):
-        if method == 'lda-discriminability':
-            _, f_tmp, _ = lda_discriminability(x_data.T, labels_data)
-            return f_tmp, np.nan
-
+        if method == 'lda':
+            _, f_stat, _ = lda_discriminability(x_data.T, labels_data)
+            return f_stat, np.nan
         elif method == 'wilks-lambda':
             return wilks_lambda_discriminability(x_data.T, labels_data)
         else:
-            raise ValueError(f'Bad method. Must be one of "lda-discriminability", "wilks-lambda"')
+            raise ValueError('Bad method. Must be one of "lda", "wilks-lambda"')
 
-    f = []
+    f_stat, p_vals  = None, None
     if elec_mode == 'all':
-        f = np.zeros((D.shape[1]))
-        pvalues = np.zeros((D.shape[1]))
+        f_stat = np.zeros(D.shape[1])
+        p_vals = np.zeros(D.shape[1])
         for t in range(D.shape[1]):
-            tmp = D[:,t,:].squeeze()
-            if ndim_L > 1:
-                f_tmp, pvalue = _compute_discrim(tmp, L[t,:].squeeze())
+            if L.ndim > 1:
+                f_stat[t], p_vals[t] = _compute_discrim(D[:,t], L[t,:])
             else:
-                f_tmp, pvalue = _compute_discrim(tmp, L.squeeze())
-            f[t] = f_tmp
-            pvalues[t] = pvalue
-        
+                f_stat[t], p_vals[t] = _compute_discrim(D[:,t], L)
     elif elec_mode == 'individual':
-        f = np.zeros((D.shape[0], D.shape[1]))
-        pvalues = np.zeros((D.shape[0], D.shape[1]))
+        f_stat = np.zeros(D.shape[:2])
+        p_vals = np.zeros(D.shape[:2])
         for t in range(D.shape[1]):
-            tmp = D[:,t,:].squeeze()
-            for cnt in range(D.shape[0]):
-                if ndim_L > 1:
-                    f_tmp, pvalue = _compute_discrim(tmp[cnt,:][np.newaxis], L[t,:].squeeze())
+            for e in range(D.shape[0]):
+                if L.ndim > 1:
+                    f_stat[e,t], p_vals[e,t] = _compute_discrim(D[e,t,None], L[t,:])
                 else:
-                    f_tmp, pvalue = _compute_discrim(tmp[cnt,:][np.newaxis], L.squeeze())
-                f[cnt,t] = f_tmp
-                pvalues[cnt,t] = pvalue
-        
+                    f_stat[e,t], p_vals[e,t] = _compute_discrim(D[e,t,None], L)
     else:
-        raise Exception(f'Error: elec_mode should be one of ["all", "individual"], but got {elec_mode}')
-        
+        raise Exception(
+            f'Error: elec_mode should be one of ["all", "individual"], but got {elec_mode}'
+        )
+    
     if method in ['wilks-lambda']:
-        return f, pvalues
+        return f_stat, p_vals
+    
+    return f_stat
 
-    return f
