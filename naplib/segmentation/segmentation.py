@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.ndimage import gaussian_filter1d
 
-from ..stats import fratio
+from ..stats import discriminability
 from ..utils import _parse_outstruct_args
 from ..data import Data
 
@@ -175,7 +175,8 @@ def electrode_lags_fratio(data=None, field=None, labels=None, max_lag=20, return
     '''
     Compute lags of each electrode based on peak of f-ratio to a given label, such as phoneme labels.
     The data is segmented around onset transitions in the labels, and an electrode's lag is defined
-    as the peak of the f-ratio after the transition.
+    as the peak of the f-ratio after the transition. This uses the "lda-discriminability" method from
+    ``naplib.stats.discriminability``.
     
     Parameters
     ----------
@@ -207,7 +208,7 @@ def electrode_lags_fratio(data=None, field=None, labels=None, max_lag=20, return
         
     segments, labels, _ = segment_around_label_transitions(data=data, field=field, labels=labels, prechange_samples=0, postchange_samples=max_lag)
     
-    fratios_lags = fratio(segments.transpose((2,1,0)), labels, elec_mode='individual')
+    fratios_lags = discriminability(segments.transpose((2,1,0)), labels, elec_mode='individual')
     
     fratios_lags_smooth = gaussian_filter1d(fratios_lags, 0.5, mode='constant')
 

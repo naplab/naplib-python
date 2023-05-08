@@ -16,15 +16,10 @@ T-Test with Feature Control
 
 .. autofunction:: ttest
 
-DPrime
-------
+Discriminability
+----------------
 
-.. autofunction:: dprime
-
-F Ratio
--------
-
-.. autofunction:: fratio
+.. autofunction:: discriminability
 
 Linear Mixed Effects Model
 --------------------------
