@@ -16,21 +16,16 @@ T-Test with Feature Control
 
 .. autofunction:: ttest
 
-DPrime
-------
+Discriminability
+----------------
 
-.. autofunction:: dprime
-
-F Ratio
--------
-
-.. autofunction:: fratio
+.. autofunction:: discriminability
 
 Linear Mixed Effects Model
 --------------------------
 
 .. autoclass:: LinearMixedEffectsModel
-	:members:
+        :members:
 
 .. minigallery:: naplib.stats.LinearMixedEffectsModel
         :add-heading: Examples using ``LinearMixedEffectsModel ``
