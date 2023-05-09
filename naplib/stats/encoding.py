@@ -88,9 +88,11 @@ def lda_discriminability(D, L):
 
     '''
     labels = list(np.unique(L))
+    def where_label_is(label):
+        return np.argwhere(L == label).squeeze(-1)
         
-    D = np.concatenate([D[np.argwhere(L==label)] for label in labels])
-    L = np.concatenate([L[np.argwhere(L==label)] for label in labels])
+    D = np.concatenate([D[where_label_is(label)] for label in labels])
+    L = np.concatenate([L[where_label_is(label)] for label in labels])
     
     global_mean = D.mean(0)
     
@@ -98,14 +100,14 @@ def lda_discriminability(D, L):
     sws = np.zeros(len(labels))
     total = 0.0
     for i, label in enumerate(labels):
+        index = where_label_is(label)
+
         # Between class variability
-        index = np.argwhere(L==label).flatten()
         group_mean = D[index].mean(0)
         sbs[i] = np.linalg.norm(group_mean - global_mean, 2)**2 * len(index)
         
         # Within class variability
-        for j in index:
-            sws[i] += np.linalg.norm(D[j] - group_mean, 2)**2
+        sws[i] = sum(np.linalg.norm(D[j] - group_mean, 2)**2 for j in index)
         
         total += len(index)
     
@@ -186,7 +188,7 @@ def discriminability(D, L, elec_mode='all', method='lda'):
         p_vals = np.zeros(D.shape[1])
         for t in range(D.shape[1]):
             if L.ndim > 1:
-                f_stat[t], p_vals[t] = _compute_discrim(D[:,t], L[t,:])
+                f_stat[t], p_vals[t] = _compute_discrim(D[:,t], L[t])
             else:
                 f_stat[t], p_vals[t] = _compute_discrim(D[:,t], L)
     elif elec_mode == 'individual':
@@ -195,7 +197,7 @@ def discriminability(D, L, elec_mode='all', method='lda'):
         for t in range(D.shape[1]):
             for e in range(D.shape[0]):
                 if L.ndim > 1:
-                    f_stat[e,t], p_vals[e,t] = _compute_discrim(D[e,t,None], L[t,:])
+                    f_stat[e,t], p_vals[e,t] = _compute_discrim(D[e,t,None], L[t])
                 else:
                     f_stat[e,t], p_vals[e,t] = _compute_discrim(D[e,t,None], L)
     else:
