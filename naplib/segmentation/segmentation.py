@@ -173,10 +173,10 @@ def segment_around_label_transitions(data=None, field=None, labels=None, prechan
     
 def electrode_lags_fratio(data=None, field=None, labels=None, max_lag=20, return_fratios=False):
     '''
-    Compute lags of each electrode based on peak of f-ratio to a given label, such as phoneme labels.
-    The data is segmented around onset transitions in the labels, and an electrode's lag is defined
-    as the peak of the f-ratio after the transition. This uses the "lda-discriminability" method from
-    ``naplib.stats.discriminability``.
+    Compute lags of each electrode based on peak of f-ratio to a given label, such as
+    phoneme labels. The data is segmented around onset transitions in the labels, and
+    an electrode's lag is defined as the peak of the f-ratio after the transition.
+    This uses the "lda" method of ``naplib.stats.discriminability``.
     
     Parameters
     ----------

@@ -69,5 +69,5 @@ def test_discriminability_wilks_lambda_same_as_lda_elecmode_individual():
     D = np.arange(0, 10, 1/1000).reshape(10,2,500) + rng.normal(size=(10,2,500))
     L = np.concatenate([np.array([1,2,3,4.]) for _ in range(125)], axis=0)
     f_stat1, _ = discriminability(D, L, elec_mode='individual', method='wilks-lambda')
-    f_stat2 = discriminability(D, L, elec_mode='individual', method='lda-discriminability')
+    f_stat2 = discriminability(D, L, elec_mode='individual', method='lda')
     assert np.allclose(f_stat1, f_stat2, atol=1e-8)
