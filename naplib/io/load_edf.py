@@ -130,10 +130,6 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         start_time = datetime.strptime(start_time, '%H.%M.%S').time()
     except:
         start_time = None
-    
-    import scipy
-    import scipy.stats
-    scipy.io.wavfile.write('tmp.wav', round(sampling_rate), scipy.stats.zscore(aux_data[:,1]))
 
     return {
         'data': data,
