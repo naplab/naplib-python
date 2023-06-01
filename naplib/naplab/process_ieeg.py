@@ -717,10 +717,7 @@ def _infer_data_type(data_path: str):
     file_suffixes = [x.split('.')[-1] for x in files_in_dir]
     
     if 'sev' in file_suffixes or 'tev' in file_suffixes:
-        if 'tev' in file_suffixes:
-            return 'tdt', data_path
-        else:
-            raise ValueError('sev file(s) found in directory but no tev file found.')
+        return 'tdt', data_path
     elif 'edf' in file_suffixes or 'EDF' in file_suffixes:
         if file_suffixes.count('edf') + file_suffixes.count('EDF') > 1:
             raise ValueError(f'Inferred edf format, but more than one edf file found in given directory.')
