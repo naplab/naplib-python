@@ -344,7 +344,9 @@ def process_ieeg(
     
     # # Cut raw data up into blocks based on alignment
     logger.info('Chunking responses based on alignment...')
-    data_by_trials_raw = _split_data_on_alignment(Data({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
+    data_by_trials_raw, effective_buffer_times = _split_data_on_alignment(
+        Data({'raw': raw_data['data']}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME
+    )
 
     # # extract frequency bands
     if 'raw' in bands:
@@ -391,14 +393,14 @@ def process_ieeg(
         data_by_trials['raw'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(data_by_trials_raw['raw'], desired_lens)]
 
     if reference_to_store is not None:
-        reference_to_store = _split_data_on_alignment(Data({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
+        reference_to_store, _ = _split_data_on_alignment(Data({'ref': reference_to_store}), raw_data['data_f'], alignment_times, befaft, buffer_time=BUFFER_TIME)
         data_by_trials['reference'] = [resample(xx, d_len, axis=0) for xx, d_len in zip(reference_to_store['ref'], desired_lens)]
     
-    data_by_trials = _remove_buffer_time(data_by_trials, final_fs, buffer_time=BUFFER_TIME)
+    data_by_trials = _remove_buffer_time(data_by_trials, final_fs, effective_buffer_times)
 
     if store_all_wav:
         logger.info('Chunking wav channels based on alignment...')
-        wav_data_chunks = _split_data_on_alignment(Data({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
+        wav_data_chunks, _ = _split_data_on_alignment(Data({'wav': [raw_data['wav']]}), raw_data['wav_f'], alignment_times, befaft, buffer_time=0)
 
     # final output dict to be made into naplib.Data object
     alignment_times = np.asarray(alignment_times)
@@ -863,30 +865,47 @@ def _load_stim_order(stim_order_path: str) -> List[str]:
             lines = [x.strip() for x in infile.readlines() if not x.isspace()]
         return lines
 
-    
+
 def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time=1):
     """
     data must be length 1, but can have as many fields as needed, each of which is a numpy array (time, ...)
     """
     output = {}
+    effective_buffer_times = []
+    
     for field in data.fields:
         split_field = []
+        duration = len(data[0][field]) / fs
         for align_region in alignment_startstops:
-            start_time = align_region[0]-befaft[0]-buffer_time
-            end_time = align_region[1]+befaft[1]+buffer_time
+            effective_buffer_times.append([buffer_time, buffer_time])
+            
+            start_time = align_region[0] - befaft[0]
+            if start_time < buffer_time:
+                effective_buffer_times[-1][0] = start_time
+                start_time = 0
+            else:
+                start_time -= buffer_time
+            
+            end_time = align_region[1] + befaft[1]
+            if duration - end_time < buffer_time:
+                effective_buffer_times[-1][1] = duration - end_time
+                end_time = duration
+            else:
+                end_time += buffer_time
+            
             start_sample = int(round(start_time * fs))
             end_sample = int(round(end_time * fs))
             split_field.append(data[0][field][start_sample:end_sample])
         output[field] = split_field
     
-    return Data(output)
+    return Data(output), effective_buffer_times
 
 
-def _remove_buffer_time(data, fs, buffer_time=1):
+def _remove_buffer_time(data, fs, buffer_times):
     output = {}
-    buffer_samples = round(fs*buffer_time)
     for trial in range(len(data)):
+        buffer_samples = [round(fs*t) for t in buffer_times[trial]]
         for field in data.fields:
-            data[trial][field] = data[trial][field][buffer_samples:-buffer_samples]
+            data[trial][field] = data[trial][field][buffer_samples[0]:len(data[trial][field])-buffer_samples[1]]
+    
     return data
-
