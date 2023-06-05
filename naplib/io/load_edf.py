@@ -30,7 +30,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
     loaded_dict : dict from string to numpy array or float
         Keys: 'data' - loaded neural recording (time*channels), 'data_f' - sampling rate of data,
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
-        'labels_data' - array of labels for the channel streams.
+        'labels_data' - array of labels for the channel streams,
         'labels_wav' - array of labels for the audio streams
 
     """
@@ -43,11 +43,13 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         start_date = fin.read(8).decode('ascii')
         start_time = fin.read(8).decode('ascii')
         header_size = int(fin.read(8).decode('ascii'))
-        _ = fin.seek(44, 1)
+        reserved = fin.read(44).decode('ascii').strip()
 
-        # current implementation only supports original EDF format
+        # current implementation only supports contiguous EDF
         if version != 0:
-            raise ValueError('EDF with version != 0 not yet supported.')
+            raise ValueError('EDF with version != 0 not supported.')
+        if reserved not in ('', 'EDF+C'):
+            raise ValueError('EDF reserved field should be empty (original EDF) or "EDF+C" (contiguous EDF+).')
 
         # number of lengths of signals
         num_records = int(fin.read(8).decode('ascii'))
@@ -64,10 +66,29 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         digital_max = np.array([float(fin.read(8).decode('ascii'))  for _ in range(num_signals)])
         prefilt = np.array([fin.read(80).decode('ascii').strip()  for _ in range(num_signals)])
         samples = np.array([int(fin.read(8).decode('ascii'))  for _ in range(num_signals)])
+        samples_per_record = samples.sum()
         fin.seek(32 * num_signals, 1)
+        
+        if labels[-1] == 'EDF Annotations':
+            skip_end_bytes = samples[-1] * 2
+            num_signals -= 1
+            labels = labels[:-1]
+            transducer = transducer[:-1]
+            physical_dim = physical_dim[:-1]
+            physical_min = physical_min[:-1]
+            physical_max = physical_max[:-1]
+            digital_min = digital_min[:-1]
+            digital_max = digital_max[:-1]
+            prefilt = prefilt[:-1]
+            samples = samples[:-1]
+        else:
+            skip_end_bytes = 0
 
         if len(set(samples)) != 1:
-            raise RuntimeError('The load_edf function does not support heterogeneous `samples` per record.')
+            raise RuntimeError(
+                'The load_edf function does not support heterogeneous `samples` per record, '
+                'except for EDF annotations.'
+            )
         samples = samples[0]
 
         # compute sampling rate
@@ -76,7 +97,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
         # only process part of recording that falls between the specified time range (t1, t2)
         min_record = floor(t1 / record_dur)
         max_record = ceil(t2 / record_dur) if 0 < t2 < num_records*record_dur else num_records
-        fin.seek(min_record * samples * num_signals * 2, 1)
+        fin.seek(min_record * samples_per_record * 2, 1)
         num_records = max_record - min_record
         t_skip = min_record * record_dur
         
@@ -98,6 +119,7 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
             buffer = rescale(buffer)
             data[i*samples:(i+1)*samples] = buffer[:, ~aux_signals]
             aux_data[i*samples:(i+1)*samples] = buffer[:, aux_signals]
+            fin.seek(skip_end_bytes, 1)
     
     # Convert start_date and start_time to python objects
     try:
@@ -130,6 +152,6 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
 
 
 def _aux_channels(labels: Iterable[str]):
-    pattern = r'^(EKG[LR]?|DC[0-9]*|TRIG[0-9]*|OSAT|PR|Pleth)$'
+    pattern = r'^(EKG[LR]?|DC[0-9]*|TRIG[0-9]*|OSAT|PR|Pleth|EDF Annotations)$'
     return np.array([re.match(pattern, label) for label in labels], dtype=bool)
 

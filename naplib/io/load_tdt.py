@@ -3,6 +3,9 @@ import numpy as np
 from typing import Dict, Optional
 from scipy.signal import resample
 
+from naplib import logger
+
+
 def load_tdt(directory: str, t1: float=0, t2: float=0, wav_stream: str='Wav5') -> Dict:
     """
     Load data from TDT structure. Directory should contain .sev files and a .tev file, as
@@ -24,48 +27,60 @@ def load_tdt(directory: str, t1: float=0, t2: float=0, wav_stream: str='Wav5') -
     loaded_dict : dict from string to numpy array or float
         Keys: 'data' - loaded neural recording (time*channels), 'data_f' - sampling rate of data,
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
-        'labels' - array of labels for the channel streams
+        'labels_data' - array of labels for the channel streams,
+        'labels_wav' - array of labels for the audio streams
     """
     
     data = read_block(directory, t1=t1, t2=t2)
+    streams = data['streams'] if 'streams' in data.keys() else data
+    
+    eeg_streams = [
+        s for s in ('EEG1', 'EEG2', 'RAWx', 'RSn1', 'RSn2')
+        if s in streams.keys() and 'data' in streams[s].keys()
+    ]
+    if not eeg_streams:
+        raise ValueError(f'Neither of EEG1, EEG2 or RAWx streams present in TDT data.')
     
     eeg_data = []
+    eeg_stream_fs = []
     eeg_stream_labels = []
     
-    streams = data['streams'].keys()
+    for i, s in enumerate(eeg_streams):
+        eeg_data.append(streams[s]['data'])
+        eeg_stream_fs.append(streams[s]['fs'])
+        eeg_stream_labels.append(np.asarray([s] * streams[s]['data'].shape[0]))
     
-    if 'EEG1' in streams:
-        eeg_data.append(data['streams']['EEG1']['data'])
-        eeg_stream_labels.append(np.asarray(['EEG1']*eeg_data[0].shape[0]))
-    elif 'RAWx' in streams:
-        eeg_data.append(data['streams']['RAWx']['data'])
-        eeg_stream_labels.append(np.asarray(['RAWx']*eeg_data[0].shape[0]))
-    else:
-        raise ValueError(f'Neither EEG1 nor RAWx streams present in TDT data.')
+    if len(np.unique(eeg_stream_fs)) != 1:
+        raise ValueError(f'Found different sampling rates for EEG streams: {eeg_stream_fs}.')
+    
+    lengths = [x.shape[1] for x in eeg_data]
+    if len(np.unique(lengths)) != 1:
+        logger.warn(f'EEG streams have different lengths: {lengths}; clipping all to length of shortest stream.')
         
-    min_len = eeg_data[0].shape[1]
+        min_len = min(lengths)
+        for i in range(len(eeg_data)):
+            if eeg_data[i].shape[1] != min_len:
+                eeg_data[i] = eeg_data[i][:, :min_len]
     
-    if 'EEG2' in streams:
-        if data['streams']['EEG1']['fs'] != data['streams']['EEG2']['fs']:
-            desired_len = data['streams']['EEG1']['fs']/data['streams']['EEG2']['fs'] * data['streams']['EEG2']['data'].shape[1]
-            eeg2_data = resample(data['streams']['EEG2']['data'], desired_len, axis=1)
-        else:
-            eeg2_data = data['streams']['EEG2']['data']
-            
-        eeg_data.append(eeg2_data)
-        eeg_stream_labels.append(np.asarray(['EEG2']*eeg_data[1].shape[0]))
-        
-        if eeg_data[1].shape[1] != eeg_data[0].shape[1]:
-            min_len = min([min_len, eeg_data[1].shape[1]])
-            eeg_data = [x[:,:min_len] for x in eeg_data]
-            
-    loaded_dict = {}
-    loaded_dict['data'] = np.concatenate(eeg_data, axis=0).T
-    loaded_dict['data_f'] = data['streams']['EEG1']['fs']
-    loaded_dict['wav'] = data['streams'][wav_stream]['data'].T
-    loaded_dict['wav_f'] = data['streams'][wav_stream]['fs']
-    loaded_dict['labels_data'] = np.concatenate(eeg_stream_labels)
-    loaded_dict['labels_wav'] = np.array([f'Wav5_{i}' for i in range(loaded_dict['wav'].shape[1])])
-    loaded_dict['t_skip'] = t1
+    eeg_data = np.concatenate(eeg_data, axis=0).T
+    eeg_stream_fs = eeg_stream_fs[0]
+    eeg_stream_labels = np.concatenate(eeg_stream_labels)
+    wav_data = streams[wav_stream]['data'].T
+    wav_stream_fs = streams[wav_stream]['fs']
+    wav_stream_labels = np.array([f'Wav5_{i}' for i in range(wav_data.shape[1])])
     
-    return loaded_dict
+    info = {}
+    if 'info' in data.keys():
+        info['start_date'] = data['info']['start_date'].date()
+        info['start_time'] = data['info']['start_date'].time()
+    
+    return {
+        'data': eeg_data,
+        'data_f': eeg_stream_fs,
+        'wav': wav_data,
+        'wav_f': wav_stream_fs,
+        'labels_data': eeg_stream_labels,
+        'labels_wav': wav_stream_labels,
+        't_skip': t1,
+        'info': info,
+    }
