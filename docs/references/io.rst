@@ -43,6 +43,11 @@ Read BIDS
 
 .. autofunction:: read_bids
 
+Read CND
+--------
+
+.. autofunction:: read_cnd
+
 Read HTK
 --------
 
