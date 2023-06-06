@@ -6,7 +6,9 @@ import naplib as nl
 
 def test_read_cnd_file():
 
-    data = read_cnd('dataSub1.mat')
+    curr_dir = os.path.dirname(__file__)
+    file = os.path.join(curr_dir, 'dataSub1.mat')
+    data = read_cnd(file)
 
     assert isinstance(data, nl.Data)
 
@@ -36,7 +38,9 @@ def test_read_cnd_file():
 
 def test_read_cnd_file_nostim():
 
-    data = read_cnd('dataSub1.mat', load_stims=False)
+    curr_dir = os.path.dirname(__file__)
+    file = os.path.join(curr_dir, 'dataSub1.mat')
+    data = read_cnd(file, load_stims=False)
 
     assert isinstance(data, nl.Data)
 
@@ -58,7 +62,9 @@ def test_read_cnd_file_nostim():
 
 def test_read_cnd_file_onlystim():
 
-    data = read_cnd('dataStim.mat', load_stims=False)
+    curr_dir = os.path.dirname(__file__)
+    file = os.path.join(curr_dir, 'dataStim.mat')
+    data = read_cnd(file, load_stims=False)
 
     assert isinstance(data, nl.Data)
 
