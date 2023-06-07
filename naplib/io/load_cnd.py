@@ -13,7 +13,7 @@ from naplib import logger
 from naplib.data import concat, Data
 
 
-def read_cnd(
+def load_cnd(
     filepath: str,
     load_stims: Union[bool, str] = True,
     truncate_lengths: bool = True,

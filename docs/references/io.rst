@@ -38,15 +38,15 @@ Load TDT
 
 .. autofunction:: load_tdt
 
-Read BIDS
+Load BIDS
 ---------
 
-.. autofunction:: read_bids
+.. autofunction:: load_bids
 
-Read CND
+Load CND
 --------
 
-.. autofunction:: read_cnd
+.. autofunction:: load_cnd
 
 Read HTK
 --------
