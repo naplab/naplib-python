@@ -8,7 +8,7 @@ Importing data from BIDS (Brain Imaging Data Structure)
 
 Although there is no universal data storage format for neural data, the BIDS format has seen
 widespread adoption. This tutorial demonstrates how to easily load data from a BIDS format
-into a ``Data`` object using the `read_bids` function. Events stored in the BIDS format are
+into a ``Data`` object using the `load_bids` function. Events stored in the BIDS format are
 naturally segmented to form the "trials" in the ``Data``, facilitating easy data analysis.
 
 **Note** 
@@ -30,7 +30,7 @@ from mne_bids import print_dir_tree
 import numpy as np
 import matplotlib.pyplot as plt
 
-from naplib.io import read_bids
+from naplib.io import load_bids
 from naplib.preprocessing import normalize
 
 ###############################################################################
@@ -61,13 +61,13 @@ print_dir_tree(bids_root, max_depth=4)
 # Read file structure into a Data Object
 # --------------------------------------
 # 
-# In this task, the stimulus recorded is simply a sudden spike in the 'stim' channels, so the associated events have duration=0. For the sake of this tutorial, we will cut the data into trials based on the 'onset' of one event and ending at the onset of the next. If the durations of the stimulus events were meaningful, we could cut by the 'duration' of each event instead. See the `read_bids` documentation for more details.
+# In this task, the stimulus recorded is simply a sudden spike in the 'stim' channels, so the associated events have duration=0. For the sake of this tutorial, we will cut the data into trials based on the 'onset' of one event and ending at the onset of the next. If the durations of the stimulus events were meaningful, we could cut by the 'duration' of each event instead. See the `load_bids` documentation for more details.
 
 resp_channels = ['Fp1','AF3','F7','F3','FC1','FC5','T7','C3','CP1','CP5','P7',
                  'P3','Pz','PO3','O1','Oz','O2','PO4','P4','P8','CP6','CP2',
                  'C4','T8','FC6','FC2','F4','F8','AF4','Fp2','Fz','Cz']
 
-data = read_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', resp_channels=resp_channels)
+data = load_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', resp_channels=resp_channels)
 
 
 ###############################################################################
@@ -105,7 +105,7 @@ print(data.mne_info)
 
 befaft = [1,0] # keep 1 second before the stimulus, nothing extra after
 
-data2 = read_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', befaft=befaft, resp_channels=resp_channels)
+data2 = load_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', befaft=befaft, resp_channels=resp_channels)
 
 # Now, when we visualize we have a bit of data from before the stimulus onset
 
