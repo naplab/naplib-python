@@ -1,5 +1,6 @@
 import pytest
 import numpy as np
+import os
 
 from naplib.io import read_cnd
 import naplib as nl
