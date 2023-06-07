@@ -68,22 +68,23 @@ class Data(Iterable):
     Data object of 2 trials containing 3 fields
     [{"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
     {"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
-    >>> # Accessing a single field returns a list
-    >>> data['name']
-    ['trial1', 'trial2']
-    >>> # Accessing multiple fields returns a Data object
-    >>> data[['resp', 'dataf']]
-    Data object of 2 trials containing 2 fields
-    [{"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
-    {"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
-    >>> # Accessing a single trial returns a dict
+    >>> # Accessing a single trial returns a view of one trial as a dict
     >>> data[1]
     {'name': 'trial2',
      'resp': array([[ 6,  7],
             [ 8,  9],
             [10, 11]]),
      'dataf': 100}
-    >>> # Accessing multiple trials returns a Data object
+    >>> # Accessing a single field returns a shallow copy of that field as a list over trials
+    >>> data['name']
+    ['trial1', 'trial2']
+    >>> # Accessing multiple fields returns a shallow copy of those fields within a Data instance
+    >>> data[['resp', 'dataf']]
+    Data object of 2 trials containing 2 fields
+    [{"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
+    {"resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
+    >>> # Accessing multiple trials with slice indexing returns a shallow copy of those
+    >>> # trials in a Data instance
     >>> data[:2]
     Data object of 2 trials containing 3 fields
     [{"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}
@@ -154,7 +155,7 @@ class Data(Iterable):
             
     def __getitem__(self, index):
         '''
-        Get either a trial or a field using bracket indexing. See examples
+        Get either a trial or a field using bracket indexing. See notes and examples
         below for details.
 
         Parameters
@@ -169,6 +170,24 @@ class Data(Iterable):
             is a string, returns the corresponding field, and if it is a list of strings,
             returns those fields together in a new Data object.
 
+        Note
+        ----
+        Depending on how indexing and slicing is performed, the data returned may be a view of
+        the underlying data, or it may be a shallow copy of the underlying data. The only way
+        to get a view of the underlying data, meaning editing that view will also edit the
+        underlying data, is to use integer indexing to get a single trial from the Data instance,
+        which returns a dict for that trial. Indexing by field name first and indexing with slicing
+        both return shallow copies of the data.
+
+        For example, if we want to set the 'name' field in the first trial of our Data, we can only
+        do it in the following way:
+
+        >>> data[0]['name'] = 'trial0'
+
+        Whereas following code will NOT actually change the underlying trial name:
+
+        >>> data['name'][0] = 'trial0'
+
         Examples
         --------
         >>> # Get a specific trial based on its index, which returns a dict
@@ -179,19 +198,23 @@ class Data(Iterable):
         >>> data[0]
         {'name': 'Zero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get a slice of trials, which returns a Data object
+        >>> # Get a slice of trials, which returns a shallow copy of those trials in a Data instance
         >>> out[:2]
         Data object of 2 trials containing 3 fields
         [{"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}
         {"name": <class 'str'>, "trial": <class 'int'>, "resp": <class 'list'>}]
 
-        >>> # Get a list of trial data from a single field
+        >>> # Get a list of trial data from a single field, which returns a shallow copy of
+        >>> # each trial in that field
         >>> data['name']
         ['TrialZero', 'TrialOne']
+
+        >>> # Get a single trial with integer indexing, returning a view of that trial as a dict
         >>> data[0]
         {'name': 'TrialZero', 'trial': 0, 'resp': [[0, 1], [2, 3]]}
 
-        >>> # Get multiple fields using a list of fieldnames, which returns a Data containing that subset of fields
+        >>> # Get multiple fields using a list of fieldnames, which returns a shallow copy of that
+        >>> # subset of fields
         >>> data[['resp','trial']]
         Data object of 2 trials containing 2 fields
         [{"resp": <class 'list'>, "trial": <class 'int'>}
