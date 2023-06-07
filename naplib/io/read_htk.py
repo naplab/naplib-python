@@ -4,7 +4,7 @@ import numpy as np
 from naplib import logger
 
 
-def load_htk(filename, return_codes=False):
+def read_htk(filename, return_codes=False):
     """
     Read an HTK file.
 

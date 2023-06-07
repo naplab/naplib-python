@@ -5,7 +5,7 @@ from ..data import Data
 
 ACCEPTED_CROP_BY = ['onset', 'durations']
 
-def read_bids(root,
+def load_bids(root,
               subject,
               datatype,
               task,
@@ -16,7 +16,7 @@ def read_bids(root,
               info_include=['sfreq', 'ch_names'],
               resp_channels=None):
     '''
-    Read data from the `BIDS file structure <https://bids.neuroimaging.io/>`_ [1]
+    Load data from the `BIDS file structure <https://bids.neuroimaging.io/>`_ [1]
     to create a Data object. The BIDS file structure is a commonly used structure
     for storing neural recordings such as EEG, MEG, or iEEG.
     
