@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 import mne
 from mne.viz import plot_topomap
 
-from naplib.io import read_bids
+from naplib.io import load_bids
 
 ###############################################################################
 # Download EEG data from OpenNeuro
@@ -51,7 +51,7 @@ resp_channels = ['Fp1','AF3','F7','F3','FC1','FC5','T7','C3','CP1','CP5','P7',
                  'P3','Pz','PO3','O1','Oz','O2','PO4','P4','P8','CP6','CP2',
                  'C4','T8','FC6','FC2','F4','F8','AF4','Fp2','Fz','Cz']
 
-data = read_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', resp_channels=resp_channels)
+data = load_bids(root=bids_root, subject=subject, datatype='eeg', task='rest', suffix='eeg', session='off', resp_channels=resp_channels)
 
 
 ###############################################################################

@@ -447,7 +447,7 @@ class Data(Iterable):
         mne.Info instance
         which stores measurement information and can be used with mne's visualization
         functions. This is empty by default unless it is manually added or read in
-        by a function like `naplib.io.read_bids`.
+        by a function like `naplib.io.load_bids`.
         '''
         if self._mne_info is None:
             raise ValueError('No mne_info is available for this Data. This must '
