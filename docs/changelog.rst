@@ -28,6 +28,12 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 1.0.0
+-------------
+- |API| : Renamed ``stats.fratio`` to ``stats.discriminability`` and added Wilks' Lambda f-statistic as a method for computing disciminability.
+- |API| : Changed all plotting function names to snake case. See API reference for details.
+- |Efficiency| : Several large enhancements to the computation speed of several preprocessing steps.
+- |Feature| : Added ``io.load_cnd`` function to load Continuous-event Neural Data (CND) format.
 
 Version 0.3.0
 -------------
