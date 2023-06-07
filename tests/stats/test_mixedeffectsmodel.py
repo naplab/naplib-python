@@ -1,7 +1,6 @@
 import pytest
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.text as mpltext
 
 from naplib.stats import LinearMixedEffectsModel
 
@@ -65,12 +64,8 @@ def test_plot_of_main_effects(data):
     model = LinearMixedEffectsModel()
     varnames = ['Feature 1', 'Feature 2', 'Subject', 'Output Variable']
     model.fit(data['x'], data['y'], random_effect=data['ID'], varnames=varnames)
-    params = model.get_model_params()
-    expected_weights = np.array([ 0.99110757, -2.00410041])
-    expected_confint = np.array([[ 0.97061759,  1.01159756],
-                                 [-2.02424875, -1.98395207]])
     
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax = model.plot_effects(ax=ax)
 
     # check plotted main effects 

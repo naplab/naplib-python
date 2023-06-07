@@ -4,12 +4,10 @@ from tqdm.auto import tqdm
 import logging
 
 from naplib import logger
-
-from ..data import Data
 from ..utils import _parse_outstruct_args
 
 
-def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, axis=0, num_repeats=1, in_place=False):
+def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, num_repeats=1, in_place=False):
     '''
     Filter input data with a notch filter to remove line noise and its harmonics.
     A notch FIR filter is applied at the line noise frequency and all of its
@@ -35,8 +33,8 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, a
     axis : int or None, default=0
         Axis of the array to apply the filter to.
     num_repeats : int, default=1
-        Number of times to repeat convolving the filter. This is useful to increase if the number of taps
-        is low compared to the sampling rate (e.g. less than 1 full second).
+        Number of times to repeat convolving the filter. This is useful to increase if the number
+        of taps is low compared to the sampling rate (e.g. less than 1 full second).
     in_place : bool, default=False
         Whether to filter the data in-place.
 

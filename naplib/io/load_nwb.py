@@ -1,4 +1,3 @@
-import os
 from typing import Dict
 import numpy as np
 from pynwb import NWBHDF5IO

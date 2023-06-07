@@ -4,6 +4,7 @@ Global variables and helpers for forced alignment
 
 import bisect
 import os
+import sys
 import yaml
 
 from . import logger
@@ -44,7 +45,7 @@ def opts2cfg(filename, opts):
     """
     with open(filename, "w") as sink:
         for (setting, value) in opts.items():
-            print("{!s} = {!s}".format(setting, value), file=sink)
+            print(f"{setting:!s} = {value:!s}", file=sink)
 
 
 def mkdir_p(dirname):
@@ -68,27 +69,31 @@ def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate
                  epochs=False, read=False, train=False, align=False, write=False):
     if configuration is None:
         logger.error("Configuration file not specified.")
-        exit(1)
+        sys.exit(1)
     with open(configuration, "r") as source:
         try:
             opts = yaml.load(source, Loader=yaml.FullLoader)
         except yaml.YAMLError as err:
             logger.error("Error in configuration file: %s", err)
-            exit(1)
+            sys.exit(1)
+
     # command line only
     if not dictionary:
         logger.error("Dictionary not specified.")
-        exit(1)
+        sys.exit(1)
     opts["dictionary"] = dictionary
+
     if not epochs:
         epochs = EPOCHS
     opts["epochs"] = epochs
+
     # could be either, and the command line takes precedent.
     try:
         sr = samplerate if samplerate else opts["samplerate"]
     except KeyError:
         logger.error("Samplerate (-s) not specified.")
-        exit(1)
+        sys.exit(1)
+
     if sr not in SAMPLERATES:
         i = bisect.bisect(SAMPLERATES, sr)
         if i == 0:
@@ -99,6 +104,7 @@ def resolve_opts(aligner=False, configuration=None, dictionary=False, samplerate
             i = i - 1
         # else keep `i` as is
         sr = SAMPLERATES[i]
-        logger.warning("Using {} Hz as samplerate".format(sr))
+        logger.warning(f"Using {sr} Hz as samplerate")
+
     opts["samplerate"] = sr
     return opts

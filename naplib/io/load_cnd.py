@@ -143,7 +143,7 @@ def load_cnd(
                         data_eeg[field] = [x for x in data_eeg[field]]
                     else:
                         data_eeg[field] = [data_eeg[field] for _ in data_eeg['eeg']]
-                except TypeError as err:
+                except TypeError:
                     data_eeg[field] = [data_eeg[field] for _ in data_eeg['eeg']]
 
     # load stimuli

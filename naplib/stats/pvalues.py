@@ -31,7 +31,7 @@ def stars(pvals):
     if not isinstance(pvals, list) and not isinstance(pvals, np.ndarray):
         pvals = [pvals]
         float_flag = True
-    for i, pval in enumerate(pvals):
+    for pval in pvals:
         if pval < 0:
             raise ValueError(f'pvalues must not be negative but found {pval}')
         j = -1

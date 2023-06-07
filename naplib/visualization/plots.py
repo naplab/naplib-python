@@ -2,12 +2,10 @@ import warnings
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as shc
-from scipy.stats import gaussian_kde
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
 from scipy import signal as sig
 import seaborn as sns
-from copy import deepcopy
 
 
 def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
@@ -518,7 +516,6 @@ def strf_plot(coef, tmin=None, tmax=None, freqs=None, ax=None, smooth=True, vmax
     ax.pcolormesh(delays_sec, freqs_, coef, **kwargs)
     
     if freqs is not None:
-        yticks = ax.get_yticks()
         ax.set_yticks([0, coef.shape[0]-1])
         ax.set_yticklabels([freqs[0], freqs[-1]])
 

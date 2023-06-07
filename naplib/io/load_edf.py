@@ -1,4 +1,3 @@
-import os
 import re
 import array
 import numpy as np

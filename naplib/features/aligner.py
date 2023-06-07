@@ -67,12 +67,12 @@ class Aligner():
 
         try:
             import yaml
-        except Exception as e:
+        except Exception:
             raise Exception('Missing package pyyaml which is required for alignment. Please '
                 'install it with "pip install pyyaml"')
         try:
             import textgrid
-        except Exception as e:
+        except Exception:
             raise Exception('Missing package TextGrid which is required for alignment. Please '
                 'install it with "pip install TextGrid"')
 
@@ -213,7 +213,7 @@ class Aligner():
             write_wavfile(fname_wav, int(soundf_), soundwave)
             fname_txt = join(text_dir, f'{name}.txt')
             with open(fname_txt, "w") as text_file:
-                n = text_file.write(script)
+                text_file.write(script)
                 text_file.close()
 
         # Align text and audio from files
@@ -313,7 +313,7 @@ class Aligner():
 
         logger.info(f'Converting text files to ascii in {self.tmp_dir} directory...')
 
-        for root, dirs, files in os.walk(text_dir, topdown=False):
+        for root, _, files in os.walk(text_dir, topdown=False):
             for name in files:
                 if '.txt' in name:
                     self._convert_text_to_ascii(name, root)
@@ -327,7 +327,7 @@ class Aligner():
         logger.info(f'Converting .TextGrid files to .phn and .wrd in {self.output_dir}')
 
         # Convert textgrid files to .phn and .wrd files in output_dir
-        for root, dirs, files in os.walk(self.tmp_dir, topdown=False):
+        for root, _, files in os.walk(self.tmp_dir, topdown=False):
             for name in files:
                 if '.TextGrid' in name:
 

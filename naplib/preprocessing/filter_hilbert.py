@@ -73,9 +73,9 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     freq_band_names = []
     if bandnames is not None:
         if not (isinstance(bandnames, list) and isinstance(bandnames[0], str) and len(bandnames) == Wn.shape[0]):
-            raise ValueError(f'If provided, bandnames must be a list of strings, one for each frequency band.')
+            raise ValueError('If provided, bandnames must be a list of strings, one for each frequency band.')
         if len(set(bandnames)) != len(bandnames):
-            raise ValueError(f'All frequency bandnames must be unique, but found duplicates.')
+            raise ValueError('All frequency bandnames must be unique, but found duplicates.')
         for bandname in bandnames:
             freq_band_names.append(bandname + ' phase')
             freq_band_names.append(bandname + ' amp')
@@ -85,7 +85,7 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
             freq_band_names.append(f'{freq_band} amp')
 
     if len(set([str(w) for w in Wn])) != Wn.shape[0]:
-        raise ValueError(f'All frequency bands in Wn must be unique, but found duplicates.')
+        raise ValueError('All frequency bands in Wn must be unique, but found duplicates.')
 
     # prepare dict of lists to put output data into
     phase_amplitude_data = {}
@@ -170,7 +170,10 @@ def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1):
 
     for minf, maxf in Wn:
         if minf >= maxf:
-            raise ValueError(f'Upper bound of frequency range must be greater than lower bound, but got lower bound of {minf} and upper bound of {maxf}')
+            raise ValueError(
+                f'Upper bound of frequency range must be greater than lower bound, but got lower '
+                f'bound of {minf} and upper bound of {maxf}'
+            )
 
     if x.ndim != 1 and x.ndim != 2:
         raise ValueError(f'Input signal must be 1- or 2-dimensional but got input with shape {x.shape}')
@@ -182,7 +185,6 @@ def filter_hilbert(x, fs, Wn=[[70,150]], n_jobs=1):
     a = np.array([np.log10(0.39), 0.5])
     f0          = 0.018 
     octSpace    = 1./7 
-    minf_global = Wn.min()
     maxf_global = Wn.max() + 1
     maxfo       = np.log2(maxf_global / f0)  # octave of max freq
     

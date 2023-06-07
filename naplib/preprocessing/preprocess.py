@@ -1,8 +1,6 @@
-from copy import deepcopy
 import numpy as np
 from scipy.stats import zscore
 
-from ..data import Data
 from ..array_ops import concat_apply
 from ..utils import _parse_outstruct_args
 

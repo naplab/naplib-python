@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import os
 
 from naplib.io import read_htk
@@ -12,7 +11,7 @@ def test_read_htk():
     assert fs == 2400
 
 def test_read_htk_no_file_found():
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(FileNotFoundError):
         read_htk('no_file.htk')
 
 def test_read_htk_return_codes():

@@ -10,13 +10,13 @@ def data():
 
 def test_bad_window_key_idx(data):
     with pytest.raises(ValueError):
-        slide = sliding_window(data, 3, window_key_idx=-1)
+        _ = sliding_window(data, 3, window_key_idx=-1)
     with pytest.raises(ValueError):
-        slide = sliding_window(data, 3, window_key_idx=4)
+        _ = sliding_window(data, 3, window_key_idx=4)
     with pytest.raises(ValueError):
-        slide = sliding_window(data, 3, window_key_idx=np.nan)
+        _ = sliding_window(data, 3, window_key_idx=np.nan)
     with pytest.raises(TypeError):
-        slide = sliding_window(data, 3, window_key_idx=[1])
+        _ = sliding_window(data, 3, window_key_idx=[1])
 
 def test_slide(data):
     slide = sliding_window(data, 3)
@@ -31,7 +31,6 @@ def test_slide_no_fill_out_of_bounds(data):
     expected = np.array([[1., 2., 3.],
                          [2., 3., 4.]])
     assert np.array_equal(slide, expected)
-
 
 def test_slide_end_window_key_idx(data):
     slide = sliding_window(data, 3, window_key_idx=2)

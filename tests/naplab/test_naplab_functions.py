@@ -1,6 +1,5 @@
 import os
 import pytest
-import numpy as np
 
 from naplib.io import load
 from naplib.naplab import align_stimulus_to_recording

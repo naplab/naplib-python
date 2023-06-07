@@ -67,8 +67,6 @@ def test_independent_ttest_with_cat_feat_different_from_without(data2):
     assert not np.allclose(pval_1, pval_scipy, atol=1e-14)
 
 def test_relative_ttest_with_cat_feat_different_from_without(data2):
-    x = data2['x']
-    groups = data2['groups']
     behavior = data2['behavior']
     x1 = data2['x1']
     x2 = data2['x2']
@@ -106,7 +104,7 @@ def test_cat_feats_and_con_feats_overlap_names_error(data2):
     groups = data2['groups']
     behavior = data2['behavior']
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(x, cat_feats={'groups': groups}, con_feats={'groups': np.concatenate([behavior, behavior], axis=0)})
+        _ = ttest(x, cat_feats={'groups': groups}, con_feats={'groups': np.concatenate([behavior, behavior], axis=0)})
     assert 'cat_feats and con_feats have overlapping key names' in str(err)
 
 def test_result_same_with_dict_or_array_or_df_cat_feat(data2):
@@ -135,38 +133,38 @@ def test_wrong_number_of_args_ttest(data2):
     x = data2['x']
     groups = data2['groups']
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(cat_feats={'group': groups})
+        _ = ttest(cat_feats={'group': groups})
     assert 'Must provide either 1 or 2' in str(err)
 
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(x, x, x, cat_feats={'group': groups})
+        _ = ttest(x, x, x, cat_feats={'group': groups})
     assert 'Must provide either 1 or 2' in str(err)
 
 def test_bad_cat_feats_type(data2):
     with pytest.raises(TypeError) as err:
-        tval, pval = ttest(data2['x'], cat_feats=1)
+        _ = ttest(data2['x'], cat_feats=1)
     assert 'cat_feats must be a' in str(err)
 
 def test_bad_con_feats_type(data2):
     with pytest.raises(TypeError) as err:
-        tval, pval = ttest(data2['x'], con_feats=1)
+        _ = ttest(data2['x'], con_feats=1)
     assert 'con_feats must be a' in str(err)
 
 def test_classes_not_0_and_1(data2):
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(data2['x'], classes=np.ones_like(data2['x']))
+        _ = ttest(data2['x'], classes=np.ones_like(data2['x']))
     assert 'classes must be an array of only zeros and ones' in str(err)
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(data2['x'], classes=-1*data2['groups'])
+        _ = ttest(data2['x'], classes=-1*data2['groups'])
     assert 'classes must be an array of only zeros and ones' in str(err)
     groups = data2['groups']
     groups[-1] = 2
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(data2['x'], classes=groups)
+        _ = ttest(data2['x'], classes=groups)
     assert 'classes must be an array of only zeros and ones' in str(err)
 
 def test_x_y_not_arrays(data2):
     with pytest.raises(ValueError) as err:
-        tval, pval = ttest(data2['x'], classes=np.ones_like(data2['x']))
+        _ = ttest(data2['x'], classes=np.ones_like(data2['x']))
     assert 'classes must be an array of only zeros and ones' in str(err)
 

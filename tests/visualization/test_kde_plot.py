@@ -10,12 +10,12 @@ def test_kde_single_line():
     rng = np.random.default_rng(1)
     data = rng.normal(size=(100,))
     
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     kde_plot(data[:50], bw_method=0.25, bins=50)
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     kde_plot([xx for xx in data[:50]], bw_method=0.25, bins=50)
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
     plt.close()
@@ -31,7 +31,7 @@ def test_plot_densities_individually_on_same_axes():
     groupings = np.array(['G0'] * 100) # define grouping vector
     groupings[50:] = 'G1' # set a different label for the samples we shifted
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     kde_plot(data[:50], ax=ax, bw_method=0.25, bins=10)
     kde_plot(data[50:], ax=ax, bw_method=0.25, bins=13)
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
@@ -49,20 +49,20 @@ def test_kde_line_same_even_if_change_data_format_but_bw_method_constant():
     groupings = np.array(['G0'] * 100) # define grouping vector
     groupings[50:] = 'G1' # set a different label for the samples we shifted
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax = kde_plot(data, groupings=groupings, bw_method=0.25, bins=10, color=['k','r'])
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
     assert np.allclose(ax.lines[1].get_data()[1][20:24], expected_line2_y)
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     data_list = [data[:50],data[50:]]
     ax = kde_plot(data_list, groupings=['One','Two'], bw_method=0.25, bins=7)
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
     assert np.allclose(ax.lines[1].get_data()[1][20:24], expected_line2_y)
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
     ax = kde_plot(data_mat, bw_method=.25, bins=20, color=['k','r'])
     assert np.allclose(ax.lines[0].get_data()[0][20:24], expected_line1_x)
@@ -78,17 +78,17 @@ def test_legend_correct_for_different_groupings():
     groupings = np.array(['G0'] * 100) # define grouping vector
     groupings[50:] = 'G1' # set a different label for the samples we shifted
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax = kde_plot(data, groupings=groupings, bw_method=0.25, bins=10, color=['k','r'])
     assert ax.lines[0].get_label() == 'G0'
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax = kde_plot(data, groupings=groupings=='G0', bw_method=0.25, bins=10, color=['k','r'])
     assert ax.lines[1].get_label() == 'True'
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     data_mat = np.concatenate([data[:50,np.newaxis],data[50:,np.newaxis]], axis=1)
     ax = kde_plot(data_mat, groupings=['One','Two'], bw_method=0.25, bins=10, color=['k','r'])
     assert ax.lines[0].get_label() == 'One'
@@ -102,12 +102,12 @@ def test_plot_on_existing_axes():
     groupings = np.array(['G0'] * 100) # define grouping vector
     groupings[50:] = 'G1' # set a different label for the samples we shifted
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax = kde_plot(data, groupings=groupings, ax=ax, bw_method=0.25, bins=10)
     assert ax.get_xlabel() == ''
     plt.close()
 
-    fig, ax = plt.subplots(1,1)
+    _, ax = plt.subplots(1,1)
     ax.set_xlabel('New x-label')
     ax.set_ylabel('New y-label')
     ax = kde_plot(data, groupings=groupings, ax=ax, bw_method=0.25, bins=10)

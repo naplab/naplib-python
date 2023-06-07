@@ -78,10 +78,12 @@ def load_bids(root,
     
     try:
         from mne_bids import BIDSPath, read_raw_bids
-    except Exception as e:
-        raise Exception('Missing package MNE-BIDS which is required for reading data from BIDS. Please '
+    except Exception:
+        raise Exception(
+            'Missing package MNE-BIDS which is required for reading data from BIDS. Please '
             'install it with "pip install --user -U mne-bids" or by following the instructions '
-            'at https://mne.tools/mne-bids/stable/install.html')
+            'at https://mne.tools/mne-bids/stable/install.html'
+        )
     
     if crop_by not in ACCEPTED_CROP_BY:
         raise ValueError(f'Invalid "crop_by" input. Expected one of {ACCEPTED_CROP_BY} but got "{crop_by}"')

@@ -277,8 +277,10 @@ def process_ieeg(
         raise ValueError(f"Not enough data to use befaft[0]={befaft[0]}. First stimulus aligned to {alignment_times[0][0]} sec")
 
     if befaft[1] > raw_data['data'].shape[0] / raw_data['data_f'] - alignment_times[-1][1]:
-        raise ValueError(f"Not enough data to use befaft[1]={befaft[1]}. Last stimulus alignment ends at {alignment_times[-1][1]} sec but"
-                         f" only have {raw_data['data'].shape[0] / raw_data['data_f']} sec of data")
+        raise ValueError(
+            f"Not enough data to use befaft[1]={befaft[1]}. Last stimulus alignment ends at {alignment_times[-1][1]} "
+            f"sec but only have {raw_data['data'].shape[0] / raw_data['data_f']} sec of data"
+        )
     
     alignment_times = np.asarray(alignment_times) - earliest_time # shift times back since we are going to truncate the data
     earliest_sample, latest_sample = (int(raw_data['data_f'] * t) for t in (earliest_time, latest_time))
@@ -303,7 +305,7 @@ def process_ieeg(
         raw_data['wav'] = raw_data['wav'].copy()
 
     # # append befaft zeros to the stims which were not used for alignment as well as the one which was (if it's in the dict too)
-    for stim_data_name, stim_data_dict_ in extra_stim_data.items():
+    for stim_data_dict_ in extra_stim_data.values():
         for wavname_, wavdata_ in stim_data_dict_.items():
             bef_zeros = int(round(wavdata_[0] * befaft[0]))
             aft_zeros = int(round(wavdata_[0] * befaft[1]))
@@ -902,10 +904,11 @@ def _split_data_on_alignment(data, fs, alignment_startstops, befaft, buffer_time
 
 
 def _remove_buffer_time(data, fs, buffer_times):
-    output = {}
     for trial in range(len(data)):
         buffer_samples = [round(fs*t) for t in buffer_times[trial]]
         for field in data.fields:
-            data[trial][field] = data[trial][field][buffer_samples[0]:len(data[trial][field])-buffer_samples[1]]
+            start_sample = buffer_samples[0]
+            end_sample   = len(data[trial][field])-buffer_samples[1]
+            data[trial][field] = data[trial][field][start_sample:end_sample]
     
     return data

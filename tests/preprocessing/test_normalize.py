@@ -87,14 +87,14 @@ def test_normalize_properly_centers_and_scales_zscore_from_list_omit(data):
     concat_norm_data = np.concatenate(norm_data, axis=0)
     assert np.allclose(np.nanmean(concat_norm_data, 0), np.array([0,0,0,0]), atol=1e-12)
     assert np.allclose(concat_norm_data[-1,:], np.array([0.60951296, 0.57832985, 0.5735268 , 0.61023999]))
-    
-    
+
 def test_normalize_properly_centers_and_scales_zscore_from_list_raise(data):
     data['x'][0][10,0] = np.nan
     with pytest.raises(ValueError) as exc:
-        norm_data = normalize(field=data['x'], method='zscore', nan_policy='raise')
+        _ = normalize(field=data['x'], method='zscore', nan_policy='raise')
     assert "nan found in data" in str(exc)
 
-def test_normalize_raises_typeerror_bad_input(data):
+def test_normalize_raises_typeerror_bad_input():
     with pytest.raises(TypeError):
-        norm_data = normalize(field=(1,2,3,4))
+        _ = normalize(field=(1,2,3,4))
+

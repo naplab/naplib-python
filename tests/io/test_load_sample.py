@@ -1,5 +1,3 @@
-import pytest
-
 from naplib.io import load_speech_task_data
 from naplib import Data as DataClass
 
