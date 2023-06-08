@@ -30,8 +30,6 @@ def filter_line_noise(data=None, field='resp', fs='dataf', f=60, num_taps=501, n
         Line noise frequency, in Hz.
     num_taps : int, default=501
         Number of taps in the FIR filter. Must be odd.
-    axis : int or None, default=0
-        Axis of the array to apply the filter to.
     num_repeats : int, default=1
         Number of times to repeat convolving the filter. This is useful to increase if the number
         of taps is low compared to the sampling rate (e.g. less than 1 full second).
