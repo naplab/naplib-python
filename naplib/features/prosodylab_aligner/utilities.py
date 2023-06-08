@@ -45,7 +45,7 @@ def opts2cfg(filename, opts):
     """
     with open(filename, "w") as sink:
         for (setting, value) in opts.items():
-            print(f"{setting:!s} = {value:!s}", file=sink)
+            print("{!s} = {!s}".format(setting, value), file=sink)
 
 
 def mkdir_p(dirname):
