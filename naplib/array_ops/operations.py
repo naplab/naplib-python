@@ -1,4 +1,3 @@
-from copy import deepcopy
 import numpy as np
 
 def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_size):

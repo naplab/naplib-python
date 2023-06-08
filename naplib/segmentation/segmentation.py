@@ -3,7 +3,6 @@ from scipy.ndimage import gaussian_filter1d
 
 from ..stats import discriminability
 from ..utils import _parse_outstruct_args
-from ..data import Data
 
 def get_label_change_points(x):
     '''
@@ -153,7 +152,7 @@ def segment_around_label_transitions(data=None, field=None, labels=None, prechan
         label_changepoints = label_changepoints.astype('int')
         labels_before_changepoints = labels_before_changepoints.astype('int')
         
-        for i_c, (change_point, new_lab, prior_lab) in enumerate(zip(label_changepoints, labels_at_changepoints, labels_before_changepoints)):
+        for change_point, new_lab, prior_lab in zip(label_changepoints, labels_at_changepoints, labels_before_changepoints):
             if change_point >= prechange_samples and change_point+postchange_samples <= x_i.shape[0]:
                 if elec_lag is not None:
                     tmp_x_i_region = np.array([x_i[change_point-prechange_samples+elec_lag[elec_idx]:change_point+postchange_samples+elec_lag[elec_idx], elec_idx] for elec_idx in range(len(elec_lag))])

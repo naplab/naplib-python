@@ -33,13 +33,13 @@ def test_resample_axis0(data):
 
 def test_bad_function_kwargs_type(data):
     with pytest.raises(TypeError):
-        new_data = concat_apply(data, resample, function_kwargs=[2])
+        _ = concat_apply(data, resample, function_kwargs=[2])
 
 def test_bad_function_new_size0(data):
     with pytest.raises(RuntimeError):
-        new_data = concat_apply(data, bad_function, axis=0, function_kwargs={'axis':0})
+        _ = concat_apply(data, bad_function, axis=0, function_kwargs={'axis':0})
 
 def test_bad_function_new_size1(data):
     with pytest.raises(RuntimeError):
-        new_data = concat_apply(data, bad_function, axis=1, function_kwargs={'axis':1})
+        _ = concat_apply(data, bad_function, axis=1, function_kwargs={'axis':1})
 

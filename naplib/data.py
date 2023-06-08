@@ -1,7 +1,6 @@
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from itertools import groupby
 from copy import deepcopy
-from collections import OrderedDict
 import numpy as np
 from mne import Info
 
@@ -91,17 +90,21 @@ class Data(Iterable):
     {"name": <class 'str'>, "resp": <class 'numpy.ndarray'>, "dataf": <class 'int'>}]
     '''
     def __init__(self, data, strict=False):
-        
+
         if isinstance(data, dict):
             lengths = []
             for k, v in data.items():
                 if not isinstance(v, list):
-                    raise TypeError(f'When creating a Data from a dict, each value in the '
-                                    f'dict must be a list, but for key "{k}" got type {type(v)}')
+                    raise TypeError(
+                        f'When creating a Data from a dict, each value in the '
+                        f'dict must be a list, but for key "{k}" got type {type(v)}'
+                    )
                 lengths.append(len(v))
             if not _all_equal_list(lengths):
-                raise ValueError(f'When creating a Data from a dict, each value in the '
-                                f'dict must be a list of the same length, but got different lengths: {lengths}')
+                raise ValueError(
+                    f'When creating a Data from a dict, each value in the '
+                    f'dict must be a list of the same length, but got different lengths: {lengths}'
+                )
             data = [dict(zip(data, vals)) for vals in zip(*data.values())]
             self._data = data
         elif isinstance(data, list):
@@ -111,10 +114,9 @@ class Data(Iterable):
                             f'of dicts, but found type {type(data)}')
         self._strict = strict
         self._validate_new_out_data(data, strict=strict)
-        self._info = dict()
+        self._info = {}
         self._mne_info = None
 
-                
     def set_field(self, fielddata, fieldname):
         '''
         Set the information in a single field with a new list of data.
@@ -132,9 +134,9 @@ class Data(Iterable):
             raise TypeError(f'Input data must be a list, but found {type(fielddata)}')
         if len(fielddata) != len(self):
             raise Exception(f'Length of field ({len(fielddata)}) is not equal to length of this Data ({len(self)})')
-        for i in range(len(self.data)):
-            self.data[i][fieldname] = fielddata[i]
-            
+        for i, trial in enumerate(self.data):
+            trial[fieldname] = fielddata[i]
+    
     def get_field(self, fieldname):
         '''
         Return all trials for a single field.
@@ -152,7 +154,7 @@ class Data(Iterable):
             return [tmp[fieldname] for tmp in self.data]
         except KeyError:
             raise KeyError(f'Invalid fieldname: {fieldname} not found in data.')
-            
+    
     def __getitem__(self, index):
         '''
         Get either a trial or a field using bracket indexing. See notes and examples
@@ -224,17 +226,16 @@ class Data(Iterable):
             return Data(self.data[index], strict=self._strict)
         if isinstance(index, str):
             return self.get_field(index)
-        if isinstance(index, list) or isinstance(index, np.ndarray):
+        if isinstance(index, (list, np.ndarray)):
             if isinstance(index[0], str):
-                return Data([dict([(field, x[field]) for field in index]) for x in self], strict=False)
+                return Data([{field:x[field] for field in index} for x in self], strict=False)
             else:
                 return Data([self.data[i] for i in index], strict=False)
         try:
             return self.data[index]
         except IndexError:
             raise IndexError(f'Index invalid for this data. Tried to index {index} but length is {len(self)}.')
-        
-            
+    
     def __setitem__(self, index, data):
         '''
         Set a specific trial or set of trials, or set a specific field, using
@@ -274,11 +275,12 @@ class Data(Iterable):
                 raise IndexError((f'Index is too large. Current data is length {len(self)} '
                     'but tried to set index {index}. If you want to add to the end of the list '
                     'of trials, use the Data.append() method.'))
-            elif index == len(self):
+
+            if index == len(self):
                 self.append(data)
             else:
                 self.data[index] = data
-     
+
     def append(self, trial_data, strict=None):
         '''
         Append a single trial of data to the end of a Data.
@@ -381,13 +383,12 @@ class Data(Iterable):
     
     def __str__(self):
         to_return = f'Data object of {len(self)} trials containing {len(self.fields)} fields\n['
-        
         to_print = 2 if len(self) > 3 else 3
+
         for trial_idx, trial in enumerate(self[:to_print]):
             fieldnames = list(trial.keys())
             to_return += '{'
             for f, fieldname in enumerate(fieldnames):
-#                 to_return += f'"{fieldname}": {trial[fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(trial[fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
@@ -395,30 +396,30 @@ class Data(Iterable):
                 to_return += '}\n'
             else:
                 to_return += '}'
+
         if to_print == 3:
-             to_return += ']\n'
+            to_return += ']\n'
         elif to_print == 2:
             to_return += '\n...\n{'
             fieldnames = list(self[-1].keys())
             for f, fieldname in enumerate(fieldnames):
-#                 to_return += f'"{fieldname}": {self[-1][fieldname].__str__()}'
                 to_return += f'"{fieldname}": {type(self[-1][fieldname])}'
                 if f < len(fieldnames)-1:
                     to_return += ', '
             to_return += '}]\n'
+
         return to_return
     
     def _validate_new_out_data(self, input_data, strict=True):
-        
         first_trial_fields = set(self.fields)
-        for t, trial in enumerate(input_data):
+        for trial in input_data:
             if not isinstance(trial, dict):
                 raise TypeError(f'input data is not a list of dicts, found {type(trial)}')
             trial_fields = set(trial.keys())
             if not trial_fields:
-                raise ValueError(f'A trial should have at least one field.')
+                raise ValueError('A trial should have at least one field.')
             if strict and trial_fields != first_trial_fields:
-                raise ValueError(f'New data does not contain the same fields as the first trial.')        
+                raise ValueError('New data does not contain the same fields as the first trial.')
             if strict:
                 for required_field in STRICT_FIELDS_REQUIRED:
                     if required_field not in trial_fields:
@@ -548,8 +549,8 @@ def concat(data_list, axis=0, copy=True):
                 data_merged.append(trial, strict=False)
         
     elif axis == 1:
-        if not all([len(data_list[0])==len(d) for d in data_list]):
-            raise ValueError(f'All Data objects must be same length if concatenating over fields (axis=1).')
+        if not all(len(data_list[0])==len(d) for d in data_list):
+            raise ValueError('All Data objects must be same length if concatenating over fields (axis=1).')
             
         if copy:
             data_merged = deepcopy(data_list[0])
@@ -643,7 +644,7 @@ def join_fields(data_list, fieldname='resp', axis=-1, return_as_data=False):
     to_return = []
     
     zipped_fields = list(zip(*starting_fields))
-    for i, field_set in enumerate(zipped_fields):
+    for field_set in zipped_fields:
         to_return.append(np.concatenate(field_set, axis=axis))
         
     if return_as_data:

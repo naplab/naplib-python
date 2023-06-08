@@ -11,7 +11,6 @@ How to easily process Data objects.
 
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 import naplib as nl
 

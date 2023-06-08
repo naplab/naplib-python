@@ -1,7 +1,6 @@
 from os.path import dirname, join
 
 from .fileio import import_data
-from ..data import Data
 
 def load_speech_task_data():
     '''

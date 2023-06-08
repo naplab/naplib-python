@@ -48,7 +48,7 @@ def test_label_change_points_negatives():
 def test_label_change_points_list_error():
     arr = [100, 100, 100, -1, -1, 2, 2]
     with pytest.raises(TypeError):
-        locs, labels, prior_labels = get_label_change_points(arr)
+        _ = get_label_change_points(arr)
 
 def test_label_change_points_1elem_array():
     arr = np.array([0])
@@ -69,9 +69,12 @@ def test_label_change_points_2elem_array():
 # test segment_around_label_transitions
 
 def test_single_label_segment_transitions_0prechange(outstruct):
-    segments, labels, prior_labels = segment_around_label_transitions(field=outstruct['resp'], labels=outstruct['labels1'],
-                                                                      prechange_samples=0,
-                                                                      postchange_samples=2)
+    segments, labels, prior_labels = segment_around_label_transitions(
+        field=outstruct['resp'],
+        labels=outstruct['labels1'],
+        prechange_samples=0,
+        postchange_samples=2
+    )
     expected = np.array([[[ 4,  5],
                           [ 6,  7]],
                          [[10, 11],
@@ -171,14 +174,11 @@ def test_electrode_lags_fratio_no_labels_or_field_passed():
     labs = np.zeros(50,)
     labs[::2] = 1
     data = Data({'resp': [rng.uniform(size=(50,2))], 'lab': [labs]})
+
     with pytest.raises(ValueError) as exc:
-        lags = electrode_lags_fratio(
-            data, field='resp', max_lag=3
-        )
+        _ = electrode_lags_fratio(data, field='resp', max_lag=3)
     assert 'None found in labels' in str(exc)
 
     with pytest.raises(ValueError) as exc:
-        lags = electrode_lags_fratio(
-            data, labels='lab', max_lag=3
-        )
+        _ = electrode_lags_fratio(data, labels='lab', max_lag=3)
     assert 'None found in field' in str(exc)

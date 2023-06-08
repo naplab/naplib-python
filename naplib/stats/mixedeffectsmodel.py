@@ -1,7 +1,6 @@
 import warnings
 from statsmodels.tools.sm_exceptions import ConvergenceWarning
 import statsmodels.formula.api as smf
-from statsmodels.regression.mixed_linear_model import MixedLM
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt

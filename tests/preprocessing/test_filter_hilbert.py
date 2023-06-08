@@ -1,7 +1,5 @@
 import pytest
 import numpy as np
-import scipy 
-
 
 from naplib import Data
 from naplib.preprocessing import filter_hilbert, filterbank_hilbert, phase_amplitude_extract
@@ -10,14 +8,17 @@ from naplib.preprocessing import filter_hilbert, filterbank_hilbert, phase_ampli
 def data_hilbert():
     rng = np.random.default_rng(1)
     samples = np.linspace(0, 10, 5000)
-    samples2 = np.linspace(0.23, 10.23, 5000)
-    x = 1+rng.random(size=(5000,4))
-    x = x + (np.sin(2 * np.pi * 20 * samples) + np.sin(2 * np.pi * 30 * samples) + np.sin(2 * np.pi * 75 * samples) + np.sin(2 * np.pi * 90 * samples)).reshape(-1,1)
-    x2 = 1+2*rng.random(size=(4000,4))
+    def sinusoid(w):
+        return np.sin(2 * np.pi * w * samples)
+
+    x = 1 + rng.random(size=(5000,4))
+    x = x + (sinusoid(20) + sinusoid(30) + sinusoid(75) + sinusoid(90)).reshape(-1,1)
+    x2 = 1 + 2 * rng.random(size=(4000,4))
+
     data_tmp = []
     for i, xx in enumerate([x,x2]):
         data_tmp.append({'name': i, 'resp': xx, 'dataf': 500, 'befaft': np.array([1.,1.])})
-        
+
     return {'out': Data(data_tmp), 'x': [x,x2]}
 
 
@@ -33,19 +34,19 @@ def test_set_bandnames_duplicates(data_hilbert):
     data_tmp = data_hilbert['out']
 
     with pytest.raises(ValueError):
-        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[15,30],[70,100]], bandnames=['bandA','bandB','bandB'])
+        _ = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[15,30],[70,100]], bandnames=['bandA','bandB','bandB'])
 
 def test_set_bands_duplicates(data_hilbert):
     data_tmp = data_hilbert['out']
 
     with pytest.raises(ValueError):
-        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[8,13],[70,100]], bandnames=['bandA','bandB','bandC'])
+        _ = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[8,13],[70,100]], bandnames=['bandA','bandB','bandC'])
 
 def test_frequency_range_too_narrow_extract(data_hilbert):
     data_tmp = data_hilbert['out']
 
     with pytest.raises(ValueError) as excinfo:
-        phs_amp_data = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandC'])
+        _ = phase_amplitude_extract(data_tmp, 'resp', Wn=[[8,13],[40,42],[70,100]], bandnames=['bandA','bandB','bandC'])
     assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_filter_multiple_bands_same_as_one(data_hilbert):
@@ -73,10 +74,10 @@ def test_filter_multiple_bands_same_as_one(data_hilbert):
 
 def test_bad_signal_shape():
     x = np.random.rand(1000, 5, 3)
-    fs=100
+    fs = 100
 
     with pytest.raises(ValueError) as excinfo:
-        x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[1, 150])
+        _ = filterbank_hilbert(x, fs, Wn=[1, 150])
     assert 'Input signal must be 1- or 2-dimensional' in str(excinfo.value)
 
 # tests filterbank_hilbert
@@ -86,7 +87,7 @@ def test_freq_range_inverted():
     fs = 100
 
     with pytest.raises(ValueError) as excinfo:
-        phs_amp_data = filterbank_hilbert(x, fs, Wn=[13, 8])
+        _ = filterbank_hilbert(x, fs, Wn=[13, 8])
     assert 'must be greater than lower bound' in str(excinfo.value)
 
 def test_no_filters_in_freq_range():
@@ -94,7 +95,7 @@ def test_no_filters_in_freq_range():
     fs = 500
 
     with pytest.raises(ValueError) as excinfo:
-        phs_amp_data = filterbank_hilbert(x, fs, Wn=[40, 42])
+        _ = filterbank_hilbert(x, fs, Wn=[40, 42])
     assert 'is too narrow, so no filters ' in str(excinfo.value)
 
 def test_center_freqs_and_output_shape():
@@ -138,7 +139,6 @@ def test_filter_center_freqs_and_output_shape():
     assert x_amp.shape == (*x.shape, 2)
     assert np.allclose(cfs, expected_cfs)
 
-
 def test_oneD_signal_same_output():
     x = np.random.rand(1000, 1)
     fs = 100
@@ -152,9 +152,8 @@ def test_oneD_signal_same_output():
 
 def test_bad_x_shape():
     x = np.random.rand(1000, 5, 3)
-    fs=100
+    fs = 100
 
     with pytest.raises(ValueError):
-        x_phs, x_amp, cfs = filterbank_hilbert(x, fs, Wn=[1, 150])
-
+        _ = filterbank_hilbert(x, fs, Wn=[1, 150])
 

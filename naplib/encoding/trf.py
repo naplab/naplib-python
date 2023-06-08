@@ -9,7 +9,6 @@ from sklearn.base import BaseEstimator
 from mne.decoding.receptive_field import _delay_time_series
 from sklearn.linear_model import RidgeCV
 
-from ..data import Data
 from ..utils import _parse_outstruct_args
 
 

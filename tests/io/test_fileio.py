@@ -76,7 +76,6 @@ def test_export_bad_format(data):
     with pytest.raises(TypeError):
         export_data('fname_out_test.mat', {'bad': 'data'})
 
-def test_export_bad_format(data):
     with pytest.raises(ValueError):
         export_data('fname_out_test.mat', data, fmt='7.2')
 

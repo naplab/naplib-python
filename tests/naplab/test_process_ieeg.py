@@ -6,7 +6,6 @@ from functools import partial
 
 from naplib.io import load
 from naplib.naplab import process_ieeg
-import matplotlib.pyplot as plt
 
 
 @pytest.fixture(scope='module')
@@ -246,7 +245,6 @@ def test_single_stimuli_pipeline_with_custom_rereference(small_data):
 def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
     """This data has a sampling rate of 50, which is different from wav file stimulus"""
     dir_path = small_data_fs50['path']
-    true_data = small_data_fs50['data_dict']
 
     data_out = process_ieeg(
         dir_path,
@@ -280,7 +278,6 @@ def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
 def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
     """This data has a sampling rate of 50, which is different from wav file stimulus"""
     dir_path = small_data_fs50['path']
-    true_data = small_data_fs50['data_dict']
 
     func = lambda x, sr, **kwargs: scipy.signal.spectrogram(x, sr, **kwargs)[2].T
     func_kwargs = {'nperseg': 256, 'noverlap': 96}

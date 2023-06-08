@@ -1,9 +1,8 @@
 from copy import deepcopy
 import numpy as np
 import pandas as pd
-from scipy.stats import t as scipyT
 import statsmodels.api as sm
-from patsy import dmatrices, dmatrix
+from patsy import dmatrix
 
 
 def ttest(*args, classes=None, cat_feats={}, con_feats={}, return_ols_result=False):

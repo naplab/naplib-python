@@ -135,8 +135,8 @@ def test_corrs_STRF():
 
 def test_bad_receptive_field():
     with pytest.raises(ValueError):
-        model = TRF(tmin=0.09, tmax=0, sfreq=100)
+        _ = TRF(tmin=0.09, tmax=0, sfreq=100)
 
     with pytest.raises(ValueError):
-        model = TRF(tmin=-0.03, tmax=-0.09, sfreq=100)
+        _ = TRF(tmin=-0.03, tmax=-0.09, sfreq=100)
 

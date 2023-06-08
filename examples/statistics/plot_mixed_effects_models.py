@@ -5,7 +5,10 @@ Linear Mixed Effects Models
 
 Analyzing linear mixed effects models.
 
-In this tutorial, we will demonstrate the use of the linear mixed effects model to identify fixed effects. These models are useful when data has some non-independence. For example, if half of the samples of the data come from subject A, and the other half come from subject B, but we want to remove the effect of subject identify and look at only the impact of the features that interest us.
+In this tutorial, we will demonstrate the use of the linear mixed effects model to identify fixed
+effects. These models are useful when data has some non-independence. For example, if half of the
+samples of the data come from subject A, and the other half come from subject B, but we want to
+remove the effect of subject identify and look at only the impact of the features that interest us.
 """
 # Author: Gavin Mischler
 # 
@@ -48,7 +51,7 @@ def generate_data(N_per_subject=50, n_subjects=5):
         subject_ID.append(i*np.ones_like(Y_thissubject))
         data_mean += np.array([1, 0]).reshape(1,-1)
         
-    fig, axes = plt.subplots(1,2,figsize=(12,6), sharey=True)
+    _, axes = plt.subplots(1,2,figsize=(12,6), sharey=True)
     for i, (x, y) in enumerate(zip(X, Y)):
         axes[0].scatter(x[:,0], y, label=f'Subj {i}')
         axes[0].set_xlabel('Feature 1')
@@ -92,7 +95,11 @@ model2.summary()
 # Visualize the summaries using effect plots
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 # 
-# As we can see in the Coef. tab of the summaries above, or the fixed effect plots below, the first model, which used the random effect of subject, recovered the true beta weights for each feature. On the other hand, the second model found the wrong weight for feature 1, since the subject identity had a large effect on the first feature. Its estimate of the fixed effect of the second feature was close to the truth, but still wrong and with a larger confidence interval.
+# As we can see in the Coef. tab of the summaries above, or the fixed effect plots below, the first
+# model, which used the random effect of subject, recovered the true beta weights for each feature.
+# On the other hand, the second model found the wrong weight for feature 1, since the subject
+# identity had a large effect on the first feature. Its estimate of the fixed effect of the second
+# feature was close to the truth, but still wrong and with a larger confidence interval.
 
 plt.figure()
 model.plot_effects()

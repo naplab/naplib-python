@@ -26,10 +26,7 @@ def test_load_edf():
 
 
 def test_load_edf_no_file_found():
-    curr_dir = os.path.dirname(__file__)
-    file = os.path.join(os.path.dirname(__file__), 'no_file.edf')
-
-    with pytest.raises(FileNotFoundError) as e:
+    with pytest.raises(FileNotFoundError):
         load_edf('no_file.edf')
 
 

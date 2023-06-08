@@ -14,7 +14,6 @@ for neural data in a Data object.
 # License: MIT
 
 
-import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import resample
 from sklearn.linear_model import Ridge, ElasticNet
@@ -111,7 +110,8 @@ print(f'STRF shape (num_outputs, frequency, lag) = {coef_ridge.shape}')
 freqs = [171, 5000]
 
 elec = 9
-model_1_coef, model_2_coef, score_model_1, score_model_2 = coef_ridge[elec], coef_elastic[elec], scores[elec], scores_2[elec]
+model_1_coef, score_model_1 = coef_ridge[elec], scores[elec]
+model_2_coef, score_model_2 = coef_elastic[elec], scores_2[elec]
 
 fig, axes = plt.subplots(1,2,figsize=(6,2.5))
 strf_plot(model_1_coef, tmin=tmin, tmax=tmax, freqs=freqs, ax=axes[0])
@@ -163,10 +163,9 @@ elec = 9
 plt.figure(figsize=(12,3))
 plt.plot(data_test['resp'][-1][:1000,elec], label='neural')
 plt.plot(predictions[-1][:1000,elec], label='Ridge pred, corr={:2.2f}'.format(scores[elec]))
-plt.plot(predictions_2[-1][:1000,elec], label='ElasticNet pred, corr={:2.2f}'.format(scores_2[elec]))
+plt.plot(predictions_2[-1][:1000,elec], label=f'ElasticNet pred, corr={scores_2[elec]:2.2f}')
 plt.xticks([0, 500, 1000], ['0', '5', '10'])
 plt.xlabel('Time (s)')
 plt.legend()
 plt.show()
-
 

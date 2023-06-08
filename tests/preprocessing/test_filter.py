@@ -96,7 +96,7 @@ def test_filter_line_noise_bad_line_noise(data60):
     data_tmp = data60['out']
 
     with pytest.raises(AssertionError):
-        data_filt = filter_line_noise(data_tmp, f=[[60]])
+        _ = filter_line_noise(data_tmp, f=[[60]])
 
 # butterworth filter
 
@@ -137,7 +137,7 @@ def test_bandstop_inplace(data):
 def test_return_filters(data):
     b_true = np.array([ 0.06745527,  0.        , -0.13491055,  0.        ,  0.06745527])
     a_true = np.array([ 1.        , -1.94246878,  2.1192024 , -1.21665164,  0.4128016 ])
-    filtered, filters = filter_butter(field=data['out']['resp'], fs=data['out']['dataf'][0], Wn=[10, 20], btype='bandpass', return_filters=True)
+    _, filters = filter_butter(field=data['out']['resp'], fs=data['out']['dataf'][0], Wn=[10, 20], btype='bandpass', return_filters=True)
     assert isinstance(filters, list)
     assert len(filters) == 3
     assert np.allclose(filters[0][0], b_true)

@@ -1,7 +1,6 @@
 from tdt import read_block
 import numpy as np
-from typing import Dict, Optional
-from scipy.signal import resample
+from typing import Dict
 
 from naplib import logger
 
