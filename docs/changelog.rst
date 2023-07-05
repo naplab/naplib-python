@@ -28,6 +28,10 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 1.1.0 (In development)
+------------------------------
+- |Enhancement| : Added the function ``visualization.eeg_locs`` to load the EEG channel locations which can be used with MNE ``plot_topomap`` to plot EEG channel data on a scalp.
+
 Version 1.0.0
 -------------
 - |API| : Renamed ``stats.fratio`` to ``stats.discriminability`` and added Wilks' Lambda f-statistic as a method for computing disciminability.
