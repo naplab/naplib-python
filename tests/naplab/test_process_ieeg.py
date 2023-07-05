@@ -144,17 +144,17 @@ def test_single_stimuli_pipeline_with_rereference(small_data):
     # check trial names based on wav files
     assert data_out['name'] == ['trig_1.wav']
 
-    # # check alignment
-    # assert np.allclose(data_out['alignment_start'][0], 20)
-    # assert np.allclose(data_out['alignment_end'][0], 30)
+    # check alignment
+    assert np.allclose(data_out['alignment_start'][0], 20)
+    assert np.allclose(data_out['alignment_end'][0], 30)
 
-    # assert data_out['raw'][0].shape == (1200,2) # 2 seconds from befaft, plus 10 seconds of trial at 100 Hz
+    assert data_out['raw'][0].shape == (1200,2) # 2 seconds from befaft, plus 10 seconds of trial at 100 Hz
 
-    # # check extracted data is correctly rereferenced (500 samples that are the same should be 0)
-    # assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
+    # check extracted data is correctly rereferenced (500 samples that are the same should be 0)
+    assert np.allclose(data_out['raw'][0][100:600,0], np.zeros((500,)))
 
-    # # check reference is equal to mean of two channels data
-    # assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
+    # check reference is equal to mean of two channels data
+    assert np.allclose(data_out[0]['reference'][:,0], true_data['data'][1900:3100].mean(1))
 
 
 def test_single_stimuli_pipeline_with_custom_rereference(small_data):
@@ -266,13 +266,13 @@ def test_single_stimuli_pipeline_with_rereference_downsample(small_data_fs50):
     assert np.allclose(data_out['alignment_start'][0], 20)
     assert np.allclose(data_out['alignment_end'][0], 30)
 
-    # assert data_out['raw'][0].shape == (120,2) # 2 seconds from befaft, plus 10 seconds of trial at 100 Hz
+    assert data_out['raw'][0].shape == (120,2) # 2 seconds from befaft, plus 10 seconds of trial at 100 Hz
 
-    # # check reference is nan (since two channels are identical)
-    # assert data_out['reference'][0].shape == (120,2)
+    # check reference is nan (since two channels are identical)
+    assert data_out['reference'][0].shape == (120,2)
 
-    # # shape of output correct
-    # assert data_out['raw'][0].shape == (120,2)
+    # shape of output correct
+    assert data_out['raw'][0].shape == (120,2)
 
 
 def test_single_stimuli_pipeline_with_custom_spectrogram(small_data_fs50):
