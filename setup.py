@@ -25,8 +25,9 @@ non_python_files = ['features/*.mat',
                     'features/prosodylab_aligner/eng.*',
                     'features/resample.sh',
                     'features/prosodylab_aligner/LICENSE',
-                    'io/sample_data/*.mat',
                     'features/test.wav',
+                    'io/sample_data/*.mat',
+                    'visualization/*.locs'
                     ]
 
 setup(
