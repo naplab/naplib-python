@@ -69,9 +69,9 @@ def eeg_locs(setup='gtec62'):
 
     if setup == 'gtec62':
         curr_dir = pathlib.Path(__file__).parent.resolve()
-        pos, _ = load_eeg_locs(os.path.join(curr_dir, 'gtec62.locs'))
+        pos, _ = _load_eeg_locs(os.path.join(curr_dir, 'gtec62.locs'))
     else:
-        pos, _ = load_eeg_locs(setup)
+        pos, _ = _load_eeg_locs(setup)
 
     def pol2cart(rho, phi):
         '''0 degrees is central North, and then positive angles are in clockwise direction'''
