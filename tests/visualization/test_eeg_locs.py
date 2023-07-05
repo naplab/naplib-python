@@ -69,3 +69,4 @@ def test_correct_locs_gtec62():
        [ 1.15447895e-01, -3.75112948e-02]])
 
 	np.allclose(pos, expected+1)
+	assert False
