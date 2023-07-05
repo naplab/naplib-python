@@ -3,9 +3,9 @@ import numpy as np
 from naplib.visualization import eeg_locs
 
 def test_correct_locs_gtec62():
-	pos = eeg_locs()
+    pos = eeg_locs()
 
-	expected = np.array([[-3.00089184e-02,  9.23579542e-02],
+    expected = np.array([[-3.00089184e-02,  9.23579542e-02],
        [ 5.94632764e-18,  9.71109000e-02],
        [ 3.00089184e-02,  9.23579542e-02],
        [-5.97874400e-02,  7.65244335e-02],
@@ -68,5 +68,4 @@ def test_correct_locs_gtec62():
        [-1.15447895e-01, -3.75112948e-02],
        [ 1.15447895e-01, -3.75112948e-02]])
 
-	np.allclose(pos, expected+1)
-	assert False
+    assert np.allclose(pos, expected)
