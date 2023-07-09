@@ -317,14 +317,15 @@ def process_ieeg(
     # # preprocessing
     
     # # common referencing
-    if rereference_grid == 'array':
-        if 'labels_data' not in raw_data:
-            raise ValueError('Implicit array-based rereferencing not allowed when electrode labels are not specified')
-        rereference_grid = make_contact_rereference_arr(raw_data['labels_data'])
-    elif rereference_grid == 'subject':
-        rereference_grid = np.ones((raw_data['data'].shape[1],) * 2, dtype=int)
-    elif isinstance(rereference_grid, str):
-        raise ValueError(f'Unknown rereference_grid mode: {rereference_grid}')
+    if isinstance(rereference_grid, str):
+        if rereference_grid == 'array':
+            if 'labels_data' not in raw_data:
+                raise ValueError('Implicit array-based rereferencing not allowed when electrode labels are not specified')
+            rereference_grid = make_contact_rereference_arr(raw_data['labels_data'])
+        elif rereference_grid == 'subject':
+            rereference_grid = np.ones((raw_data['data'].shape[1],) * 2, dtype=int)
+        else:
+            raise ValueError(f'Unknown string rereference_grid mode: {rereference_grid}')
 
     if rereference_grid is not None:
         logger.info(f'Performing common rereferencing using "{rereference_method}" method...')
