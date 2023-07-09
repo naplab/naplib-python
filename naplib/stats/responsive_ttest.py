@@ -3,11 +3,11 @@ import numpy as np
 from scipy.stats import ttest_ind
 from mne.stats import fdr_correction
 
-from ..utils import _parse_outstruct_args
-from ..data import Data
+from naplib.utils import _parse_outstruct_args
+from naplib.data import Data
 
 
-def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True, random_state=None):
+def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True):
     '''
     Identify responsive electrodes by performing a t-test between response
     values during silence (before stimulus) compared to during speech/sound
@@ -37,8 +37,8 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         example, befaft=np.array([0.5, 0.5]) indicates that for each trial,
         the first half second of the responses come before the onset
         of the stimulus, and they should be compared to the subsequent half second.
-        If no Data is provided, this
-        cannot be a string. Note: if this is a list it must be of same length
+        If no Data is provided, this cannot be a string.
+        Note: if this is a list it must be of same length
         as the resp, so to specify the same befaft for all trials, use a np.ndarray
         of length 2.
     sfreq : str | int, default='dataf'
@@ -63,8 +63,6 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         that assumes equal population variances [2]_.
         If False, perform Welch's t-test, which does not assume equal
         population variance [3]_.
-    random_state : int, default=None
-        Random seed which can be set for reproducibility.
 
     Returns
     -------
@@ -106,7 +104,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     else:
         return_as_data = False
 
-    resp, befaft, sfreq = _parse_outstruct_args(data, deepcopy(resp), befaft, sfreq,
+    resp, befaft, sfreq = _parse_outstruct_args(data, resp, befaft, sfreq,
                                          allow_different_lengths=True,
                                          allow_strings_without_outstruct=False)
 
@@ -130,11 +128,10 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         aft = round(befaft[t][1] * sfreq[t])
         if bef < 5:
             raise ValueError(f'befaft period is too short, there must be at least 3 samples of response before stimulus onset.')
-        before_tmp = rng.permuted(resp[t][:bef], axis=0) - resp[t].mean(0, keepdims=True)
-        after_tmp = rng.permuted(resp[t][bef:bef+aft], axis=0) - resp[t].mean(0, keepdims=True)
-        N_test_samples = int(min([before_tmp.shape[0], after_tmp.shape[0]]))
-        before_samples.append(before_tmp[:N_test_samples])
-        after_samples.append(after_tmp[:N_test_samples])
+        before_tmp = resp[t][:bef] - resp[t].mean(0, keepdims=True)
+        after_tmp = resp[t][bef:bef+aft] - resp[t].mean(0, keepdims=True)
+        before_samples.append(before_tmp)
+        after_samples.append(after_tmp)
 
     before_samples_cat = np.concatenate(before_samples, axis=0)
     after_samples_cat = np.concatenate(after_samples, axis=0)
