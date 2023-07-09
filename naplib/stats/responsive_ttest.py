@@ -14,6 +14,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     (after stimulus onset) [1]_.
     `scipy's ttest_ind <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.ttest_ind.html>`_
     is used to perform the t-test. Please see their documentation for more details.
+
     Parameters
     ----------
     data : naplib.Data instance, optional
@@ -64,6 +65,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         population variance [3]_.
     random_state : int, default=None
         Random seed which can be set for reproducibility.
+
     Returns
     -------
     out : naplib.Data | list of np.arrays, same as `resp` input type
@@ -79,6 +81,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         - 'stat' : test statistic, shape (num_channels,)
         - 'significant': True if null hypothesis was rejected (response is significantly different), False if not, shape (num_channels,)
         - 'alpha': error rate of the test
+
     References
     ----------
     .. [1] Mesgarani, N., & Chang, E. F. (2012). Selective cortical representation
@@ -107,7 +110,6 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
                                          allow_different_lengths=True,
                                          allow_strings_without_outstruct=False)
 
-
     if isinstance(resp, np.ndarray):
         resp = [r for r in resp]
 
@@ -128,25 +130,17 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         aft = round(befaft[t][1] * sfreq[t])
         if bef < 5:
             raise ValueError(f'befaft period is too short, there must be at least 3 samples of response before stimulus onset.')
-        before_samples.append(resp[t][:bef])
-        after_samples.append(resp[t][bef:bef+aft])
+        before_tmp = rng.permuted(resp[t][:bef], axis=0) - resp[t].mean(0, keepdims=True)
+        after_tmp = rng.permuted(resp[t][bef:bef+aft], axis=0) - resp[t].mean(0, keepdims=True)
+        N_test_samples = int(min([before_tmp.shape[0], after_tmp.shape[0]]))
+        before_samples.append(before_tmp[:N_test_samples])
+        after_samples.append(after_tmp[:N_test_samples])
 
-    N_retest = 10
-    # do the test N_retest times and average the stats
-    for trial_ in range(len(before_samples)):
-        for _ in range(N_retest):
-            before_samples_permuted = rng.permuted(before_samples[trial_], axis=0)
-            after_samples_permuted = rng.permuted(after_samples[trial_], axis=0)
-            N_test_samples = int(min([before_samples_permuted.shape[0]*.75, after_samples_permuted.shape[0]*.75]))            
-            stat, pval = ttest_ind(before_samples_permuted[:N_test_samples], after_samples_permuted[:N_test_samples], axis=0,
-                                   equal_var=equal_var, alternative=alternative)
-        
-            pvals.append(pval)
-            statistics.append(stat)
+    before_samples_cat = np.concatenate(before_samples, axis=0)
+    after_samples_cat = np.concatenate(after_samples, axis=0)
     
-    statistics = np.array(statistics).mean(0)
-    pvals = np.exp(np.log(np.array(pvals)+1e-15).mean(0))
-
+    statistics, pvals = ttest_ind(before_samples_cat, after_samples_cat,
+                                  equal_var=equal_var, alternative=alternative)
 
     if fdr_method is not None:
         reject, pval_corrected = fdr_correction(pvals, alpha=alpha, method=fdr_method)

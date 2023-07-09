@@ -22,7 +22,22 @@ def test_responsive_ttest_picks_correct_electrode_from_outstruct(outstruct):
     new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2)
     assert new_out[0]['resp'].shape[1] == 1
     assert np.array_equal(stats['significant'], np.array([0,1,0,0]).astype('bool'))
-    assert np.allclose(stats['stat'], np.array([-9.18367893e-01, -1.50768755e+02,  8.01840241e-02, -1.10738582e+00]), atol=1e-7)
+    assert np.allclose(stats['stat'], np.array([-1.67113052, -63.20943622,   0.23296204,  -1.78460185]), atol=1e-7)
+    assert np.allclose(stats['pval'], np.array([1.26958793e-001, 2.51319873e-266, 8.15870594e-001, 1.26958793e-001]), atol=1e-7)
+
+def test_responsive_ttest_picks_correct_electrode_from_outstruct_alternative_less(outstruct):
+    new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2, alternative='less')
+    assert new_out[0]['resp'].shape[1] == 1
+    assert np.array_equal(stats['significant'], np.array([0,1,0,0]).astype('bool'))
+    assert np.allclose(stats['stat'], np.array([-1.67113052, -63.20943622,   0.23296204,  -1.78460185]), atol=1e-7)
+    assert np.allclose(stats['pval'], np.array([6.34793965e-002, 1.25659937e-266, 5.92064703e-001, 6.34793965e-002]), atol=1e-7)
+
+def test_responsive_ttest_picks_correct_electrode_from_outstruct_alternative_greater(outstruct):
+    new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', random_state=2, alternative='greater')
+    assert new_out[0]['resp'].shape[1] == 0
+    assert np.array_equal(stats['significant'], np.array([0,0,0,0]).astype('bool'))
+    assert np.allclose(stats['stat'], np.array([-1.67113052, -63.20943622,   0.23296204,  -1.78460185]), atol=1e-7)
+    assert np.allclose(stats['pval'], np.array([1., 1., 1., 1.]), atol=1e-7)
 
 def test_responsive_ttest_picks_correct_electrode_pass_args_individually_vs_outstruct_same(outstruct):
     new_resp, stats_resp = responsive_ttest(resp=outstruct['resp'], sfreq=100, befaft=np.array([1.,1.]), random_state=2)
