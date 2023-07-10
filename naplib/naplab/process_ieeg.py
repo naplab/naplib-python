@@ -326,6 +326,7 @@ def process_ieeg(
     elif isinstance(rereference_grid, str):
         raise ValueError(f'Unknown string rereference_grid mode: {rereference_grid}')
 
+
     if rereference_grid is not None:
         logger.info(f'Performing common rereferencing using "{rereference_method}" method...')
         if store_reference:

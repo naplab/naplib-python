@@ -7,7 +7,7 @@ from naplib.utils import _parse_outstruct_args
 from naplib.data import Data
 
 
-def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True):
+def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre_post=[1, 1], alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True):
     '''
     Identify responsive electrodes by performing a t-test between response
     values during silence (before stimulus) compared to during speech/sound
@@ -35,8 +35,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
         a list should contain the befaft period for each trial, and a single
         np.ndarray of length 2 specifies the befaft period for all trials. For
         example, befaft=np.array([0.5, 0.5]) indicates that for each trial,
-        the first half second of the responses come before the onset
-        of the stimulus, and they should be compared to the subsequent half second.
+        the first half second of the responses come before the stimulus onset.
         If no Data is provided, this cannot be a string.
         Note: if this is a list it must be of same length
         as the resp, so to specify the same befaft for all trials, use a np.ndarray
@@ -44,6 +43,20 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     sfreq : str | int, default='dataf'
         The sampling frequency of the responses. If a string, specifies field of
         the Data containing the sampling frequency.
+    pre_post : np.ndarray | list
+        List or array of length 2 or 4, giving the time windows (in seconds) to compare
+        before and after stimulus onset. If length 2 (such as [x,y]), both numbers must be positive floats, and
+        the first number specifies the window [-x, 0) relative to sound onset while the second number
+        specifies the window [0, y) relative to sound onset. The responses in these two
+        windows will be compared by the t-test. If length 4, the first two floats specify the start
+        and end points of the first window (relative to sound onset), and the remaining two floats
+        specify the start and end points of the second window. Thus, the following two inputs
+        produce the same windows and the same test, [0.8, 1] and [-0.8, 0, 0, 1], whereby the responses in the
+        0.8 seconds immediately preceeding stimulus onset are compared to the responses in
+        the 1 second immediately following stimulus onset. Sometimes, sound does not onset
+        until a little later after stimulus onset, and there is also neural delay for many electrodes,
+        so one `pre_post` option could be [-1, 0, 0.2, 1.2] to add a buffer of 200ms for the
+        electrodes to begin responding more strongly.
     alpha : float, default=0.05
         Error rate.
     fdr_method : str, {'indep', 'negcorr', None}, default='indep'
@@ -66,12 +79,8 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
 
     Returns
     -------
-    out : naplib.Data | list of np.arrays, same as `resp` input type
-        If Data object was given as input, this is a copy of that
-        Data with the `resp` field replaced by only the responsive
-        electrode data. If `resp` input was given as a list of arrays
-        or a 3D array, then this is a list of numpy arrays, each of shape
-        (time, new_num_channels)
+    out : list of np.arrays, same as `resp` input type
+        A list of numpy arrays, each of shape (time, new_num_channels)
     stats : dict
         Dictionary containing statistics about responsive elecs, with the
         following keys
@@ -88,21 +97,19 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     .. [3] https://en.wikipedia.org/wiki/Welch%27s_t-test
     '''
 
+    if not isinstance(pre_post, (np.ndarray, list)) or len(pre_post) not in [2, 4]:
+        raise ValueError('pre_post must be an array or list of length 2 or 4')
+
+    if len(pre_post) == 2:
+        if pre_post[0] <= 0 or pre_post[1] <= 0:
+            raise ValueError(f'pre_post must be all positive if length 2 but got {pre_post}')
+        pre_post = [-pre_post[0], 0, 0, pre_post[1]]
+
     if fdr_method is not None and fdr_method not in ['indep', 'negcorr']:
         raise ValueError(f"fdr_method should be 'indep' or 'negcorr' but got {fdr_method}")
 
     if alternative not in ['two-sided', 'less', 'greater']:
         raise ValueError(f"alternative must be one of ['two-sided', 'less', 'greater'] but got {alternative}")
-
-    if isinstance(data, Data):
-        return_as_data = True
-        data_copy = deepcopy(data)
-        if isinstance(resp, str):
-            resp_fieldname = deepcopy(resp) # if this is a string, need to save the name now
-        else:
-            resp_fieldname = 'resp'
-    else:
-        return_as_data = False
 
     resp, befaft, sfreq = _parse_outstruct_args(data, resp, befaft, sfreq,
                                          allow_different_lengths=True,
@@ -124,11 +131,19 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     statistics = []
     for t in range(len(resp)):
         bef = round(befaft[t][0] * sfreq[t])
-        aft = round(befaft[t][1] * sfreq[t])
+
+        pre_start = round(pre_post[0] * sfreq[t]) + bef
+        pre_end = round(pre_post[1] * sfreq[t]) + bef
+        post_start = round(pre_post[2] * sfreq[t]) + bef
+        post_end = round(pre_post[3] * sfreq[t]) + bef
+
+        if not (pre_start < pre_end and pre_end <= post_start and post_start < post_end):
+            raise ValueError('pre_post provided resulted in a non-increasing time window.')        
+
         if bef < 5:
-            raise ValueError(f'befaft period is too short, there must be at least 3 samples of response before stimulus onset.')
-        before_tmp = resp[t][:bef] - resp[t].mean(0, keepdims=True)
-        after_tmp = resp[t][bef:bef+aft] - resp[t].mean(0, keepdims=True)
+            raise ValueError(f'befaft period is too short, there must be at least 5 samples of response before stimulus onset.')
+        before_tmp = resp[t][pre_start:pre_end] - resp[t].mean(0, keepdims=True)
+        after_tmp = resp[t][post_start:post_end] - resp[t].mean(0, keepdims=True)
         before_samples.append(before_tmp)
         after_samples.append(after_tmp)
 
@@ -147,9 +162,5 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     resp_corrected = [r[:,reject] for r in resp]
 
     stats = {'pval': pval_corrected, 'stat': statistics, 'significant': reject, 'alpha': alpha}
-
-    if return_as_data:
-        data_copy[resp_fieldname] = resp_corrected
-        return data_copy, stats
 
     return resp_corrected, stats
