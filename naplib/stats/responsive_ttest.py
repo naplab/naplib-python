@@ -122,7 +122,6 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', alp
     after_samples = []
     pvals = []
     statistics = []
-    rng = np.random.default_rng(random_state)
     for t in range(len(resp)):
         bef = round(befaft[t][0] * sfreq[t])
         aft = round(befaft[t][1] * sfreq[t])
