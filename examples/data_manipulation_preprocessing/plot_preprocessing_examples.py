@@ -100,12 +100,13 @@ plt.show()
 # Perform t-test to remove electrodes that are not responsive
 # This function performs FDR correction by default, but many parameters can be changed to alter
 # the test
-data_responsive, stats = responsive_ttest(data, random_state=1)
+data_responsive, stats = responsive_ttest(data)
 print(stats.keys()) # statistics computed
 
 
 # now there are only 8 electrodes remaining
-print(data_responsive['resp'][0].shape)
+print(data_responsive[0].shape)
+data['resp'] = data_responsive # set the responses to only be these good electrodes
 
 
 # plot some of the statistics computed
@@ -135,15 +136,15 @@ plt.show()
 # * beta (14-30Hz)
 
 # filter the responses to different bands and set them as new fields of the Data
-data_responsive['delta_resp'] = filter_butter(data_responsive, field='resp', Wn=[0.5, 4], order=5)
-data_responsive['theta_resp'] = filter_butter(data_responsive, field='resp', Wn=[4, 8], order=5)
-data_responsive['alpha_resp'] = filter_butter(data_responsive, field='resp', Wn=[8, 13], order=5)
-data_responsive['beta_resp'] = filter_butter(data_responsive, field='resp', Wn=[14, 30], order=5)
+data['delta_resp'] = filter_butter(data, field='resp', Wn=[0.5, 4], order=5)
+data['theta_resp'] = filter_butter(data, field='resp', Wn=[4, 8], order=5)
+data['alpha_resp'] = filter_butter(data, field='resp', Wn=[8, 13], order=5)
+data['beta_resp'] = filter_butter(data, field='resp', Wn=[14, 30], order=5)
 
 
 # To make sure the filter bands are correct or meet our requirements, get the filters used and plot them
 # If we are not satisfied with the filters, we can set the ``order`` parameter in the ``filter_butter`` function to increase the filter order.
-theta_resp, filters = filter_butter(data_responsive, Wn=[4, 8], return_filters=True, order=5)
+theta_resp, filters = filter_butter(data, Wn=[4, 8], return_filters=True, order=5)
 
 # plot frequency response
 fig, ax = plt.subplots()
@@ -151,7 +152,7 @@ nl.visualization.freq_response(filters[0], fs=data[0]['dataf'], ax=ax)
 plt.show()
 
 # use a higher order to get steeper cutoff region
-theta_resp_2, filters_2 = filter_butter(data_responsive, Wn=[4, 8], order=10, return_filters=True)
+theta_resp_2, filters_2 = filter_butter(data, Wn=[4, 8], order=10, return_filters=True)
 
 # plot frequency response
 fig, ax = plt.subplots()
@@ -165,23 +166,23 @@ plt.show()
 # 
 # Now that we have bandpassed responses, normalize each one (by z-scoring).
 
-data_responsive['delta_resp'] = normalize(data_responsive, field='delta_resp')
-data_responsive['theta_resp'] = normalize(data_responsive, field='theta_resp')
-data_responsive['alpha_resp'] = normalize(data_responsive, field='alpha_resp')
-data_responsive['beta_resp'] = normalize(data_responsive, field='beta_resp')
+data['delta_resp'] = normalize(data, field='delta_resp')
+data['theta_resp'] = normalize(data, field='theta_resp')
+data['alpha_resp'] = normalize(data, field='alpha_resp')
+data['beta_resp'] = normalize(data, field='beta_resp')
 
 trial = 0
 t = np.arange(0, 10*100) / data['dataf'][trial]
 
 fig, axes = plt.subplots(4,1,figsize=(12,8), sharex=True)
 
-axes[0].plot(t, data_responsive['delta_resp'][trial][:10*100])
+axes[0].plot(t, data['delta_resp'][trial][:10*100])
 axes[0].set_title('Delta')
-axes[1].plot(t, data_responsive['theta_resp'][trial][:10*100])
+axes[1].plot(t, data['theta_resp'][trial][:10*100])
 axes[1].set_title('Theta')
-axes[2].plot(t, data_responsive['alpha_resp'][trial][:10*100])
+axes[2].plot(t, data['alpha_resp'][trial][:10*100])
 axes[2].set_title('Alpha')
-axes[3].plot(t, data_responsive['beta_resp'][trial][:10*100])
+axes[3].plot(t, data['beta_resp'][trial][:10*100])
 axes[3].set_title('Beta')
 axes[3].set_xlabel('Time (s)')
 plt.tight_layout()
