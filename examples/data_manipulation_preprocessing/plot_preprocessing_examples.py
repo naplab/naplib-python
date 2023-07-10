@@ -100,7 +100,7 @@ plt.show()
 # Perform t-test to remove electrodes that are not responsive
 # This function performs FDR correction by default, but many parameters can be changed to alter
 # the test
-data_responsive, stats = responsive_ttest(data, random_state=1)
+data_responsive, stats = responsive_ttest(data)
 print(stats.keys()) # statistics computed
 
 
