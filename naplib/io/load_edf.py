@@ -12,13 +12,13 @@ def load_edf(path: str, t1: float=0, t2: float=0) -> Dict:
 
     Notes
     -----
-    This function supports the original EDF format. For the EDF+ format
-    it may be better to use PyEDFlib or mne.io. They are slower.
+    This function supports the original EDF format and EDF+C. For the EDF+D format
+    it may be better to use PyEDFlib or mne.io.
     
     Parameters
     ----------
     path : str, path-like
-        Directory containing TDT data files (tev, sev, and/or tin files, etc.)
+        Path to EDF data file
     t1 : float, default=0
         Starting time to extract
     t2 : float, default=0
