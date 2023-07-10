@@ -20,8 +20,8 @@ def _load_eeg_locs(fname):
         Name of each channel, length is n_channels
     """
     
-    with open(fname, 'r') as file1:
-        lines = [x.strip().split('\t') for x in file1.readlines()]
+    with open(fname, 'r') as infile:
+        lines = [x.strip().split('\t') for x in infile.readlines()]
         
     pos = []
     names = []
