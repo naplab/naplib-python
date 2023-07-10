@@ -28,9 +28,9 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
-Version 1.1.0 (In development)
-------------------------------
-- |Enhancement| : Added a ``pre_post`` argument to ``stats.responsive_ttest`` to allow greater flexibility to how the responsiveness test is conducted. Also fixed a minor issue with how the test was being computed.
+Version 1.1.0
+-------------
+- |API| |FIX| : Added a ``pre_post`` argument to ``stats.responsive_ttest`` to allow greater flexibility to how the responsiveness test is conducted. Also fixed a minor issue with how the test was being computed.
 - |Enhancement| : Added the function ``visualization.eeg_locs`` to load the EEG channel locations which can be used with MNE ``plot_topomap`` to plot EEG channel data on a scalp.
 
 Version 1.0.0
