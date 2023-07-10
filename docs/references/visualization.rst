@@ -27,3 +27,8 @@ Frequency Response
 ------------------
 
 .. autofunction:: freq_response
+
+EEG Channel Locs
+----------------
+
+.. autofunction:: eeg_locs
