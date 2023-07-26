@@ -1,8 +1,13 @@
-@misc{mischler2023naplibpython,
-      title={naplib-python: Neural Acoustic Data Processing and Analysis Tools in Python}, 
-      author={Gavin Mischler and Vinay Raghavan and Menoua Keshishian and Nima Mesgarani},
-      year={2023},
-      eprint={2304.01799},
-      archivePrefix={arXiv},
-      primaryClass={q-bio.NC}
+@article{MISCHLER2023100541,
+title = {naplib-python: Neural acoustic data processing and analysis tools in python},
+journal = {Software Impacts},
+volume = {17},
+pages = {100541},
+year = {2023},
+issn = {2665-9638},
+doi = {https://doi.org/10.1016/j.simpa.2023.100541},
+url = {https://www.sciencedirect.com/science/article/pii/S2665963823000787},
+author = {Gavin Mischler and Vinay Raghavan and Menoua Keshishian and Nima Mesgarani},
+keywords = {Python, Auditory neuroscience, iEEG, ECoG, Preprocessing},
+abstract = {Recently, the computational neuroscience community has pushed for more transparent and reproducible methods across the field. In the interest of unifying the domain of auditory neuroscience, naplib-python provides an intuitive and general data structure for handling all neural recordings and stimuli, as well as extensive preprocessing, feature extraction, and analysis tools which operate on that data structure. The package removes many of the complications associated with this domain, such as varying trial durations and multi-modal stimuli, and provides a general-purpose analysis framework that interfaces easily with existing toolboxes used in the field.}
 }
