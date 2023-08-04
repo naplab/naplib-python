@@ -41,9 +41,9 @@ naplib-python is built by the [Neural Acoustic Processing Lab](http://naplab.ee.
 
 ## Citing naplib-python
 
-If you find ``naplib-python`` useful for your research, please cite the following paper:
+If you find ``naplib-python`` useful for your research, please cite the following paper ([link](https://doi.org/10.1016/j.simpa.2023.100541)):
 
-> Mischler, Gavin, Vinay Raghavan, Menoua Keshishian, and Nima Mesgarani. ‘naplib-python: Neural Acoustic Data Processing and Analysis Tools in Python’. ArXiv [q-Bio.NC], 2023. arXiv. http://arxiv.org/abs/2304.01799.
+> Gavin Mischler, Vinay Raghavan, Menoua Keshishian, & Nima Mesgarani (2023). naplib-python: Neural acoustic data processing and analysis tools in python. Software Impacts, 17, 100541.
 
 ## Backlog
 
