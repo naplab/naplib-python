@@ -153,7 +153,7 @@ def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
 
     # loop through groups
     color_cycle_default = plt.rcParams["axes.prop_cycle"].by_key()["color"]
-    len_cycle = len(color_cycle)
+    len_cycle = len(color_cycle_default)
     for i, grp in enumerate(sorted(np.unique(df['group'].values))):
         if color[i] is None:
             col = color_cycle_default[i%len_cycle] #next(ax._get_lines.prop_cycler)['color']
