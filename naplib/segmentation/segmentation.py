@@ -268,9 +268,10 @@ def shift_label_onsets(data=None, labels='wrd_labels', p=0.5):
     
     for labels_this_trial in labels:
         
-        new_labels_this_trial = labels_this_trial.copy()
+        new_labels_this_trial = labels_this_trial.copy().squeeze()
+        new_labels_this_trial = np.concatenate([np.array([-1]), new_labels_this_trial])
         
-        locs, labs, prior_labs = get_label_change_points(labels_this_trial)
+        locs, labs, prior_labs = get_label_change_points(new_labels_this_trial)
 
         for i, (loc, lab, prior_lab) in enumerate(zip(locs, labs, prior_labs)):
             if lab == -1:
