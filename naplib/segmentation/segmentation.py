@@ -284,6 +284,6 @@ def shift_label_onsets(data=None, labels='wrd_labels', p=0.5):
             remove_samples = int(p*feature_length)
             new_labels_this_trial[loc:loc+remove_samples] = -1
 
-        new_labels.append(new_labels_this_trial)
+        new_labels.append(new_labels_this_trial[1:]) # remove extra -1 that we had prepended
     return new_labels
     
