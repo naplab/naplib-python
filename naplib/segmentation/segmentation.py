@@ -1,4 +1,5 @@
 import numpy as np
+from naplib import Data
 from scipy.ndimage import gaussian_filter1d
 
 from ..stats import discriminability
@@ -217,4 +218,72 @@ def electrode_lags_fratio(data=None, field=None, labels=None, max_lag=20, return
         return lags, fratios_lags_smooth
     else:
         return lags
+
+def shift_label_onsets(data=None, labels='wrd_labels', p=0.5):
+    """
+    From continuous labels, shift them so that they correspond to a
+    certain fraction of the feature's progress. This is useful if you have something
+    like word labels, which encode word onsets and offsets, but you want to be able
+    to segment your data based on word centers (i.e. 50% of the way through the word).
+
+    For example, if the labels for one trial are a continuous (discrete)
+    signal representing word labels over time,
+    such as [-1,-1,-1,3,3,3,3,4,4,4,-1,-1,5,5,5,5,5] where -1 means no word, and 3, 4,
+    and 5 indicate different words which are present over those samples, then with
+    p=0.5, the onsets will be shifted so that their onsets correspond to 50% of
+    the word's progress. So, the output will be [-1,-1,-1,-1,-1,3,3,-1,4,4,-1,-1,-1,-1,5,5,5].
+    
+    Parameters
+    ----------
+    data : Data, optional
+        Data instance. If provided, then labels should indicate a field of this data.
+    labels : string, or list of np.ndarrays, default='wrd_labels'
+        Either a field of the data, or a list of 1D numpy arrays.
+    p : float (0<=p<1), default=0.5
+        Initial proportion of the label duration for each category to remove. For word labels, a value
+        of 0.5 will replace the first 50% of each word with -1, while a value of 0.99999999 will almost certainly
+        guarantee that only the last sample of each label region remains and the rest are
+        replaced with -1. 0.5 can be used to get word centers, while 0.99999999 can be used to get word
+        offsets.
+    
+    Returns
+    -------
+    new_labels : list[np.ndarray]
+        New labels for each trial.
+    
+    Examples
+    --------
+    >>> from naplib.segmentation import shift_label_onsets
+    >>> import numpy as np
+    >>> labs = [np.array([-1,-1,-1,3,3,3,3,4,4,4,-1,-1,5,5,5,5,5])]
+    >>> shift_label_onsets(labels=labs)
+    [array([-1, -1, -1, -1, -1,  3,  3, -1,  4,  4, -1, -1, -1, -1,  5,  5,  5])]
+    
+    """
+    if p >= 1 or p < 0:
+        raise ValueError(f'p must be in the range [0, 1), but got {p}')
+        
+    labels = _parse_outstruct_args(data, labels, allow_strings_without_outstruct=False)
+    
+    new_labels = []
+    
+    for labels_this_trial in labels:
+        
+        new_labels_this_trial = labels_this_trial.copy()
+        
+        locs, labs, prior_labs = get_label_change_points(labels_this_trial)
+
+        for i, (loc, lab, prior_lab) in enumerate(zip(locs, labs, prior_labs)):
+            if lab == -1:
+                continue
+            if i == len(locs)-1:
+                feature_length = len(labels_this_trial) - loc
+            else:
+                feature_length = locs[i+1] - loc
+
+            remove_samples = int(p*feature_length)
+            new_labels_this_trial[loc:loc+remove_samples] = -1
+
+        new_labels.append(new_labels_this_trial)
+    return new_labels
     
