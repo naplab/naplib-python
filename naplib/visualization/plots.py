@@ -152,9 +152,11 @@ def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
                          f' but got {len(color)} colors and {num_unique} groups')
 
     # loop through groups
+    color_cycle_default = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    len_cycle = len(color_cycle)
     for i, grp in enumerate(sorted(np.unique(df['group'].values))):
         if color[i] is None:
-            col = next(ax._get_lines.prop_cycler)['color']
+            col = color_cycle_default[i%len_cycle] #next(ax._get_lines.prop_cycler)['color']
         else:
             col = color[i]
 
@@ -340,7 +342,7 @@ def shaded_error_plot(*args, ax=None, reduction='mean', err_method='stderr', col
 
     return ax
 
-def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2):
+def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2, metric='euclidean', linkage='ward'):
     '''
     Perform hierarchical clustering and plot dendrogram and clustered values as an
     image underneath. See Examples below for a depiction.
@@ -359,7 +361,13 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
         colormap for the data plot
     n_clusters : int, default=2
         number of clusters which will be used when computing cluster labels that are returned
-    
+    metric : str, default='euclidean'
+        Distance metric. See scipy.spatial.distance.pdist for valid metrics.
+    linkage : str, default='ward'
+        Linkage method. Must be one of 'single','complete','average','weighted','centroid',
+        'median', or 'ward'. Some linkage methods are only valid for certain distance
+        metrics.
+
     Returns
     -------
     cluster_dict : dict
@@ -395,13 +403,13 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     else:
         return_axes = False
         
-    dend = shc.dendrogram(shc.linkage(data, method='ward'), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
+    dend = shc.dendrogram(shc.linkage(data, method=linkage, metric=metric), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
 
     axes[0].set_yticks([])
 
     leaves = dend['leaves']
 
-    cluster = AgglomerativeClustering(n_clusters=n_clusters, affinity='euclidean', linkage='ward')
+    cluster = AgglomerativeClustering(n_clusters=n_clusters, metric=metric, linkage=linkage)
     cluster_labels = cluster.fit_predict(data)
 
     if cmap=='bwr':
