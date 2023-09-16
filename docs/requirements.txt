@@ -4,7 +4,8 @@ ipython>=7.4
 ipykernel>=5.1.0
 numpydoc>=1.1.0
 recommonmark==0.5.0
-pyyaml>=5.1
+ruamel.yaml==0.17.32
+pyyaml
 TextGrid
 sphinx-gallery==0.10.1
 openneuro-py==2022.4.0
