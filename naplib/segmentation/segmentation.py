@@ -1,5 +1,4 @@
 import numpy as np
-from naplib import Data
 from scipy.ndimage import gaussian_filter1d
 
 from ..stats import discriminability
