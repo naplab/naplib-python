@@ -277,7 +277,7 @@ def shift_label_onsets(data=None, labels='wrd_labels', p=0.5):
             if lab == -1:
                 continue
             if i == len(locs)-1:
-                feature_length = len(labels_this_trial) - loc
+                feature_length = len(labels_this_trial) - loc + 1
             else:
                 feature_length = locs[i+1] - loc
 
