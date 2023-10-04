@@ -1,6 +1,6 @@
 from typing import Dict
 import numpy as np
-from pynwb import NWBHDF5IO
+
 
 def load_nwb(filepath: str) -> Dict:
     """
@@ -18,6 +18,12 @@ def load_nwb(filepath: str) -> Dict:
         'wav' - loaded audio recording (time*channels), wav_f' - sampling rate of sound,
         'labels' - array of labels for the channel streams
     """
+
+    try:
+        from pynwb import NWBHDF5IO
+    except Exception:
+        raise Exception('Missing package pynwb which is required for loading data from NWB format. Please '
+            'install it with "pip install pynwb"')
 
     with NWBHDF5IO(filepath, "r") as reader:
         loaded_data = reader.read()
