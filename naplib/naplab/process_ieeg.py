@@ -54,6 +54,10 @@ def process_ieeg(
     n_jobs: int=1,
 ):
     """
+    Process raw iEEG data.
+
+    Parameters
+    ----------
     data_path : str path-like
         String specifying data directory (for TDT) or file path for raw data file
     alignment_dir : str path-like

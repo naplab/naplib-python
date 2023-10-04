@@ -65,7 +65,7 @@ class LinearMixedEffectsModel():
             
         Returns
         -------
-            model : returns an instance of self
+        model : returns an instance of self
         '''
         if random_effect is not None:
             if random_effect.ndim == 1:
