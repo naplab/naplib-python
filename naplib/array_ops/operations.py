@@ -21,7 +21,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
     
     Parameters
     ----------
-    arr : np.ndarray, shape (time, *feature_dims)
+    arr : np.ndarray, shape (time, feature_dims...)
         Data to be windowed. Windowing is only applied across first dimension,
         which is assumed to be time. All other dimensions are kept the same for
         the output.
@@ -49,7 +49,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
     
     Returns
     -------
-    windows : np.ndarray, shape (n_samples, window_len, *feature_dims...)
+    windows : np.ndarray, shape (n_samples, window_len, feature_dims...)
         Windowed array segments.
     
     

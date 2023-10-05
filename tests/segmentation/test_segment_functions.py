@@ -4,6 +4,7 @@ import numpy as np
 from naplib.segmentation import get_label_change_points
 from naplib.segmentation import segment_around_label_transitions
 from naplib.segmentation import electrode_lags_fratio
+from naplib.segmentation import shift_label_onsets
 from naplib import Data
 
 @pytest.fixture(scope='module')
@@ -182,3 +183,39 @@ def test_electrode_lags_fratio_no_labels_or_field_passed():
     with pytest.raises(ValueError) as exc:
         _ = electrode_lags_fratio(data, labels='lab', max_lag=3)
     assert 'None found in field' in str(exc)
+
+## test shift_label_onsets
+def test_shift_label_onsets_simple_50(outstruct):
+    expected = [np.array([-1, 0, -1, 1, 1, -1, 3, 3]), np.array([-1, -1, 2, -1, 0, 0])]
+    new_labels = shift_label_onsets(outstruct, labels='labels1', p=0.5)
+
+    for lab, exp in zip(new_labels, expected):
+        assert np.allclose(lab, exp)
+
+def test_shift_label_onsets_simple_99(outstruct):
+    expected = [np.array([-1, 0, -1, -1, 1, -1, -1, 3]), np.array([-1, -1, 2, -1, -1, 0])]
+    new_labels = shift_label_onsets(outstruct, labels='labels1', p=0.99)
+
+    for lab, exp in zip(new_labels, expected):
+        assert np.allclose(lab, exp)
+
+def test_shift_label_onsets_from_list():
+    expected = [np.array([-1,-1,-1,-1,-1,3,3,-1,4,4,-1,-1,-1,-1,5,5,5])]
+    labels = [np.array([-1,-1,-1,3,3,3,3,4,4,4,-1,-1,5,5,5,5,5])]
+    new_labels = shift_label_onsets(labels=labels, p=0.5)
+
+    for lab, exp in zip(new_labels, expected):
+        assert np.allclose(lab, exp)
+
+def test_shift_label_onsets_bad_p(outstruct):
+    with pytest.raises(ValueError) as exc:
+        _ = shift_label_onsets(outstruct, labels='labels1', p=-0.2)
+    assert 'p must be in the range [0, 1)' in str(exc)
+
+    with pytest.raises(ValueError) as exc:
+        _ = shift_label_onsets(outstruct, labels='labels2', p=1)
+    assert 'p must be in the range [0, 1)' in str(exc)
+
+    with pytest.raises(ValueError) as exc:
+        _ = shift_label_onsets(outstruct, labels='labels2', p=1.5)
+    assert 'p must be in the range [0, 1)' in str(exc)
