@@ -1,3 +1,4 @@
+import os
 import pickle
 import numpy as np
 from hdf5storage import loadmat, savemat
@@ -207,7 +208,7 @@ def load(filename):
     
     '''
     
-    if not filename.endswith('.pkl') and '.' not in filename:
+    if not filename.endswith('.pkl') and '.' not in os.path.basename(filename):
         filename = filename + '.pkl'
         
     with open(filename, 'rb') as inp:
@@ -216,7 +217,7 @@ def load(filename):
     return output
 
 
-def save(filename, obj):
+def save(filename, obj, makedirs=False):
     '''
     Save object with pickle.
     
@@ -227,6 +228,8 @@ def save(filename, obj):
         automatically.
     obj : Object
         Data to save.
+    makedirs : bool, default=False
+        Whether to create parent directories if they do not exist.
 
     Examples
     --------
@@ -239,8 +242,11 @@ def save(filename, obj):
 
     '''
     
-    if not filename.endswith('.pkl') and '.' not in filename:
+    if not filename.endswith('.pkl') and '.' not in os.path.basename(filename):
         filename = filename + '.pkl'
+
+    if makedirs:
+        os.makedirs(os.path.dirname(filename), exist_ok=True)
     
     with open(filename, 'wb') as f:
         pickle.dump(obj, f)
