@@ -2,10 +2,12 @@ import warnings
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as shc
+import sklearn
 from sklearn.cluster import AgglomerativeClustering
 import matplotlib.pyplot as plt
 from scipy import signal as sig
 import seaborn as sns
+from packaging import version
 
 
 def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
@@ -409,7 +411,11 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
 
     leaves = dend['leaves']
 
-    cluster = AgglomerativeClustering(n_clusters=n_clusters, metric=metric, linkage=linkage)
+    # The metric parameter is only available after sklearn 1.2.0. Before 1.2.0, it was called affinity
+    if version.parse(sklearn.__version__) < version.parse("1.2.0"):
+        cluster = AgglomerativeClustering(n_clusters=n_clusters, affinity=metric, linkage=linkage)
+    else:
+        cluster = AgglomerativeClustering(n_clusters=n_clusters, metric=metric, linkage=linkage)
     cluster_labels = cluster.fit_predict(data)
 
     if cmap=='bwr':
