@@ -36,5 +36,5 @@ def test_compare_peakRate():
 
 
     assert np.allclose(pr_vals, pr_vals_truth, atol=1e-3)
-    assert np.allclose(pr_inds, pr_inds_truth, atol=1e-3)
+    assert np.allclose(pr_inds, pr_inds_truth)
 
