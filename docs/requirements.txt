@@ -5,5 +5,6 @@ ipykernel>=5.1.0
 numpydoc>=1.1.0
 recommonmark==0.5.0
 sphinx-gallery==0.10.1
+mne<1.5 # for building docs, since mne-bids is needed, must have lower version of mne https://github.com/mne-tools/mne-python/pull/11582/files
 openneuro-py==2022.4.0
 mne-bids==0.11.1
