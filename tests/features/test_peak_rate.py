@@ -3,7 +3,7 @@ import os
 import contextlib
 import wave
 
-from naplib.features import auditory_spectrogram, peakRate
+from naplib.features import auditory_spectrogram, peak_rate
 
 def test_compare_peakRate():
     curr_dir = os.path.dirname(os.path.realpath(__file__))
@@ -23,7 +23,7 @@ def test_compare_peakRate():
         sound_normalized = sound_float32 / max_int16
 
     aud = auditory_spectrogram(sound_normalized, rate, frame_len=8, tc=4, factor='linear')
-    pr = peakRate(aud, 100)
+    pr = peak_rate(aud, 100)
     pr_inds = np.where(pr)[0]
     pr_vals = pr[pr_inds]
 
