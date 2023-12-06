@@ -15,6 +15,11 @@ Auditory Spectrogram
 .. minigallery:: naplib.features.auditory_spectrogram
         :add-heading: Examples using ``auditory_spectrogram ``
 
+Extract peakRates from the Spectrogtam
+---------------------------------------
+
+.. autofunction:: peak_rate
+
 Aligner for Phonemes and Words
 ------------------------------
 

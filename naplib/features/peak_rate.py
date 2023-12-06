@@ -5,7 +5,7 @@ from scipy.stats import zscore
 
 def peak_rate(aud, sfreq, band=[1,10], thresh=0):
     '''
-    Extract peak_rate events from the (auditory) spectrogram
+    Extract peak_rate events [#1oganian]_ from the (auditory) spectrogram
     
     Parameters
     ----------
@@ -25,9 +25,9 @@ def peak_rate(aud, sfreq, band=[1,10], thresh=0):
 
     References
     ----------
-    [#1oganian] Y. Oganian, & E.F. Chang, "A speech envelope landmark for
-    syllable encoding in human superior temporal gyrus," in Science Advances,
-    vol 5, no. 11, pp. eaay6279, November 2019, doi: 10.1126/sciadv.aay6279
+    .. [#1oganian] Y. Oganian, & E.F. Chang, "A speech envelope landmark for
+        syllable encoding in human superior temporal gyrus," in Science Advances,
+        vol 5, no. 11, pp. eaay6279, November 2019, doi: 10.1126/sciadv.aay6279
     '''
     
     # Extract the envelope by taking the mean over frequencies
