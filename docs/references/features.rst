@@ -15,7 +15,7 @@ Auditory Spectrogram
 .. minigallery:: naplib.features.auditory_spectrogram
         :add-heading: Examples using ``auditory_spectrogram ``
 
-Extract peakRates from the Spectrogram
+Extract peak_rate events from the Spectrogram
 --------------------------------------
 
 .. autofunction:: peak_rate
