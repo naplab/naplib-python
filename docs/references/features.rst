@@ -16,7 +16,7 @@ Auditory Spectrogram
         :add-heading: Examples using ``auditory_spectrogram ``
 
 Extract peak_rate events from the Spectrogram
---------------------------------------
+---------------------------------------------
 
 .. autofunction:: peak_rate
 
