@@ -15,6 +15,11 @@ def test_too_few_samples(caplog):
     expected = np.array([1., 1., 3., 4., 5., 5.])
     assert np.allclose(new, expected)
 
+def test_bad_x_shape():
+    x = np.ones((12,3,4))
+    with pytest.raises(ValueError):
+        _ = resample_categorical(x, num=8)
+
 def test_downsample():
     x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
     new = resample_categorical(x, num=8)
