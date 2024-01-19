@@ -1,4 +1,5 @@
 import pytest
+import logging
 import numpy as np
 
 from naplib.array_ops import resample_categorical
