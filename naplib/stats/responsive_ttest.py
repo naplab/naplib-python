@@ -7,7 +7,7 @@ from naplib.utils import _parse_outstruct_args
 from naplib.data import Data
 
 
-def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre_post=[1, 1], alpha=0.05, fdr_method='indep', alternative='two-sided', equal_var=True):
+def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre_post=[1, 1], alpha=0.05, average=False, fdr_method='indep', alternative='two-sided', equal_var=True):
     '''
     Identify responsive electrodes by performing a t-test between response
     values during silence (before stimulus) compared to during speech/sound
@@ -43,7 +43,7 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre
     sfreq : str | int, default='dataf'
         The sampling frequency of the responses. If a string, specifies field of
         the Data containing the sampling frequency.
-    pre_post : np.ndarray | list
+    pre_post : np.ndarray | list, default=[1, 1]
         List or array of length 2 or 4, giving the time windows (in seconds) to compare
         before and after stimulus onset. If length 2 (such as [x,y]), both numbers must be positive floats, and
         the first number specifies the window [-x, 0) relative to sound onset while the second number
@@ -55,10 +55,13 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre
         0.8 seconds immediately preceeding stimulus onset are compared to the responses in
         the 1 second immediately following stimulus onset. Sometimes, sound does not onset
         until a little later after stimulus onset, and there is also neural delay for many electrodes,
-        so one `pre_post` option could be [-1, 0, 0.2, 1.2] to add a buffer of 200ms for the
+        so one good `pre_post` option could be [-1, 0, 0.2, 1.2] to add a buffer of 200ms for the
         electrodes to begin responding more strongly.
     alpha : float, default=0.05
         Error rate.
+    average : bool, default=False
+        Whether to average each segment before t-test or not. Should only be used if have a sufficiently
+        high number of trials, because this will create one comparison per trial.
     fdr_method : str, {'indep', 'negcorr', None}, default='indep'
         Method of correction for multiple comparisons. If 'indep' it implements 
         Benjamini/Hochberg for independent or if 'negcorr' it corresponds
@@ -88,6 +91,19 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre
         - 'stat' : test statistic, shape (num_channels,)
         - 'significant': True if null hypothesis was rejected (response is significantly different), False if not, shape (num_channels,)
         - 'alpha': error rate of the test
+
+    Examples
+    --------
+    >>> import naplib as nl
+    >>> data = nl.io.load_speech_task_data()
+    >>> # Get responsiveness of the 10 electrodes, assuming that they must show an increase
+    >>> # response to the stimulus, and averaging segment windows
+    >>> new_data, stats = responsive_ttest(data, average=True, alternative='less')
+    >>> # All 10 electrodes have significant responses
+    >>> stats['significant']
+    array([ True,  True,  True,  True,  True,  True,  True,  True,  True,
+        True])
+
 
     References
     ----------
@@ -144,8 +160,12 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre
             raise ValueError(f'befaft period is too short, there must be at least 5 samples of response before stimulus onset.')
         before_tmp = resp[t][pre_start:pre_end] - resp[t].mean(0, keepdims=True)
         after_tmp = resp[t][post_start:post_end] - resp[t].mean(0, keepdims=True)
-        before_samples.append(before_tmp)
-        after_samples.append(after_tmp)
+        if average:
+            before_samples.append(before_tmp.mean(0, keepdims=True))
+            after_samples.append(after_tmp.mean(0, keepdims=True))
+        else:
+            before_samples.append(before_tmp)
+            after_samples.append(after_tmp)
 
     before_samples_cat = np.concatenate(before_samples, axis=0)
     after_samples_cat = np.concatenate(after_samples, axis=0)

@@ -28,6 +28,11 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 1.3.0
+-------------
+- |Feature| : Added the function ``peak_rate`` to ``naplib.features`` which can be used to extract peak rate events from an acoustic stimulus. See documentation for details.
+- |Enhancement| : Added the parameter ``average`` to ``naplib.stats.responsive_ttest`` to enable more robust t-test statistics when there are enough trials. See documentation for details.
+
 Version 1.2.0
 -------------
 - |Enhancement| : Added the parameter ``makedirs`` to ``naplib.io.save`` to enable the automatic creation of directories in the path for the filename provided.
