@@ -25,6 +25,13 @@ def test_responsive_ttest_picks_correct_electrode_from_outstruct(outstruct):
     assert np.allclose(stats['stat'], np.array([-1.67113052, -63.20943622,   0.23296204,  -1.78460185]), atol=1e-7)
     assert np.allclose(stats['pval'], np.array([1.26958793e-001, 2.51319873e-266, 8.15870594e-001, 1.26958793e-001]), atol=1e-7)
 
+def test_responsive_ttest_picks_correct_electrode_from_outstruct_average_segment_windows(outstruct):
+    new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', average=True)
+    assert new_out[0].shape[1] == 1
+    assert np.array_equal(stats['significant'], np.array([0,1,0,0]).astype('bool'))
+    assert np.allclose(stats['stat'], np.array([-1.59007915, -5.28643157,  0.28904705, -1.57361706]), atol=1e-7)
+    assert np.allclose(stats['pval'], np.array([0.25424966, 0.02457324, 0.78690711, 0.25424966]), atol=1e-7)
+
 def test_responsive_ttest_picks_correct_electrode_from_outstruct_alternative_less(outstruct):
     new_out, stats = responsive_ttest(data=outstruct, resp='resp', sfreq='dataf', befaft='befaft', alternative='less')
     assert new_out[0].shape[1] == 1
