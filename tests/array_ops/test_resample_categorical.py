@@ -10,7 +10,7 @@ LOGGER = logging.getLogger(__name__)
 def test_too_few_samples(caplog):
     caplog.set_level(logging.WARNING)
     x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
-    resample_categorical(x, num=6)
+    new = resample_categorical(x, num=6)
     assert 'New labels are not equivalent to the old labels' in caplog.text
     expected = np.array([1., 1., 3., 4., 5., 5.])
     assert np.allclose(new, expected)
