@@ -26,3 +26,38 @@ def test_upsample():
     new = resample_categorical(x, num=20)
     expected = np.array([1., 1., 1., 1., 1., 2., 2., 2., 3., 3., 4., 4., 4., 4., 4., 5., 5., 5., 5., 5.])
     assert np.allclose(new, expected)
+
+def test_downsample_2d():
+    x = np.reshape([1,1,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4],(12,2))
+    new = resample_categorical(x, num=7)
+    expected = np.array([[1., 1.],[1., 2.],[2., 3.],[3., 3.],[3., 3.],[4., 4.],[4., 4.]])
+    assert np.allclose(new, expected)
+
+def test_upsample_2d():
+    x = np.reshape([1,1,1,1,1,2,2,2,2,3,3,3,3,3,3,3,3,3,4,4,4,4,4,4],(12,2))
+    new = resample_categorical(x, num=24)
+    expected = np.array([[1., 1.],
+       [1., 1.],
+       [1., 1.],
+       [1., 1.],
+       [1., 2.],
+       [1., 2.],
+       [2., 2.],
+       [2., 2.],
+       [2., 3.],
+       [2., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [3., 3.],
+       [4., 4.],
+       [4., 4.],
+       [4., 4.],
+       [4., 4.],
+       [4., 4.],
+       [4., 4.]])
+    assert np.allclose(new, expected)
