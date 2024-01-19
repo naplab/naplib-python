@@ -6,6 +6,7 @@ from naplib.array_ops import resample_categorical
 
 LOGGER = logging.getLogger(__name__)
 
+@pytest.mark.usefixtures("caplog")
 def test_too_few_samples(caplog):
     caplog.set_level(logging.WARNING)
     x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
