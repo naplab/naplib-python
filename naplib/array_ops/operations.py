@@ -1,5 +1,90 @@
 import numpy as np
 
+from naplib import logger
+from naplib.segmentation import get_label_change_points
+
+def resample_categorical(x, num):
+    """
+    Resample categorical data (i.e. integers) to a new size
+    
+    Parameters
+    ----------
+    x : np.ndarray
+        Array to be resampled. Either shape (time,) or shape (time, features).
+        Will resample along axis=0. Each feature is resampled independently. 
+    num : int
+        Number of desired samples. Output will be of shape (``num``, features)
+    
+    Returns
+    -------
+    resamp_x : np.ndarray
+        Resampled data. Length = ``num``
+    
+    Examples
+    --------
+    >>> from naplib.array_ops import resample_categorical
+    >>> import numpy as np
+    >>> # array of length 16 containing categorical values
+    >>> x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
+    >>> resample_categorical(x, num=8)
+    array([1., 1., 2., 3., 4., 4., 5., 5.])
+    >>> resample_categorical(x, num=20)
+    array([1., 1., 1., 1., 1., 2., 2., 2., 3., 3., 4., 4., 4., 4., 4., 5., 5.,
+       5., 5., 5.])
+    """
+    if x.ndim > 2:
+        raise ValueError(f'x must be at most 2D but got x of shape {x.shape}')
+    if x.ndim == 2:
+        resamp_x = []
+        for col in x.T:
+            resamp_x.append(_resample_1d_categorical(col, num))
+        resamp_x = np.vstack(resamp_x).T
+    else:
+        resamp_x = _resample_1d_categorical(x, num)
+
+    return resamp_x
+
+
+def _resample_1d_categorical(x, num):
+    
+    length = len(x)
+    fs_ratio = float(num) / length
+    
+    locs, labs, prior_labs = get_label_change_points(x)
+
+    output = np.nan * np.empty((num,1))
+    output[0] = x[0]
+
+    for loc, lab in zip(locs, labs):
+        output[round(loc*fs_ratio)] = lab
+
+    output = _np_fill(_forward_fill(output).squeeze(), fill_value=0)
+    
+    # check that the output didn't get rid of any sections
+    locs2, labs2, prior_labs2 = get_label_change_points(output)
+    if len(locs)!=len(locs2) or not np.allclose(labs, labs2):
+        logger.warning(f'New labels are not equivalent to the old labels. This could be caused by '\
+                       f'there being too few samples of a certain category label, because '\
+                       f'the new sampling rate is too low to capture the rapid category changes.')
+    
+    return output
+    
+
+def _forward_fill(arr):
+    'https://stackoverflow.com/questions/41190852/most-efficient-way-to-forward-fill-nan-values-in-numpy-array'
+    arr = arr.T
+    mask = np.isnan(arr)
+    idx = np.where(~mask,np.arange(mask.shape[1]),0)
+    np.maximum.accumulate(idx,axis=1, out=idx)
+    out = arr[np.arange(idx.shape[0])[:,None], idx]
+    return out
+
+
+def _np_fill(arr, fill_value=0):
+    arr[np.isnan(arr)] = fill_value
+    return arr
+
+
 def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_size):
     '''
     Vectorized method to extract sub-windows of an array.
@@ -13,6 +98,7 @@ def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_s
         np.expand_dims(np.arange(max_time + 1), 0).T
     )
     return arr[sub_windows]
+
 
 def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, fill_value=0):
     '''
@@ -93,6 +179,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
             raise ValueError(f'window_key_idx must be an integer from 0 to window_len-1, but got {window_key_idx}')
     
     return _extract_windows_vectorized(arr, window_len-2, arr.shape[0]-window_len, window_len)
+
 
 def concat_apply(data_list, function, axis=0, function_kwargs=None):
     '''
