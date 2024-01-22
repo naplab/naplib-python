@@ -1,7 +1,7 @@
 import numpy as np
 
-from naplib import logger
-from naplib.segmentation import get_label_change_points
+from .. import logger
+from ..segmentation import get_label_change_points
 
 def resample_categorical(x, num):
     """
@@ -26,12 +26,13 @@ def resample_categorical(x, num):
     >>> import numpy as np
     >>> # array of length 16 containing categorical values
     >>> x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
-    >>> resample_categorical(x, num=8)
+    >>> resample_categorical(x, num=8) # downsample
     array([1., 1., 2., 3., 4., 4., 5., 5.])
-    >>> resample_categorical(x, num=20)
+    >>> resample_categorical(x, num=20) # upsample
     array([1., 1., 1., 1., 1., 2., 2., 2., 3., 3., 4., 4., 4., 4., 4., 5., 5.,
        5., 5., 5.])
     """
+    
     if x.ndim > 2:
         raise ValueError(f'x must be at most 2D but got x of shape {x.shape}')
     if x.ndim == 2:
@@ -40,11 +41,12 @@ def resample_categorical(x, num):
             resamp_x.append(_resample_1d_categorical(col, num))
         resamp_x = np.vstack(resamp_x).T
     else:
-        resamp_x = _resample_1d_categorical(x, num)
+        resamp_x = _resample_1d_categorical_simple(x, num)
 
     return resamp_x
-
-
+            
+            
+            
 def _resample_1d_categorical(x, num):
     
     length = len(x)
@@ -52,37 +54,87 @@ def _resample_1d_categorical(x, num):
     
     locs, labs, prior_labs = get_label_change_points(x)
 
-    output = np.nan * np.empty((num,1))
-    output[0] = x[0]
+    output = np.nan * np.empty((num,))
+    output[0:round(locs[0]*fs_ratio)] = x[0]
 
-    for loc, lab in zip(locs, labs):
-        output[round(loc*fs_ratio)] = lab
-
-    output = _np_fill(_forward_fill(output).squeeze(), fill_value=0)
-    
+    for loc, loc_end, lab in zip(locs[:-1], locs[1:], labs[:-1]):
+        output[round(loc*fs_ratio):round(loc_end*fs_ratio)] = lab
+    output[round(locs[-1]*fs_ratio):] = labs[-1]
+                
     # check that the output didn't get rid of any sections
     locs2, labs2, prior_labs2 = get_label_change_points(output)
     if len(locs)!=len(locs2) or not np.allclose(labs, labs2):
         logger.warning(f'New labels are not equivalent to the old labels. This could be caused by '\
                        f'there being too few samples of a certain category label, because '\
                        f'the new sampling rate is too low to capture the rapid category changes.')
-    
+
     return output
+
+
+def forward_fill(arr, axis=0):
+    """
+    Forward fill a numpy array along an axis
+    (removing nan's in the process).
     
-
-def _forward_fill(arr):
-    'https://stackoverflow.com/questions/41190852/most-efficient-way-to-forward-fill-nan-values-in-numpy-array'
-    arr = arr.T
+    Note, only 2-dimensional inputs are currently supported.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to forward fill.
+    axis : int, default=0
+        Axis over which to forward fill.
+    
+    Returns
+    -------
+    filled_arr : np.ndarray
+        Array which is now forward filled
+    
+    Examples
+    --------
+    >>> from naplib.array_ops import forward_fill
+    >>> arr = np.nan*np.ones((5,4))
+    >>> arr[0,1] = 1
+    >>> arr[2,0] = 2
+    >>> arr[2,2] = 3
+    >>> arr
+    array([[nan,  1., nan, nan],
+           [nan, nan, nan, nan],
+           [ 2., nan,  3., nan],
+           [nan, nan, nan, nan],
+           [nan, nan, nan, nan]])
+    >>> # forward fill along axis=0
+    >>> forward_fill(arr, axis=0)
+    array([[nan,  1., nan, nan],
+           [nan,  1., nan, nan],
+           [ 2.,  1.,  3., nan],
+           [ 2.,  1.,  3., nan],
+           [ 2.,  1.,  3., nan]])
+    >>> # forward fill along axis=1
+    >>> forward_fill(arr, axis=1)
+    array([[nan,  1.,  1.,  1.],
+           [nan, nan, nan, nan],
+           [ 2.,  2.,  3.,  3.],
+           [nan, nan, nan, nan],
+           [nan, nan, nan, nan]])
+    """
+    if arr.ndim > 2:
+        raise ValueError(f'Forward fill currently only supported for 1D or 2D inputs but got input with {arr.ndim} dimensions')
+    elif arr.ndim == 1:
+        arr = arr[:,np.newaxis]
+        flag_1d = True
+        if axis != 0:
+            raise ValueError(f'Got 1D input but axis is not 0 for forward fill.')
+    else:
+        flag_1d = False
+    arr = np.swapaxes(arr, 1, axis)
     mask = np.isnan(arr)
-    idx = np.where(~mask,np.arange(mask.shape[1]),0)
-    np.maximum.accumulate(idx,axis=1, out=idx)
-    out = arr[np.arange(idx.shape[0])[:,None], idx]
-    return out
-
-
-def _np_fill(arr, fill_value=0):
-    arr[np.isnan(arr)] = fill_value
-    return arr
+    idx = np.where(~mask, np.arange(mask.shape[1]), 0)
+    np.maximum.accumulate(idx, axis=1, out=idx)
+    out = arr[np.arange(idx.shape[0])[:, None], idx]
+    if flag_1d:
+        return np.swapaxes(out, 1, axis).squeeze()
+    return np.swapaxes(out, 1, axis)
 
 
 def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_size):
