@@ -127,6 +127,9 @@ def forward_fill(arr, axis=0):
             raise ValueError(f'Got 1D input but axis is not 0 for forward fill.')
     else:
         flag_1d = False
+    if axis > 1:
+        raise ValueError(f'Axis must be either 0 or 1 but got {axis}')
+
     arr = np.swapaxes(arr, 1, axis)
     mask = np.isnan(arr)
     idx = np.where(~mask, np.arange(mask.shape[1]), 0)
