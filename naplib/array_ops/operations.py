@@ -41,7 +41,7 @@ def resample_categorical(x, num):
             resamp_x.append(_resample_1d_categorical(col, num))
         resamp_x = np.vstack(resamp_x).T
     else:
-        resamp_x = _resample_1d_categorical_simple(x, num)
+        resamp_x = _resample_1d_categorical(x, num)
 
     return resamp_x
             
