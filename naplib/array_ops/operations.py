@@ -3,13 +3,13 @@ import numpy as np
 from .. import logger
 from ..segmentation import get_label_change_points
 
-def resample_categorical(x, num):
+def resample_categorical(arr, num):
     """
     Resample categorical data (i.e. integers) to a new size
     
     Parameters
     ----------
-    x : np.ndarray
+    arr : np.ndarray
         Array to be resampled. Either shape (time,) or shape (time, features).
         Will resample along axis=0. Each feature is resampled independently. 
     num : int
@@ -17,7 +17,7 @@ def resample_categorical(x, num):
     
     Returns
     -------
-    resamp_x : np.ndarray
+    resamp_arr : np.ndarray
         Resampled data. Length = ``num``
     
     Examples
@@ -33,17 +33,17 @@ def resample_categorical(x, num):
        5., 5., 5.])
     """
     
-    if x.ndim > 2:
+    if arr.ndim > 2:
         raise ValueError(f'x must be at most 2D but got x of shape {x.shape}')
-    if x.ndim == 2:
-        resamp_x = []
-        for col in x.T:
-            resamp_x.append(_resample_1d_categorical(col, num))
-        resamp_x = np.vstack(resamp_x).T
+    if arr.ndim == 2:
+        resamp_arr = []
+        for col in arr.T:
+            resamp_arr.append(_resample_1d_categorical(col, num))
+        resamp_arr = np.vstack(resamp_arr).T
     else:
-        resamp_x = _resample_1d_categorical(x, num)
+        resamp_arr = _resample_1d_categorical(arr, num)
 
-    return resamp_x
+    return resamp_arr
             
             
             
