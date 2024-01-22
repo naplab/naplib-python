@@ -8,11 +8,11 @@ def test_forward_fill_axis0():
   arr[0,1] = 1
   arr[2,0] = 2
   arr[2,2] = 3
-  expected = np.array([[nan,  1., nan, nan],
-                       [nan,  1., nan, nan],
-                       [ 2.,  1.,  3., nan],
-                       [ 2.,  1.,  3., nan],
-                       [ 2.,  1.,  3., nan]])
+  expected = np.array([[np.nan,  1., np.nan, np.nan],
+                       [np.nan,  1., np.nan, np.nan],
+                       [ 2.,  1.,  3., np.nan],
+                       [ 2.,  1.,  3., np.nan],
+                       [ 2.,  1.,  3., np.nan]])
   output = forward_fill(arr, axis=0)
   assert np.allclose(output, expected)
 
@@ -21,11 +21,11 @@ def test_forward_fill_axis1():
   arr[0,1] = 1
   arr[2,0] = 2
   arr[2,2] = 3
-  expected = np.array([[nan,  1.,  1.,  1.],
-                       [nan, nan, nan, nan],
+  expected = np.array([[np.nan,  1.,  1.,  1.],
+                       [np.nan, np.nan, np.nan, np.nan],
                        [ 2.,  2.,  3.,  3.],
-                       [nan, nan, nan, nan],
-                       [nan, nan, nan, nan]])
+                       [np.nan, np.nan, np.nan, np.nan],
+                       [np.nan, np.nan, np.nan, np.nan]])
   output = forward_fill(arr, axis=1)
   assert np.allclose(output, expected)
 
