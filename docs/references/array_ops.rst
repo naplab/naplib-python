@@ -17,3 +17,8 @@ Resample Categorical Data
 -------------------------
 
 .. autofunction:: resample_categorical
+
+Forward Fill
+------------
+
+.. autofunction:: forward_fill
