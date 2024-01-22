@@ -34,7 +34,7 @@ def resample_categorical(arr, num):
     """
     
     if arr.ndim > 2:
-        raise ValueError(f'x must be at most 2D but got x of shape {x.shape}')
+        raise ValueError(f'arr must be at most 2D but got arr of shape {arr.shape}')
     if arr.ndim == 2:
         resamp_arr = []
         for col in arr.T:
