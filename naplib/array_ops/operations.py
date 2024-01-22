@@ -1,5 +1,145 @@
 import numpy as np
 
+from .. import logger
+from ..segmentation import get_label_change_points
+
+def resample_categorical(arr, num):
+    """
+    Resample categorical data (i.e. integers) to a new size
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to be resampled. Either shape (time,) or shape (time, features).
+        Will resample along axis=0. Each feature is resampled independently. 
+    num : int
+        Number of desired samples. Output will be of shape (``num``, features)
+    
+    Returns
+    -------
+    resamp_arr : np.ndarray
+        Resampled data. Length = ``num``
+    
+    Examples
+    --------
+    >>> from naplib.array_ops import resample_categorical
+    >>> import numpy as np
+    >>> # array of length 16 containing categorical values
+    >>> x = np.array([1,1,1,1,2,2,3,3,4,4,4,4,5,5,5,5])
+    >>> resample_categorical(x, num=8) # downsample
+    array([1., 1., 2., 3., 4., 4., 5., 5.])
+    >>> resample_categorical(x, num=20) # upsample
+    array([1., 1., 1., 1., 1., 2., 2., 2., 3., 3., 4., 4., 4., 4., 4., 5., 5.,
+       5., 5., 5.])
+    """
+    
+    if arr.ndim > 2:
+        raise ValueError(f'arr must be at most 2D but got arr of shape {arr.shape}')
+    if arr.ndim == 2:
+        resamp_arr = []
+        for col in arr.T:
+            resamp_arr.append(_resample_1d_categorical(col, num))
+        resamp_arr = np.vstack(resamp_arr).T
+    else:
+        resamp_arr = _resample_1d_categorical(arr, num)
+
+    return resamp_arr
+            
+            
+            
+def _resample_1d_categorical(x, num):
+    
+    length = len(x)
+    fs_ratio = float(num) / length
+    
+    locs, labs, prior_labs = get_label_change_points(x)
+
+    output = np.nan * np.empty((num,))
+    output[0:round(locs[0]*fs_ratio)] = x[0]
+
+    for loc, loc_end, lab in zip(locs[:-1], locs[1:], labs[:-1]):
+        output[round(loc*fs_ratio):round(loc_end*fs_ratio)] = lab
+    output[round(locs[-1]*fs_ratio):] = labs[-1]
+                
+    # check that the output didn't get rid of any sections
+    locs2, labs2, prior_labs2 = get_label_change_points(output)
+    if len(locs)!=len(locs2) or not np.allclose(labs, labs2):
+        logger.warning(f'New labels are not equivalent to the old labels. This could be caused by '\
+                       f'there being too few samples of a certain category label, because '\
+                       f'the new sampling rate is too low to capture the rapid category changes.')
+
+    return output
+
+
+def forward_fill(arr, axis=0):
+    """
+    Forward fill a numpy array along an axis
+    (removing nan's in the process).
+    
+    Note, only 2-dimensional inputs are currently supported.
+    
+    Parameters
+    ----------
+    arr : np.ndarray
+        Array to forward fill.
+    axis : int, default=0
+        Axis over which to forward fill.
+    
+    Returns
+    -------
+    filled_arr : np.ndarray
+        Array which is now forward filled
+    
+    Examples
+    --------
+    >>> from naplib.array_ops import forward_fill
+    >>> arr = np.nan*np.ones((5,4))
+    >>> arr[0,1] = 1
+    >>> arr[2,0] = 2
+    >>> arr[2,2] = 3
+    >>> arr
+    array([[nan,  1., nan, nan],
+           [nan, nan, nan, nan],
+           [ 2., nan,  3., nan],
+           [nan, nan, nan, nan],
+           [nan, nan, nan, nan]])
+    >>> # forward fill along axis=0
+    >>> forward_fill(arr, axis=0)
+    array([[nan,  1., nan, nan],
+           [nan,  1., nan, nan],
+           [ 2.,  1.,  3., nan],
+           [ 2.,  1.,  3., nan],
+           [ 2.,  1.,  3., nan]])
+    >>> # forward fill along axis=1
+    >>> forward_fill(arr, axis=1)
+    array([[nan,  1.,  1.,  1.],
+           [nan, nan, nan, nan],
+           [ 2.,  2.,  3.,  3.],
+           [nan, nan, nan, nan],
+           [nan, nan, nan, nan]])
+    """
+    if arr.ndim > 2:
+        raise ValueError(f'Forward fill currently only supported for 1D or 2D inputs but got input with {arr.ndim} dimensions')
+    elif arr.ndim == 1:
+        arr = arr[:,np.newaxis]
+        flag_1d = True
+        if axis != 0:
+            raise ValueError(f'Got 1D input but axis is not 0 for forward fill.')
+    else:
+        flag_1d = False
+    if axis > 1:
+        raise ValueError(f'Axis must be either 0 or 1 but got {axis}')
+
+    arr = np.swapaxes(arr, 1, axis)
+    mask = np.isnan(arr)
+    idx = np.where(~mask, np.arange(mask.shape[1]), 0)
+    np.maximum.accumulate(idx, axis=1, out=idx)
+    out = arr[np.arange(idx.shape[0])[:, None], idx]
+    if flag_1d:
+        return np.swapaxes(out, 1, axis).squeeze()
+    return np.swapaxes(out, 1, axis)
+
+
 def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_size):
     '''
     Vectorized method to extract sub-windows of an array.
@@ -13,6 +153,7 @@ def _extract_windows_vectorized(arr, clearing_time_index, max_time, sub_window_s
         np.expand_dims(np.arange(max_time + 1), 0).T
     )
     return arr[sub_windows]
+
 
 def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, fill_value=0):
     '''
@@ -93,6 +234,7 @@ def sliding_window(arr, window_len, window_key_idx=0, fill_out_of_bounds=True, f
             raise ValueError(f'window_key_idx must be an integer from 0 to window_len-1, but got {window_key_idx}')
     
     return _extract_windows_vectorized(arr, window_len-2, arr.shape[0]-window_len, window_len)
+
 
 def concat_apply(data_list, function, axis=0, function_kwargs=None):
     '''

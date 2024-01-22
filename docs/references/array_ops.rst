@@ -12,3 +12,13 @@ Concatenate and Apply
 ---------------------
 
 .. autofunction:: concat_apply
+
+Resample Categorical Data
+-------------------------
+
+.. autofunction:: resample_categorical
+
+Forward Fill
+------------
+
+.. autofunction:: forward_fill
