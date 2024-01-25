@@ -57,7 +57,7 @@ setup(
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10"
     ],
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     package_data={'naplib': non_python_files},
     include_package_data=True,
 )
