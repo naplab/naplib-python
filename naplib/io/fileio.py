@@ -7,7 +7,7 @@ import h5py
 from naplib import logger
 from ..data import Data
 
-def import_data(filepath, strict=True, useloadmat=True):
+def import_data(filepath, strict=True, useloadmat=True, varname='out'):
     '''
     Import Data object from MATLAB (.mat) format. This will
     automatically transpose the 'resp' and 'aud' fields
@@ -27,6 +27,8 @@ def import_data(filepath, strict=True, useloadmat=True):
         2) Each trial must contain the exact same set of fields
     useloadmat : boolean, default=True
         If True, use hdf5storage.loadmat, else use custom h5py loader
+    varname : string, default='out'
+        Name of the variable containing the out structure to load.
 
     Returns
     -------
@@ -42,10 +44,17 @@ def import_data(filepath, strict=True, useloadmat=True):
     data = []
     if useloadmat:
         loaded = loadmat(filepath)
-        loaded = loaded['out'].squeeze()
-        fieldnames = loaded[0].dtype.names
+        loaded = loaded[varname]
+        if loaded.ndim > 1:
+            loaded = loaded.squeeze(0)
+            fieldnames = loaded[0].dtype.names
+        else:
+            fieldnames = loaded.squeeze().dtype.names
+            # a single struct, rather than struct array,
+            # was saved originally, so make it an 'array' list
+            loaded = [loaded.squeeze().item()]
 
-        for tt,trial in enumerate(loaded):
+        for tt, trial in enumerate(loaded):
             trial_dict = {}
             for f, t in zip(fieldnames, trial):
                 logger.debug(f'Loading trial #{tt}: {f}')
