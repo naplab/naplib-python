@@ -28,6 +28,11 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 1.4.0
+-------------
+- |Enhancement| : Added the ability to load outstructs from matlab which have different variable names, not just 'out'.
+- |Enhancement| : Improved the `naplib.io.export_data` function to the matlab outstruct by handling cases where fieldnames are strings characters like spaces which are not allowed in matlab struct field names.
+
 Version 1.3.0
 -------------
 - |Feature| : Added the function ``peak_rate`` to ``naplib.features`` which can be used to extract peak rate events from an acoustic stimulus. See documentation for details.
