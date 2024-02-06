@@ -105,6 +105,17 @@ def import_data(filepath, strict=True, useloadmat=True):
     out = Data(data=data, strict=strict)
     return out
 
+def _matlab_valid_fieldnames(fields):
+    '''
+    Convert fieldnames so they are matlab struct compliant (e.g. no spaces, hyphens)
+    '''
+    new_fields = []
+    for field in fields:
+        tmp = field.replace(' ', '_')
+        tmp = tmp.replace('-', '_')
+        new_fields.append(tmp)
+    return new_fields
+
 def export_data(filepath, data, fmt='7.3'):
     '''
     Export a naplib.Data instance to the MATLAB-compatible
@@ -137,7 +148,8 @@ def export_data(filepath, data, fmt='7.3'):
     
     fieldnames = data.fields
 
-    dt = np.dtype([(field, 'O') for field in data.fields])
+    matlab_fieldnames = _matlab_valid_fieldnames(fieldnames)
+    dt = np.dtype([(field, 'O') for field in matlab_fieldnames])
     
     # construct a numpy void array which contains multiple dtypes
     void_data = []
