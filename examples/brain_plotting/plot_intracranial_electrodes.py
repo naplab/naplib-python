@@ -1,7 +1,7 @@
 """
-================================
-Plotting Intracranial Electrodes
-================================
+============================
+Plot Intracranial Electrodes
+============================
 
 This notebook demonstrates calculating anatomical information about
 intracranial electrodes and plotting on the Freesurfer average brain.
