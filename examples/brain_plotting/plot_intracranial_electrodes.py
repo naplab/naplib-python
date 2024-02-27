@@ -26,7 +26,7 @@ mne.datasets.fetch_fsaverage('./fsaverage/')
 
 ###############################################################################
 # Create a brain with the inflated surface for plotting
-brain = Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
 # Specify the coordinates of 30 electrodes in fsaverage space
 coords = np.array([[-47.281147  ,  17.026093  , -21.833099  ],
