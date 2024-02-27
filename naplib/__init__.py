@@ -45,5 +45,5 @@ from .data import Data, join_fields, concat
 from .brain import Brain
 import naplib.naplab
 
-__version__ = "1.4.0"
+__version__ = "2.0.0"
 
