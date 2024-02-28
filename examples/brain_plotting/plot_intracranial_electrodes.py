@@ -65,7 +65,7 @@ isleft = coords[:,0]<0
 ###############################################################################
 # Get anatomical labels for each electrode
 
-electrode_labels = brain.annotate_coords(coords, isleft)
+electrode_labels = brain.annotate_pial_coords(coords, isleft)
 print(electrode_labels)
 
 ###############################################################################
@@ -90,11 +90,11 @@ fig, axes = brain.plot_brain_elecs(coords, isleft, values=dist_from_HG, hemi='lh
 plt.show()
 
 ###############################################################################
-# Plot electrodes with an interactive plotly figure in the pial space so we can
-# see the true electrode locations, not just the nearest surface point
-brain_pial = nl.Brain('pial', subject_dir='./fsaverage/')
+# Plot electrodes with an interactive plotly figure, and color them by their label
 
-fig, axes = brain_pial.plot_brain_elecs(coords, isleft, values=dist_from_HG, view='lateral', backend='plotly')
+colors = ['k' if lab == 'pSTG' else 'r' for lab in electrode_labels]
+brain = Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
 fig.show()
 
 
