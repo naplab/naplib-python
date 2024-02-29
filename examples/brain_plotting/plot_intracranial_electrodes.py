@@ -93,7 +93,7 @@ plt.show()
 # Plot electrodes with an interactive plotly figure, and color them by their label
 
 colors = ['k' if lab == 'pSTG' else 'r' for lab in electrode_labels]
-brain = Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
 fig.show()
 
