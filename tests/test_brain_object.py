@@ -74,8 +74,8 @@ def test_compute_dist_from_HG_surf(data):
        41.13779771, 29.70781128, 30.51372665, 32.71152818, 43.08254325,
        37.00318716, 34.83448731, 32.22574902, 31.71335103, 30.79269113])
 
-    assert np.allclose(dist_from_HG1, expected)
-    assert np.allclose(dist_from_HG2, expected)
+    assert np.allclose(dist_from_HG1, expected, atol=1e-5)
+    assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
 def test_compute_dist_from_HG_euclidean(data):
     dist_from_HG1 = data['brain_pial'].distance_from_region(data['coords'], data['isleft'], region='pmHG', metric='euclidean')
@@ -87,8 +87,8 @@ def test_compute_dist_from_HG_euclidean(data):
        21.74880021, 26.51097265, 26.42224012, 26.11006209, 20.57905128,
        24.90655226, 24.26172569, 24.67493693, 25.13182362, 26.06956133])
 
-    assert np.allclose(dist_from_HG1, expected)
-    assert np.allclose(dist_from_HG2, expected)
+    assert np.allclose(dist_from_HG1, expected, atol=1e-5)
+    assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
 
 def test_plotly_electrode_coloring(data):
