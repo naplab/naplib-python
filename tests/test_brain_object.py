@@ -100,7 +100,7 @@ def test_plotly_electrode_coloring(data):
     fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
-    assert fig.data[0]['facecolor'].shape == (163842,)
+    assert fig.data[0]['facecolor'].shape == (327680, 4)
 
     # check that electrodes were split into hemispheres correctly
     assert 'lh' in fig.data[1]['name']
@@ -119,7 +119,7 @@ def test_plotly_electrode_coloring_by_value(data):
     fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
-    assert fig.data[0]['facecolor'].shape == (163842,)
+    assert fig.data[0]['facecolor'].shape == (327680, 4)
 
     # check elecs are colored correctly for each hemi
     expected_lh = np.asarray([[85,85,85,255] for _ in range(data['isleft'].sum())]) # all black
