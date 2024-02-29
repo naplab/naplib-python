@@ -74,6 +74,8 @@ def test_compute_dist_from_HG_surf(data):
        41.13779771, 29.70781128, 30.51372665, 32.71152818, 43.08254325,
        37.00318716, 34.83448731, 32.22574902, 31.71335103, 30.79269113])
 
+    print(dist_from_HG1-expected)
+    print(dist_from_HG2-expected)
     assert np.allclose(dist_from_HG1, expected, atol=1e-5)
     assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
@@ -87,6 +89,8 @@ def test_compute_dist_from_HG_euclidean(data):
        21.74880021, 26.51097265, 26.42224012, 26.11006209, 20.57905128,
        24.90655226, 24.26172569, 24.67493693, 25.13182362, 26.06956133])
 
+    print(dist_from_HG1-expected)
+    print(dist_from_HG2-expected)
     assert np.allclose(dist_from_HG1, expected, atol=1e-5)
     assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
@@ -94,7 +98,7 @@ def test_compute_dist_from_HG_euclidean(data):
 def test_plotly_electrode_coloring(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
     fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', backend='plotly')
-    assert len(fig,data) == 4
+    assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (163842,)
 
@@ -113,7 +117,7 @@ def test_plotly_electrode_coloring(data):
 def test_plotly_electrode_coloring_by_value(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
     fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', backend='plotly')
-    assert len(fig,data) == 4
+    assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (163842,)
 
