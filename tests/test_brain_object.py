@@ -104,9 +104,9 @@ def test_plotly_electrode_coloring(data):
 
     # check that electrodes were split into hemispheres correctly
     assert 'lh' in fig.data[1]['name']
-    assert fig.data[1]['marker']['color'].shape == data['isleft'].sum()
+    assert fig.data[1]['marker']['color'].shape[0] == data['isleft'].sum()
     assert 'rh' in fig.data[3]['name']
-    assert fig.data[1]['marker']['color'].shape == (len(data['isleft']) - data['isleft'].sum())
+    assert fig.data[1]['marker']['color'].shape[0] == (len(data['isleft']) - data['isleft'].sum())
 
     # check elecs are colored correctly for each hemi
     expected_lh = np.asarray([[0,0,0,255] for _ in range(data['isleft'].sum())]) # all black
@@ -123,7 +123,7 @@ def test_plotly_electrode_coloring_by_value(data):
 
     # check elecs are colored correctly for each hemi
     expected_lh = np.asarray([[85,85,85,255] for _ in range(data['isleft'].sum())]) # all black
-    expected_rh = np.asarray([[170.170,170,255] for _ in range(len(data['isleft']) - data['isleft'].sum())]) # all red
+    expected_rh = np.asarray([[170,170,170,255] for _ in range(len(data['isleft']) - data['isleft'].sum())]) # all red
     assert np.allclose(expected_lh, fig.data[1]['marker']['color'])
     assert np.allclose(expected_rh, fig.data[3]['marker']['color'])
 
