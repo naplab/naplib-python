@@ -65,7 +65,7 @@ isleft = coords[:,0]<0
 ###############################################################################
 # Get anatomical labels for each electrode
 
-anatomical_labels = brain.annotate_pial_coords(coords, isleft)
+anatomical_labels = brain.annotate_coords(coords, isleft)
 print(anatomical_labels)
 
 ###############################################################################
