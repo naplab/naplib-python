@@ -25,8 +25,8 @@ os.makedirs('./fsaverage', exist_ok=True)
 mne.datasets.fetch_fsaverage('./fsaverage/')
 
 ###############################################################################
-# Create a brain with the inflated surface for plotting
-brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+# Create a brain with the pial surface for computing metrics
+brain = nl.Brain('pial', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
 # Specify the coordinates of 30 electrodes in fsaverage space
 coords = np.array([[-47.281147  ,  17.026093  , -21.833099  ],
@@ -65,22 +65,19 @@ isleft = coords[:,0]<0
 ###############################################################################
 # Get anatomical labels for each electrode
 
-electrode_labels = brain.annotate_pial_coords(coords, isleft)
-print(electrode_labels)
+anatomical_labels = brain.annotate_pial_coords(coords, isleft)
+print(anatomical_labels)
 
 ###############################################################################
 # Compute the distance of each electrode from posteromedial HG along the
 # cortical surface
 
-dist_from_HG = brain.distance_from_region(coords, isleft, region='pmHG')
+dist_from_HG = brain.distance_from_region(coords, isleft, region='pmHG', metric='surf')
 print(dist_from_HG)
 
 ###############################################################################
-# Compute the distance of each electrode from posteromedial HG along the
-# cortical surface
-
-dist_from_HG = brain.distance_from_region(coords, isleft, region='pmHG')
-print(dist_from_HG)
+# Create a brain with the inflated surface for plotting
+brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
 ###############################################################################
 # Plot electrode locations with matplotlib, and color the electrodes
@@ -92,8 +89,7 @@ plt.show()
 ###############################################################################
 # Plot electrodes with an interactive plotly figure, and color them by their label
 
-colors = ['k' if lab == 'pSTG' else 'r' for lab in electrode_labels]
-brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+colors = ['k' if lab == 'pSTG' else 'r' for lab in anatomical_labels]
 fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
 fig.show()
 

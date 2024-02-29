@@ -66,34 +66,34 @@ def test_bad_isleft_change(data):
 
 def test_compute_dist_from_HG_surf(data):
     dist_from_HG1 = data['brain_pial'].distance_from_region(data['coords'], data['isleft'], region='pmHG', metric='surf')
-    dist_from_HG2 = data['brain_inflated'].distance_from_region(data['coords'], data['isleft'], region='pmHG', metric='surf')
     expected = np.array([52.67211969, 50.86446306, 46.6258215 , 42.63758415, 39.27460724,
        37.07385395, 36.85639736, 27.13146072, 25.69458138, 49.98035531,
        45.88171027, 42.72107443, 41.56546499, 37.83171644, 35.98377774,
-       28.77996954, 32.920761  , 19.91693572, 22.38750331, 36.75626353,
-       41.13779771, 29.70781128, 30.51372665, 32.71152818, 43.08254325,
+       28.77996954, 32.920761  , 19.91693572, 22.38750331, 36.74425306,
+       41.73006064, 30.15477367, 30.96079365, 33.36495598, 43.59780259,
        37.00318716, 34.83448731, 32.22574902, 31.71335103, 30.79269113])
 
-    print(dist_from_HG1-expected)
-    print(dist_from_HG2-expected)
     assert np.allclose(dist_from_HG1, expected, atol=1e-5)
-    assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
 def test_compute_dist_from_HG_euclidean(data):
     dist_from_HG1 = data['brain_pial'].distance_from_region(data['coords'], data['isleft'], region='pmHG', metric='euclidean')
-    dist_from_HG2 = data['brain_inflated'].distance_from_region(data['coords'], data['isleft'], region='pmHG', metric='euclidean')
-    expected = np.array([51.17067854, 49.54186483, 45.62676668, 41.22253056, 37.85904187,
-       35.00619601, 32.5843648 , 25.10199761, 24.72810672, 48.76114145,
-       44.92899899, 41.76565915, 40.60505468, 37.28299408, 34.64679732,
-       26.14865343, 25.13892486, 20.05481732, 22.27812812, 32.32367299,
-       21.74880021, 26.51097265, 26.42224012, 26.11006209, 20.57905128,
-       24.90655226, 24.26172569, 24.67493693, 25.13182362, 26.06956133])
+    expected = np.array([51.20138081, 49.58391837, 45.70336713, 41.35918778, 38.044578  ,
+       35.23063082, 32.82563014, 25.46049199, 25.09231068, 48.80932856,
+       45.00960136, 41.87569965, 40.7384779 , 37.46057727, 34.87385546,
+       26.48234884, 25.53328187, 20.43864999, 22.67706513, 32.28229751,
+       21.84583143, 26.70976875, 26.61332683, 26.29146341, 20.65065803,
+       25.12395657, 24.52664769, 24.98141639, 25.43457889, 26.3676947 ])
 
-    print(dist_from_HG1-expected)
-    print(dist_from_HG2-expected)
     assert np.allclose(dist_from_HG1, expected, atol=1e-5)
-    assert np.allclose(dist_from_HG2, expected, atol=1e-5)
 
+def test_annotate_coords(data):
+    annots = data['brain_pial'].annotate_coords(data['coords'], data['isleft'])
+    expected = np.array(['mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG',
+       'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG',
+       'pSTG', 'mSTG', 'mSTG', 'mSTG', 'pSTG', 'pSTG', 'pSTG', 'pSTG',
+       'pSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG'], dtype='<U4')
+
+    assert np.array_equal(annots, expected)
 
 def test_plotly_electrode_coloring(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]

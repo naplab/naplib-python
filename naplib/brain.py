@@ -866,17 +866,16 @@ class Brain:
             labels = np.array([self.num2label[label] for label in labels])
         return labels
     
-    def annotate_pial_coords(self, coords, isleft, distance_cutoff=10, is_surf=None, text=True):
+    def annotate_coords(self, coords, isleft, distance_cutoff=10, is_surf=None, text=True):
         """
-        Get labels (like pmHG, IFG, etc) for coordinates in pial coordinate space.
-
-        Note, no matter what the `surf_type` of this brain is, the coordinates are assumed to be in
-        pial space so it will use the pial surface to compute distances.
+        Get labels (like pmHG, IFG, etc) for coordinates. Note, the coordinates should match the
+        `surf_type` of this brain, otherwise finding nearest surface points to each coordinate in order
+        to label it may be inaccurate.
 
         Parameters
         ----------
         coords : np.ndarray
-            Array of coordinates in pial space for this brain's subject_id, shape (num_elecs, 3).
+            Array of coordinates, shape (num_elecs, 3).
         isleft : np.ndarray
             Boolean array whether each electrode belongs to the left hemisphere, shape (num_elecs,).
         distance_cutoff : float, default=10
@@ -894,7 +893,7 @@ class Brain:
             Array of labels, either as strings or ints.
         
         """
-        verts, dists = get_nearest_vert_index(coords, isleft, self.lh.surf_pial, self.rh.surf_pial, verbose=False)
+        verts, dists = get_nearest_vert_index(coords, isleft, self.lh.surf, self.rh.surf, verbose=False)
         labels = self.annotate(verts, isleft, is_surf=is_surf, text=text)
         labels = np.asarray([lab if dist < distance_cutoff else None for lab, dist in zip(labels, dists)])
         return labels
@@ -902,7 +901,8 @@ class Brain:
     def distance_from_region(self, coords, isleft, region='pmHG', metric='surf'):
         """
         Get distance from a certain region for each electrode's coordinates. Can compute
-        distance along the cortical surface or as euclidean distance.
+        distance along the cortical surface or as euclidean distance. For proper results, assuming
+        coordinates are in pial space, the brain must also be in pial space.
 
         Parameters
         ----------
@@ -928,8 +928,8 @@ class Brain:
                              f" brain.split_hg(), or a similar method. For example, Te1.1 is only"
                              f" available after calling brain.split_hg(method='te1x')")
         
-        surf_lh = self.lh.surf_pial
-        surf_rh = self.rh.surf_pial
+        surf_lh = self.lh.surf
+        surf_rh = self.rh.surf
         
         # see which vertices correspond to this region in each hemi
         which_verts_this_region_lh = self.lh.labels == region_label_num
