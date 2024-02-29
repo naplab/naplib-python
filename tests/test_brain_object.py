@@ -106,7 +106,7 @@ def test_plotly_electrode_coloring(data):
     assert 'lh' in fig.data[1]['name']
     assert fig.data[1]['marker']['color'].shape[0] == data['isleft'].sum()
     assert 'rh' in fig.data[3]['name']
-    assert fig.data[1]['marker']['color'].shape[0] == (len(data['isleft']) - data['isleft'].sum())
+    assert fig.data[3]['marker']['color'].shape[0] == (len(data['isleft']) - data['isleft'].sum())
 
     # check elecs are colored correctly for each hemi
     expected_lh = np.asarray([[0,0,0,255] for _ in range(data['isleft'].sum())]) # all black
