@@ -56,7 +56,7 @@ def data():
 
 def test_bad_isleft_change(data):
     bad_isleft = data['isleft'].copy()
-    bad_isleft[:4] = True
+    bad_isleft[:4] = False
 
     correct_dists = data['brain_pial'].distance_from_region(data['coords'], data['isleft'], region='pmHG')
     bad_dists = data['brain_pial'].distance_from_region(data['coords'], bad_isleft, region='pmHG')
