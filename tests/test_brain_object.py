@@ -100,10 +100,14 @@ def test_remote_tts(data):
     data['brain_inflated'].remove_tts(method='split')
     assert 'TTS' not in data['brain_inflated'].label_names
 
-def test_mpl_hemis(data):
+def test_mpl_both_hemis(data):
 
     fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
-    assert len(axes) == 2
+    assert len(axes) == 3 # includes the colorbar
+    plt.close()
+
+    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], hemi='both', backend='mpl')
+    assert len(axes) == 2 # no colorbar
     plt.close()
 
 def test_mpl_one_hemi(data):

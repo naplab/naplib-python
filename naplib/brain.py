@@ -1446,8 +1446,9 @@ class Brain:
                         else:
                             elec_colors = np.asarray([mpl.colors.to_rgba(cc, alph) for cc, alph in zip(colors, elec_alpha)])
                     elif isinstance(colors, np.ndarray):
-                        elec_colors = colors[elec_isleft]
-                        elec_colors[:,3] = elec_alpha
+                        elec_colors = colors.copy()
+                        if elec_colors.shape[1] > 3:
+                            elec_colors[:,3] = elec_alpha
                     else:
                         raise TypeError('no values given, and colors could not be interpreted as either numpy array, single color string, or list of strings')
                         
