@@ -1,10 +1,9 @@
 import pytest
 import numpy as np
 import copy
-
 import os
 import mne
-
+import matplotlib.pyplot as plt
 
 from naplib import Brain
 
@@ -95,9 +94,31 @@ def test_annotate_coords(data):
 
     assert np.array_equal(annots, expected)
 
+def test_remote_tts(data):
+    old_labels = data['brain_pial'].label_names
+    assert 'TTS' in old_labels
+    data['brain_inflated'].remove_tts(method='split')
+    assert 'TTS' not in data['brain_inflated'].label_names
+
+def test_mpl_hemis(data):
+
+    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', backend='mpl')
+    assert len(axes) == 2
+    plt.close()
+
+def test_mpl_one_hemi(data):
+
+    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='lh', view='frontal', backend='mpl')
+    assert len(axes) == 1
+    plt.close()
+
+    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='rh', backend='mpl')
+    assert len(axes) == 1
+    plt.close()
+
 def test_plotly_electrode_coloring(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
-    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', backend='plotly')
+    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', view='top', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (327680, 4)
@@ -116,7 +137,7 @@ def test_plotly_electrode_coloring(data):
 
 def test_plotly_electrode_coloring_by_value(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
-    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', backend='plotly')
+    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', view='medial', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (327680, 4)

@@ -87,10 +87,15 @@ fig, axes = brain.plot_brain_elecs(coords, isleft, values=dist_from_HG, hemi='lh
 plt.show()
 
 ###############################################################################
-# Plot electrodes with an interactive plotly figure, and color them by their label
+# Plot electrodes with an interactive plotly figure, and instead of coloring them by a value, we
+# will color them by a custom color for each electrode.
+# Some common use-cases for this might be to color electrodes based on the identity of the subject
+# they came from when pooling electrodes, or by a categorical variable. In this case, we color
+# them by the anatomical labels they were assigned to (black for posterior STG and red for middle STG)
 
 colors = ['k' if lab == 'pSTG' else 'r' for lab in anatomical_labels]
 fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
-fig.show()
+fig.write_html("interactive_brain_plot.html") # save as an interactive html plot
+fig.show() # show the interactive plot in the notebook
 
 

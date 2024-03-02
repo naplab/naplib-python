@@ -1084,8 +1084,6 @@ class Brain:
         view='lateral',
         snap_to_surface=None,
         elec_size=4,
-        show_overlay=False,
-        overlay_alpha=0.6,
         cortex='classic',
         cmap='cool',
         alpha=1,
