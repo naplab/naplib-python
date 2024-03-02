@@ -102,12 +102,12 @@ def test_remote_tts(data):
 
 def test_mpl_hemis(data):
 
-    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', backend='mpl')
+    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
     assert len(axes) == 2
     plt.close()
 
 def test_mpl_one_hemi(data):
-
+    colors = np.random.rand(len(data['coords']), 4)
     fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='lh', view='frontal', backend='mpl')
     assert len(axes) == 1
     plt.close()
