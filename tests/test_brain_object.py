@@ -120,9 +120,11 @@ def test_split_hg():
 
 def test_paint_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
-    assert np.array_equal(np.unique(brain.overlay), np.array([0]))
+    assert np.array_equal(np.unique(brain1.lh.overlay), np.array([0]))
+    assert np.array_equal(np.unique(brain1.rh.overlay), np.array([0]))
     brain1.paint_overlay('STG', value=1)
-    assert np.array_equal(np.unique(brain.overlay), np.array([0,1]))
+    assert np.array_equal(np.unique(brain1.lh.overlay), np.array([0,1]))
+    assert np.array_equal(np.unique(brain1.rh.overlay), np.array([0,1]))
 
 def test_mark_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
@@ -131,7 +133,8 @@ def test_mark_overlay(data):
     assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t1.rh.overlay[:5])
     assert np.allclose(t1.lh.overlay.sum(), 4305.875)
 
-    t2 = brain1.mark_overlay(np.arange(3), np.array([True, True, False]), inner_radius=10, taper=False)
+    brain2 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
+    t2 = brain2.mark_overlay(np.arange(3), np.array([True, True, False]), inner_radius=10, taper=False)
     assert np.array_equal(np.array([1., 1., 0., 0., 0.]), t2.lh.overlay[:5])
     assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t2.rh.overlay[:5])
     assert np.allclose(t2.lh.overlay.sum(), 14314.0)
