@@ -100,6 +100,43 @@ def test_remote_tts(data):
     data['brain_inflated'].remove_tts(method='split')
     assert 'TTS' not in data['brain_inflated'].label_names
 
+def test_split_hg():
+
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
+    assert 'pmHG' not in brain1.label_names
+    assert 'alHG' not in brain1.label_names
+
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').split_hg(method='endpoint').simplify_labels()
+    assert 'pmHG' in brain1.label_names
+    assert 'alHG' in brain1.label_names
+
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').split_hg(method='six_four').simplify_labels()
+    assert 'pmHG' in brain1.label_names
+    assert 'alHG' in brain1.label_names
+    
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').split_hg(method='median').simplify_labels()
+    assert 'pmHG' in brain1.label_names
+    assert 'alHG' in brain1.label_names
+
+def test_paint_overlay(data):
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
+    assert np.array_equal(np.unique(brain.overlay), np.array([0]))
+    brain1.paint_overlay('STG', value=1)
+    assert np.array_equal(np.unique(brain.overlay), np.array([0,1]))
+
+def test_mark_overlay(data):
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
+    t1 = brain1.mark_overlay(np.arange(3), np.array([True, True, False]), inner_radius=10, taper=True)
+    assert np.array_equal(np.array([1., 1., 0., 0., 0.]), t1.lh.overlay[:5])
+    assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t1.rh.overlay[:5])
+    assert np.allclose(t1.lh.overlay.sum(), 4305.875)
+
+    t2 = brain1.mark_overlay(np.arange(3), np.array([True, True, False]), inner_radius=10, taper=False)
+    assert np.array_equal(np.array([1., 1., 0., 0., 0.]), t2.lh.overlay[:5])
+    assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t2.rh.overlay[:5])
+    assert np.allclose(t2.lh.overlay.sum(), 14314.0)
+
+
 def test_mpl_both_hemis(data):
 
     fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
@@ -109,6 +146,7 @@ def test_mpl_both_hemis(data):
     fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], hemi='both', backend='mpl')
     assert len(axes) == 2 # no colorbar
     plt.close()
+
 
 def test_mpl_one_hemi(data):
     colors = np.random.rand(len(data['coords']), 4)
