@@ -139,7 +139,6 @@ def test_mark_overlay(data):
     assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t2.rh.overlay[:5])
     assert np.allclose(t2.lh.overlay.sum(), 14314.0)
 
-
 def test_mpl_both_hemis(data):
 
     fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
