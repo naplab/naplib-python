@@ -1264,17 +1264,14 @@ class Brain:
 
         """
         if hemi == "both":
-            surfs = {
-                "lh": (self.lh.surf[0].copy(), self.lh.surf[1].copy()),
-                "rh": (self.rh.surf[0].copy(), self.rh.surf[1].copy()),
-            }
-            sulci = {"lh": self.lh.sulc.copy(), "rh": self.rh.sulc.copy()}
+            surfs = {"lh": self.lh.surf, "rh": self.rh.surf}
+            sulci = {"lh": self.lh.sulc, "rh": self.rh.sulc}
         elif hemi == "lh":
-            surfs = {"lh": (self.lh.surf[0].copy(), self.lh.surf[1].copy())}
-            sulci = {"lh": self.lh.sulc.copy()}
+            surfs = {"lh": self.lh.surf}
+            sulci = {"lh": self.lh.sulc}
         elif hemi == "rh":
-            surfs = {"rh": (self.rh.surf[0].copy(), self.rh.surf[1].copy())}
-            sulci = {"rh": self.rh.sulc.copy()}
+            surfs = {"rh": self.rh.surf}
+            sulci = {"rh": self.rh.sulc}
         else:
             raise ValueError(f"hemi must be either both, lh, or rh, but got {hemi}")
 
