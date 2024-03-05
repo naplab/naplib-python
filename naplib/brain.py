@@ -1172,10 +1172,29 @@ class Brain:
         >>> import plotly.io as pio
         >>> pio.renderers.default = 'iframe' # or possibly 'notebook'
 
-        If plots still don't show in the notebook, you may need to enable certain ipywidgets for displaying plotly in notebooks.
+        If plots still don't show in the notebook, you may need to install nbformat if you do not have it, or
+        you may need to enable certain ipywidgets for displaying plotly in notebooks.
         Regardless, it should still be possible to save the the figure as either HTML or
         static image file. See `plotly examples documentation <https://plotly.com/python/interactive-html-export/>`_ for
         details on saving figures. 
+
+        Examples
+        --------
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
+        >>> import naplib as nl
+        >>> brain = nl.Brain('pial', subject_dir='path/to/subjects/').split_hg('midpoint').split_stg().simplify_labels()
+        >>> coords = np.array([[-47.281147  ,  17.026093  , -21.833099  ],
+                               [-48.273964  ,  16.155487  , -20.162935  ],
+                               [-51.101261  ,  13.711058  , -16.258459  ]])
+        >>> values = np.array([1, 1.5, 3]) # one value per electrode for color
+        >>> # plot with matplotlib
+        >>> fig, axes = brain.plot_brain_elecs(coords, values=values, hemi='lh', view='lateral')
+        >>> plt.show()
+        >>> # plot interactive figure with plotly
+        >>> fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
+        >>> fig.write_html("interactive_brain_plot.html") # save as an interactive html plot
+        >>> fig.show() # show the interactive plot in the notebook
         
         """
         if hemi == 'both':
