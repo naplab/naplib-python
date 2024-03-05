@@ -115,57 +115,6 @@ num2region = {
 region2num = {v: k for k, v in num2region.items()}
 
 
-ROI = (
-    # 'G_and_S_subcentral',
-    "G_front_inf-Opercular",
-    "G_front_inf-Orbital",
-    "G_front_inf-Triangul",
-    # 'G_Ins_lg_and_S_cent_ins',
-    # 'G_insular_short',
-    "G_temp_sup-G_T_transv",
-    "G_temp_sup-Lateral",
-    "G_temp_sup-Plan_polar",
-    "G_temp_sup-Plan_tempo",
-    # 'G_temporal_inf',
-    "G_temporal_middle",
-    # 'Pole_temporal',
-    # 'S_circular_insula_ant',
-    # 'S_circular_insula_inf',
-    # 'S_circular_insula_sup',
-    # 'S_front_inf',
-    # 'S_temporal_inf',
-    # 'S_temporal_sup',
-    "S_temporal_transverse",
-    "O_pmHG",
-    "O_alHG",
-    "O_Te10",
-    "O_Te11",
-    "O_Te12",
-    "O_mSTG",
-    "O_pSTG",
-    "O_IFG",
-)
-ROI_SIMPLE = (
-    "HG",
-    "pmHG",
-    "alHG",
-    "Te1.0",
-    "Te1.1",
-    "Te1.2",
-    "TTS",
-    "PT",
-    "PP",
-    "STG",
-    "MTG",
-    "mSTG",
-    "pSTG",
-    "IFG",
-    "IFG.opr",
-    "IFG.tri",
-    "IFG.orb",
-)
-
-
 class Hemisphere:
     def __init__(
         self,
@@ -386,14 +335,21 @@ class Hemisphere:
 
         return self
 
-    def filter_labels(self, labels=None):
+    def filter_labels(self, labels):
         """
         Returns mask of vertices that are within the union of `labels`.
+
+        Parameters
+        ----------
+        labels : str | list[str]
+            Label(s) of zone(s) to include in the binary mask.
+
+        Returns
+        -------
+        mask : boolean array of shape (n_verts,).
         """
         if isinstance(labels, str):
             labels = (labels,)
-        elif labels is None:
-            labels = ROI_SIMPLE if self.simplified else ROI
 
         mask = np.zeros(self.n_verts, dtype=bool)
         for label in labels:
@@ -402,7 +358,7 @@ class Hemisphere:
 
         return mask
 
-    def zones(self, labels=None, min_alpha=0):
+    def zones(self, labels, min_alpha=0):
         """
         Build zone map of brain where vertices in region-of-interest (union of `labels`), have
         alpha=1, and everywhere else has alpha=`min_alpha`.
@@ -422,8 +378,6 @@ class Hemisphere:
         """
         if isinstance(labels, str):
             labels = (labels,)
-        elif labels is None:
-            labels = ROI_SIMPLE if self.simplified else ROI
 
         verts = np.zeros(self.n_verts, dtype=bool)
         zones = np.zeros(self.n_verts, dtype=int)
