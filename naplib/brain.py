@@ -1342,7 +1342,7 @@ class Brain:
     ):
         colormap_map = dict(
             classic=(dict(colormap="Greys", vmin=-1, vmax=2), None),
-            high_contrast=(dict(colormap="Greys", vmin=-0.2, vmax=1.3)),
+            high_contrast=(dict(colormap="Greys", vmin=-0.2, vmax=1.3), None),
             mid_contrast=(dict(colormap="Greys", vmin=-1.3, vmax=1.3), np.tanh),
             low_contrast=(dict(colormap="Greys", vmin=-4, vmax=4), None),
             grey_binary=(
@@ -1683,15 +1683,6 @@ def find_closest_vertices(surface_coords, point_coords):
     point_coords = np.atleast_2d(point_coords)
     dists = cdist(surface_coords, point_coords)
     return np.argmin(dists, axis=0), np.min(dists, axis=0)
-
-
-def _map_z2color(zval, colormap, vmin, vmax):
-    # map the normalized value zval to a corresponding color in the colormap
-
-    if vmin > vmax:
-        raise ValueError("incorrect relation between vmin and vmax")
-    t = (zval - vmin) / float((vmax - vmin))  # normalize val
-    return colormap(t)
 
 
 def _tri_indices(simplices):
