@@ -1250,6 +1250,10 @@ class Brain:
                 else:
                     brain_alpha = 0.45
 
+        if backend == "mpl":
+            kwargs.setdefault("edgecolors", "none")
+            kwargs.setdefault("depthshade", False)
+
         fig, axes = self._plot_brain_elecs_standalone(
             surfs,
             sulci,
