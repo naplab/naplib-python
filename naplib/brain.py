@@ -1320,40 +1320,6 @@ class Brain:
 
         sulci_cmap_kwargs, sulci_cmap_nonlinearity = colormap_map[cortex]
 
-        # this must be defined within this scope so it can use the graph_objects import
-        def _plotly_trisurf(points3D, simplices, facecolor, opacity=1, name=""):
-            # points3D are coordinates of the triangle vertices
-            # simplices are the simplices that define the triangularization;
-            # simplices  is a numpy array of shape (no_triangles, 3)
-            I, J, K = _tri_indices(simplices)
-
-            triangles = go.Mesh3d(
-                x=points3D[:, 0],
-                y=points3D[:, 1],
-                z=points3D[:, 2],
-                facecolor=facecolor,
-                i=I,
-                j=J,
-                k=K,
-                name=name,
-                opacity=opacity,
-            )
-
-            return triangles
-
-        # this must be defined within this scope so it can use the graph_objects import
-        def _plotly_scatter3d(coords, elec_colors, name=""):
-            marker = go.scatter3d.Marker(color=elec_colors)
-            scatter = go.Scatter3d(
-                x=coords[:, 0],
-                y=coords[:, 1],
-                z=coords[:, 2],
-                mode="markers",
-                marker=marker,
-                name=name,
-            )
-            return scatter
-
         hemi_keys = sorted(list(surfs.keys()))
 
         for k in hemi_keys:
@@ -1461,87 +1427,82 @@ class Brain:
                 colors_sulci[:, -1] = brain_alpha
                 p3dc.set_fc(colors_sulci)
 
-            if elecs is not None:
-                # snap elecs to pial surface
-                if snap_to_surface:
-                    if hemi == "lh":
-                        map_surf = self.lh.surf_pial
-                    else:
-                        map_surf = self.rh.surf_pial
-                    nearest_vert_indices, _ = find_closest_vertices(map_surf[0], elecs)
-                    if backend == "plotly":
-                        coords = offset_verts[nearest_vert_indices]
-                    else:
-                        coords = surfs[hemi][0][nearest_vert_indices]
-                else:
-                    if backend == "plotly":
-                        coords = elecs - vert_x_offset
-                    else:
-                        coords = elecs
+            if elecs is None:
+                continue
 
-                if elec_values is None:
-                    # if no values to map, use given colors
-                    if colors is None:
-                        elec_colors = np.zeros((len(coords), 4))
-                        elec_colors[:, -1] = elec_alpha
-                    elif isinstance(colors, str):
-                        if isinstance(elec_alpha, (float, int)):
-                            elec_colors = np.asarray(
-                                [mpl.colors.to_rgba(colors, elec_alpha)]
-                                * len(elec_isleft)
-                            )
-                        else:
-                            elec_colors = np.asarray(
-                                [
-                                    mpl.colors.to_rgba(colors, alph)
-                                    for alph in elec_alpha
-                                ]
-                            )
-                    elif isinstance(colors, list):
-                        if isinstance(elec_alpha, (float, int)):
-                            elec_colors = np.asarray(
-                                [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
-                            )
-                        else:
-                            elec_colors = np.asarray(
-                                [
-                                    mpl.colors.to_rgba(cc, alph)
-                                    for cc, alph in zip(colors, elec_alpha)
-                                ]
-                            )
-                    elif isinstance(colors, np.ndarray):
-                        elec_colors = colors.copy()
-                        if elec_colors.shape[1] > 3:
-                            elec_colors[:, 3] = elec_alpha
-                    else:
-                        raise TypeError(
-                            "no values given, and colors could not be interpreted as either numpy array, single color string, or list of strings"
-                        )
-
-                else:  # we do have values that we can map
-                    if hemi == "lh":
-                        elec_colors = cmap_func(elec_values)
-                    else:
-                        elec_colors = cmap_func(elec_values)
-
-                # restrict to only this hemisphere
+            # snap elecs to pial surface
+            if snap_to_surface:
                 if hemi == "lh":
-                    coords = coords[elec_isleft]
-                    elec_colors = elec_colors[elec_isleft]
+                    map_surf = self.lh.surf_pial
                 else:
-                    coords = coords[~elec_isleft]
-                    elec_colors = elec_colors[~elec_isleft]
-
+                    map_surf = self.rh.surf_pial
+                nearest_vert_indices, _ = find_closest_vertices(map_surf[0], elecs)
                 if backend == "plotly":
-                    elec_colors *= 255
-                    elec_colors = elec_colors.astype("int")
-                    scatter = _plotly_scatter3d(
-                        coords, elec_colors, name=f"elecs-{hemi}"
+                    coords = offset_verts[nearest_vert_indices]
+                else:
+                    coords = surfs[hemi][0][nearest_vert_indices]
+            else:
+                if backend == "plotly":
+                    coords = elecs - vert_x_offset
+                else:
+                    coords = elecs
+
+            if elec_values is None:
+                # if no values to map, use given colors
+                if colors is None:
+                    elec_colors = np.zeros((len(coords), 4))
+                    elec_colors[:, -1] = elec_alpha
+                elif isinstance(colors, str):
+                    if isinstance(elec_alpha, (float, int)):
+                        elec_colors = np.asarray(
+                            [mpl.colors.to_rgba(colors, elec_alpha)] * len(elec_isleft)
+                        )
+                    else:
+                        elec_colors = np.asarray(
+                            [mpl.colors.to_rgba(colors, alph) for alph in elec_alpha]
+                        )
+                elif isinstance(colors, list):
+                    if isinstance(elec_alpha, (float, int)):
+                        elec_colors = np.asarray(
+                            [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
+                        )
+                    else:
+                        elec_colors = np.asarray(
+                            [
+                                mpl.colors.to_rgba(cc, alph)
+                                for cc, alph in zip(colors, elec_alpha)
+                            ]
+                        )
+                elif isinstance(colors, np.ndarray):
+                    elec_colors = colors.copy()
+                    if elec_colors.shape[1] > 3:
+                        elec_colors[:, 3] = elec_alpha
+                else:
+                    raise TypeError(
+                        "no values given, and colors could not be interpreted as either numpy array, single color string, or list of strings"
                     )
-                    trace_list.append(scatter)
-                else:  # mpl
-                    x, y, z = coords.T
-                    ax.scatter(x, y, z, s=elec_size, c=elec_colors, **kwargs)
+            else:  # we do have values that we can map
+                if hemi == "lh":
+                    elec_colors = cmap_func(elec_values)
+                else:
+                    elec_colors = cmap_func(elec_values)
+
+            # restrict to only this hemisphere
+            if hemi == "lh":
+                coords = coords[elec_isleft]
+                elec_colors = elec_colors[elec_isleft]
+            else:
+                coords = coords[~elec_isleft]
+                elec_colors = elec_colors[~elec_isleft]
+
+            if backend == "plotly":
+                elec_colors *= 255
+                elec_colors = elec_colors.astype("int")
+                scatter = _plotly_scatter3d(coords, elec_colors, name=f"elecs-{hemi}")
+                trace_list.append(scatter)
+            else:  # mpl
+                x, y, z = coords.T
+                ax.scatter(x, y, z, s=elec_size, c=elec_colors, **kwargs)
 
         if backend == "plotly":
             axis = dict(
@@ -1648,3 +1609,37 @@ def _tri_indices(simplices):
     # returns the lists of indices i, j, k
 
     return ([triplet[c] for triplet in simplices] for c in range(3))
+
+
+def _plotly_trisurf(points3D, simplices, facecolor, opacity=1, name=""):
+    # points3D are coordinates of the triangle vertices
+    # simplices are the simplices that define the triangularization;
+    # simplices  is a numpy array of shape (no_triangles, 3)
+    I, J, K = _tri_indices(simplices)
+
+    triangles = go.Mesh3d(
+        x=points3D[:, 0],
+        y=points3D[:, 1],
+        z=points3D[:, 2],
+        facecolor=facecolor,
+        i=I,
+        j=J,
+        k=K,
+        name=name,
+        opacity=opacity,
+    )
+
+    return triangles
+
+
+def _plotly_scatter3d(coords, elec_colors, name=""):
+    marker = go.scatter3d.Marker(color=elec_colors)
+    scatter = go.Scatter3d(
+        x=coords[:, 0],
+        y=coords[:, 1],
+        z=coords[:, 2],
+        mode="markers",
+        marker=marker,
+        name=name,
+    )
+    return scatter
