@@ -1299,15 +1299,15 @@ class Brain:
         **kwargs,
     ):
         colormap_map = dict(
-            classic=(dict(colormap="Greys", vmin=-1, vmax=2), None),
-            high_contrast=(dict(colormap="Greys", vmin=-0.2, vmax=1.3), None),
+            classic=(dict(colormap="Greys", vmin=-1, vmax=2), lambda x: x),
+            high_contrast=(dict(colormap="Greys", vmin=-0.2, vmax=1.3), lambda x: x),
             mid_contrast=(dict(colormap="Greys", vmin=-1.3, vmax=1.3), np.tanh),
-            low_contrast=(dict(colormap="Greys", vmin=-4, vmax=4), None),
+            low_contrast=(dict(colormap="Greys", vmin=-4, vmax=4), lambda x: x),
             grey_binary=(
                 dict(colormap="Greys", vmin=-0.9, vmax=2),
-                lambda arr: np.where(arr < 0.5, np.tanh(arr - 0.2), np.tanh(arr + 0.2)),
+                lambda x: np.where(x < 0.5, np.tanh(x - 0.2), np.tanh(x + 0.2)),
             ),
-            bone=(dict(colormap="bone", vmin=-0.2, vmax=2), None),
+            bone=(dict(colormap="bone", vmin=-0.2, vmax=2), lambda x: x),
         )
 
         assert isinstance(surfs, dict)
@@ -1329,13 +1329,7 @@ class Brain:
         vmin_sulci = sulci_cmap_kwargs["vmin"]
         vmax_sulci = sulci_cmap_kwargs["vmax"]
         norm_sulci = Normalize(vmin=vmin_sulci, vmax=vmax_sulci)
-        if sulci_cmap_nonlinearity is not None:
-            cmap_sulci_func = lambda x: cmap_sulci(
-                norm_sulci(sulci_cmap_nonlinearity(x))
-            )
-
-        else:
-            cmap_sulci_func = lambda x: cmap_sulci(norm_sulci(x))
+        cmap_sulci_func = lambda x: cmap_sulci(norm_sulci(sulci_cmap_nonlinearity(x)))
 
         # create figure
         if backend == "mpl":
@@ -1352,13 +1346,8 @@ class Brain:
             if elec_values is not None:
                 # if plotting electrodes, that overrides the colormap for overlay
                 cmap_overlay = plt.colormaps[cmap]
-                if vmin is None:
-                    if vmin is None:
-                        vmin = elec_values.min()
-
-                if vmax is None:
-                    if vmax is None:
-                        vmax = elec_values.max()
+                vmin = elec_values.min() if vmin is None else vmin
+                vmax = elec_values.max() if vmax is None else vmax
 
                 norm = Normalize(vmin=vmin, vmax=vmax)
                 cmap_func = lambda x: cmap_overlay(norm(x))
@@ -1374,13 +1363,11 @@ class Brain:
             sulc = sulci[hemi]
 
             if isinstance(view, str):
-                if hemi == "lh":
-                    elev, azim = self.lh.view(view, backend=backend)
-                else:
-                    elev, azim = self.rh.view(view, backend=backend)
-            else:
-                assert isinstance(view, tuple)
+                elev, azim = getattr(self, hemi).view(view, backend=backend)
+            elif isinstance(view, tuple):
                 elev, azim = view
+            else:
+                raise ValueError("Argument `view` should be a string or tuple.")
 
             # color by sulci
             triangle_values_sulci = np.array(
@@ -1447,45 +1434,41 @@ class Brain:
                 else:
                     coords = elecs
 
-            if elec_values is None:
-                # if no values to map, use given colors
-                if colors is None:
-                    elec_colors = np.zeros((len(coords), 4))
-                    elec_colors[:, -1] = elec_alpha
-                elif isinstance(colors, str):
-                    if isinstance(elec_alpha, (float, int)):
-                        elec_colors = np.asarray(
-                            [mpl.colors.to_rgba(colors, elec_alpha)] * len(elec_isleft)
-                        )
-                    else:
-                        elec_colors = np.asarray(
-                            [mpl.colors.to_rgba(colors, alph) for alph in elec_alpha]
-                        )
-                elif isinstance(colors, list):
-                    if isinstance(elec_alpha, (float, int)):
-                        elec_colors = np.asarray(
-                            [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
-                        )
-                    else:
-                        elec_colors = np.asarray(
-                            [
-                                mpl.colors.to_rgba(cc, alph)
-                                for cc, alph in zip(colors, elec_alpha)
-                            ]
-                        )
-                elif isinstance(colors, np.ndarray):
-                    elec_colors = colors.copy()
-                    if elec_colors.shape[1] > 3:
-                        elec_colors[:, 3] = elec_alpha
-                else:
-                    raise TypeError(
-                        "no values given, and colors could not be interpreted as either numpy array, single color string, or list of strings"
+            # if no elec_values specified, use given colors
+            if elec_values is not None:
+                elec_colors = cmap_func(elec_values)
+            elif colors is None:
+                elec_colors = np.zeros((len(coords), 4))
+                elec_colors[:, -1] = elec_alpha
+            elif isinstance(colors, str):
+                if isinstance(elec_alpha, (float, int)):
+                    elec_colors = np.asarray(
+                        [mpl.colors.to_rgba(colors, elec_alpha)] * len(elec_isleft)
                     )
-            else:  # we do have values that we can map
-                if hemi == "lh":
-                    elec_colors = cmap_func(elec_values)
                 else:
-                    elec_colors = cmap_func(elec_values)
+                    elec_colors = np.asarray(
+                        [mpl.colors.to_rgba(colors, alph) for alph in elec_alpha]
+                    )
+            elif isinstance(colors, list):
+                if isinstance(elec_alpha, (float, int)):
+                    elec_colors = np.asarray(
+                        [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
+                    )
+                else:
+                    elec_colors = np.asarray(
+                        [
+                            mpl.colors.to_rgba(cc, alph)
+                            for cc, alph in zip(colors, elec_alpha)
+                        ]
+                    )
+            elif isinstance(colors, np.ndarray):
+                elec_colors = colors.copy()
+                if elec_colors.shape[1] > 3:
+                    elec_colors[:, 3] = elec_alpha
+            else:
+                raise TypeError(
+                    "no values given, and colors could not be interpreted as either numpy array, single color string, or list of strings"
+                )
 
             # restrict to only this hemisphere
             if hemi == "lh":
