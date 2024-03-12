@@ -231,7 +231,7 @@ def test_set_visible(data):
     assert np.allclose(ITG_and_pmHG_visible_lh.sum(), 5952)
     assert np.allclose(ITG_and_pmHG_visible_rh.sum(), 5158)
 
-    brain1.reset_overlay()
+    brain_pial1.reset_overlay()
     ending_visible = brain_pial1.lh.alpha
     assert (ending_visible.sum() == 327680)
 
