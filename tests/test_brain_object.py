@@ -147,7 +147,7 @@ def test_mark_overlay(data):
 def test_plot_brain_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
     brain1.paint_overlay('STG', value=1)
-    fig, axes = plt.test_plot_brain_overlay()
+    fig, axes = brain1.plot_brain_overlay()
     assert len(axes) == 2
     plt.close()
 
