@@ -1,10 +1,9 @@
-import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import numpy as np
 import plotly.graph_objs as go
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
-
 
 from ..localization import Brain, find_closest_vertices
 from ..utils import surfdist_viz
@@ -46,6 +45,7 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
             return eye, center
         else:
             return (0, 0) if hemi == "lh" else (0, 180)
+
     elif mode == "frontal":
         if backend == "plotly":
             eye = dict(x=0, y=1, z=0)
@@ -53,6 +53,7 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
             return eye, center
         else:
             return (0, 90)
+
     elif mode == "top":
         if backend == "plotly":
             eye = dict(x=0, y=0, z=1)
@@ -60,19 +61,17 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
             return eye, center
         else:
             return (90, 270)
+
     elif mode == "best":
         if backend == "plotly":
-            eye = (
-                dict(x=-1, y=0.1, z=0.1)
-                if hemi == "lh"
-                else dict(x=1, y=0.1, z=0.1)
-            )
+            eye = dict(x=-1, y=0.1, z=0.1) if hemi == "lh" else dict(x=1, y=0.1, z=0.1)
             center = dict(x=0, y=0, z=0)
             return eye, center
         else:
             return (20, 160) if hemi == "lh" else (40, 20)
-    else:
-        raise ValueError(f"Unknown `mode`: {mode}.")
+
+    raise ValueError(f"Unknown `mode`: {mode}.")
+
 
 def _plot_hemi(hemi, cmap="coolwarm", ax=None, denorm=False, view="best"):
     surfdist_viz(
@@ -88,6 +87,7 @@ def _plot_hemi(hemi, cmap="coolwarm", ax=None, denorm=False, view="best"):
     )
     ax.axes.set_axis_off()
     ax.grid(False)
+
 
 def plot_brain_overlay(
     brain, cmap="coolwarm", ax=None, denorm=False, view="best", **kwargs
@@ -278,7 +278,7 @@ def plot_brain_elecs(
     you may need to enable certain ipywidgets for displaying plotly in notebooks.
     Regardless, it should still be possible to save the the figure as either HTML or
     static image file. See `plotly examples documentation <https://plotly.com/python/interactive-html-export/>`_ for
-    details on saving figures. 
+    details on saving figures.
 
     Examples
     --------
@@ -298,7 +298,7 @@ def plot_brain_elecs(
     >>> fig, axes = plot_brain_elecs(brain, coords, isleft, colors=colors, backend='plotly')
     >>> fig.write_html("interactive_brain_plot.html") # save as an interactive html plot
     >>> fig.show() # show the interactive plot in the notebook
-    
+
     """
     if hemi == "both":
         surfs = {"lh": brain.lh.surf, "rh": brain.rh.surf}
@@ -360,6 +360,7 @@ def plot_brain_elecs(
     )
 
     return fig, axes
+
 
 def _plot_brain_elecs_standalone(
     brain,
