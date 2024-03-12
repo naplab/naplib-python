@@ -1129,6 +1129,7 @@ class Brain:
         if ax is None:
             ax1 = fig.add_subplot(1, 2, 1, projection="3d")
             ax2 = fig.add_subplot(1, 2, 2, projection="3d")
+            ax = (ax1, ax2)
         else:
             ax1, ax2 = ax
 

@@ -98,4 +98,12 @@ fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotl
 fig.write_html("interactive_brain_plot.html") # save as an interactive html plot
 fig.show() # show the interactive plot in the notebook
 
+###############################################################################
+# Color certain brain regions by their label
+brain.paint_overlay('mSTG', -3)
+brain.paint_overlay('pSTG', 3)
+brain.paint_overlay('MTG', 1)
+fig, axes = brain.plot_brain_overlay(view='lateral')
+plt.show()
+
 
