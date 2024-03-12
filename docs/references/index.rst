@@ -9,6 +9,7 @@ The package is split up into submodules.
     :maxdepth: 2
 
     data
+    brain
     features
     array_ops
     encoding
