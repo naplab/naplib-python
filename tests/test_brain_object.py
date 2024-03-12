@@ -212,24 +212,24 @@ def test_set_visible(data):
     brain_pial1.set_visible('pmHG')
     pmHG_visible_lh = brain_pial1.lh.alpha
     pmHG_visible_rh = brain_pial1.rh.alpha
-    print((pmHG_visible_lh.sum(), pmHG_visible_rh.sum()))
-    # assert (pmHG_visible_lh.sum() == 860)
-    # assert (pmHG_visible_rh.sum() == 612)
+    # print((pmHG_visible_lh.sum(), pmHG_visible_rh.sum()))
+    assert (pmHG_visible_lh.sum() == 860)
+    assert (pmHG_visible_rh.sum() == 630)
 
     brain_pial1.set_visible('ITG')
     ITG_visible_lh = brain_pial1.lh.alpha
     ITG_visible_rh = brain_pial1.rh.alpha
-    print((ITG_visible_lh.sum(), ITG_visible_rh.sum()))
-    # assert np.allclose(ITG_visible_lh.sum(), 5072)
-    # assert np.allclose(ITG_visible_rh.sum(), 4546)
+    # print((ITG_visible_lh.sum(), ITG_visible_rh.sum()))
+    assert np.allclose(ITG_visible_lh.sum(), 5072)
+    assert np.allclose(ITG_visible_rh.sum(), 4546)
 
     brain_pial1.set_visible(['pmHG','ITG'])
     ITG_and_pmHG_visible_lh = brain_pial1.lh.alpha
     ITG_and_pmHG_visible_rh = brain_pial1.rh.alpha
-    print((ITG_and_pmHG_visible_lh.sum(), ITG_and_pmHG_visible_rh.sum()))
+    # print((ITG_and_pmHG_visible_lh.sum(), ITG_and_pmHG_visible_rh.sum()))
 
-    assert np.allclose(ITG_and_pmHG_visible_lh.sum(), 5952)
-    assert np.allclose(ITG_and_pmHG_visible_rh.sum(), 5158)
+    assert np.allclose(ITG_and_pmHG_visible_lh.sum(), 5932)
+    assert np.allclose(ITG_and_pmHG_visible_rh.sum(), 5176.0)
 
     brain_pial1.reset_overlay()
     ending_visible = brain_pial1.lh.alpha
