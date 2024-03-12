@@ -28,6 +28,10 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 2.0.0
+-------------
+- |MajorFeature| : Added the ``naplib.Brain`` class for representing a brain. This can be used to plot intracranial electrodes on static or interactive 3D brain plots, estimate anatomical locations of electrodes, calculate statistics on brains, and more. See Examples for illustrations of use-cases.
+
 Version 1.4.0
 -------------
 - |Enhancement| : Added the ability to load outstructs from matlab which have different variable names, not just 'out'.
