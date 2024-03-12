@@ -125,6 +125,7 @@ def surfdist_viz(
     bg_map=None,
     bg_on_stat=False,
     figsize=None,
+    ax=None,
 ):
     """Visualize results on cortical surface using matplotlib.
 
@@ -156,7 +157,8 @@ def surfdist_viz(
                  only areas that are not covered by the statsitical map after
                  thresholding will show shadows.
     figsize : tuple of intergers, dimensions of the figure that is produced.
-
+    ax : Axis
+        Axis to plot on, with 3d projection.
 
     Returns
     -------
@@ -178,12 +180,16 @@ def surfdist_viz(
     if isinstance(cmap, str):
         cmap = plt.cm.get_cmap(cmap)
 
-    # initiate figure and 3d axes
-    if figsize is not None:
-        fig = plt.figure(figsize=figsize)
+    if ax is None:
+        premade_ax = False
+        # initiate figure and 3d axes
+        if figsize is not None:
+            fig = plt.figure(figsize=figsize)
+        else:
+            fig = plt.figure()
+        ax = fig.add_subplot(111, projection="3d", xlim=limits, ylim=limits)
     else:
-        fig = plt.figure()
-    ax = fig.add_subplot(111, projection="3d", xlim=limits, ylim=limits)
+        premade_ax = True
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
 
@@ -249,4 +255,5 @@ def surfdist_viz(
 
         p3dcollec.set_facecolors(face_colors)
 
-    return fig, ax
+    if not premade_ax:
+        return fig, ax
