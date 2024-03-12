@@ -6,7 +6,6 @@ import os
 import warnings
 from os.path import join as pjoin
 
-
 import numpy as np
 from nibabel.freesurfer.io import read_geometry, read_label, read_morph_data
 from scipy.spatial.distance import cdist
@@ -1018,18 +1017,6 @@ class Brain:
         self.lh.set_visible(labels, min_alpha)
         self.rh.set_visible(labels, min_alpha)
         return self
-
-    
-
-
-def left2hemi(is_left: bool):
-    """
-    Converts boolean indicator of hemisphere to string tag 'lh' or 'rh'.
-
-    Returns:
-        hemi: hemisphere code string ('lh' or 'rh')
-    """
-    return "lh" if is_left else "rh"
 
 
 def get_nearest_vert_index(coords, isleft, surf_lh, surf_rh, verbose=False):
