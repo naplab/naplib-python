@@ -315,6 +315,7 @@ class Hemisphere:
             "IFG.orb": ["G_front_inf-Orbital"],
             "Subcnt": ["G_and_S_subcentral"],
             "Insula": ["G_Ins_lg_and_S_cent_ins", "G_insular_short"],
+            "T.Pole": ["Pole_temporal"],
         }
         conversions = {
             key: [self.label2num[g] for g in groups]
@@ -774,8 +775,24 @@ class Brain:
 
         Examples
         --------
+        >>> from naplib import Brain
+        >>> import numpy as np
+        >>> import matplotlib.pyplot as plt
         >>> brain = Brain('pial', subject_dir='path/to/freesurfer/subjects/').split_stg().join_ifg()
-        >>> annotations = brain.
+        >>> coords = np.array([[-47.281147  ,  17.026093  , -21.833099  ],
+                               [-48.273964  ,  16.155487  , -20.162935  ]])
+        >>> isleft = np.array([True, True])
+        >>> annotations = brain.annotate_coords(coords, isleft)
+        array(['mSTG','mSTG'])
+        >>> dist_from_HG = brain.distance_from_region(coords, isleft, region='pmHG', metric='surf')
+        array([52.67211969 50.86446306])
+        >>> # plot electrodes on brain with matplotlib
+        >>> fig, axes = brain.plot_brain_elecs(coords, isleft, values=dist_from_HG, hemi='lh', view='lateral')
+        >>> plt.show()
+        >>> # plot electrodes on brain in interactive 3D figure
+        >>> fig, _ = brain.plot_brain_elecs(coords, isleft, values=dist_from_HG, backend='plotly')
+        >>> fig.write_html("interactive_brain_plot.html") # save as an interactive html figure
+        >>> fig.show()
 
         """
         if surf_type not in SURF_TYPES:
@@ -1102,6 +1119,11 @@ class Brain:
         **kwargs : kwargs
             Any other kwargs to pass to matplotlib.pyplot.figure
 
+        Returns
+        -------
+        fig : matplotlib Figure
+        axes : tuple of matplotlib Axes
+
         """
         fig = plt.figure(**kwargs)
         if ax is None:
@@ -1112,6 +1134,8 @@ class Brain:
 
         self.lh.plot(cmap, ax1, denorm, view=view)
         self.rh.plot(cmap, ax2, denorm, view=view)
+
+        return fig, ax
 
     def plot_brain_elecs(
         self,
@@ -1134,7 +1158,8 @@ class Brain:
         **kwargs,
     ):
         """
-        Plot electrodes on the brain using a simple matplotlib backend.
+        Plot electrodes on the brain using a simple matplotlib backend, or an interactive
+        3D figure using the plotly backend.
 
         Due to the limitation of matplotlib being unable to render 3D surfaces
         in order as they would truly be seen by the camera angle, electrodes

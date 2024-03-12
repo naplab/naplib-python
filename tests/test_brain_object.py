@@ -118,6 +118,7 @@ def test_split_hg():
     assert 'pmHG' in brain1.label_names
     assert 'alHG' in brain1.label_names
 
+
 def test_paint_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
     assert np.array_equal(np.unique(brain1.lh.overlay), np.array([0]))
@@ -125,6 +126,10 @@ def test_paint_overlay(data):
     brain1.paint_overlay('STG', value=1)
     assert np.array_equal(np.unique(brain1.lh.overlay), np.array([0,1]))
     assert np.array_equal(np.unique(brain1.rh.overlay), np.array([0,1]))
+
+    # reset back to no overlay
+    brain1.reset_overlay()
+    assert np.array_equal(np.unique(brain1.lh.overlay), np.array([0]))
 
 def test_mark_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
@@ -138,6 +143,13 @@ def test_mark_overlay(data):
     assert np.array_equal(np.array([1., 1., 0., 0., 0.]), t2.lh.overlay[:5])
     assert np.array_equal(np.array([0., 0., 1., 0., 0.]), t2.rh.overlay[:5])
     assert np.allclose(t2.lh.overlay.sum(), 14314.0)
+
+def test_plot_brain_overlay(data):
+    brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
+    brain1.paint_overlay('STG', value=1)
+    fig, axes = plt.test_plot_brain_overlay()
+    assert len(axes) == 2
+    plt.close()
 
 def test_mpl_both_hemis(data):
 
@@ -162,7 +174,7 @@ def test_mpl_one_hemi(data):
 
 def test_plotly_electrode_coloring(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
-    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', view='top', backend='plotly')
+    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', view='best', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (327680, 4)
@@ -191,6 +203,37 @@ def test_plotly_electrode_coloring_by_value(data):
     expected_rh = np.asarray([[170,170,170,255] for _ in range(len(data['isleft']) - data['isleft'].sum())]) # all red
     assert np.allclose(expected_lh, fig.data[1]['marker']['color'])
     assert np.allclose(expected_rh, fig.data[3]['marker']['color'])
+
+def test_set_visible(data):
+    brain_pial1 = copy.deepcopy(data['brain_pial'])
+    starting_visible = brain_pial1.lh.alpha
+    assert (starting_visible.sum() == 327680)
+
+    brain_pial1.set_visible('pmHG')
+    pmHG_visible_lh = brain_pial1.lh.alpha
+    pmHG_visible_rh = brain_pial1.rh.alpha
+    print((pmHG_visible_lh.sum(), pmHG_visible_rh.sum()))
+    assert (pmHG_visible_lh.sum() == 880)
+    assert (pmHG_visible_rh.sum() == 612)
+
+    brain_pial1.set_visible('ITG')
+    ITG_visible_lh = brain_pial1.lh.alpha
+    ITG_visible_rh = brain_pial1.rh.alpha
+    print((ITG_visible_lh.sum(), ITG_visible_rh.sum()))
+    assert np.allclose(ITG_visible_lh.sum(), 5072)
+    assert np.allclose(ITG_visible_rh.sum(), 4546)
+
+    brain_pial1.set_visible(['pmHG','ITG'])
+    ITG_and_pmHG_visible_lh = brain_pial1.lh.alpha
+    ITG_and_pmHG_visible_rh = brain_pial1.rh.alpha
+    print((ITG_and_pmHG_visible_lh.sum(), ITG_and_pmHG_visible_rh.sum()))
+
+    assert np.allclose(ITG_and_pmHG_visible_lh.sum(), 5952)
+    assert np.allclose(ITG_and_pmHG_visible_rh.sum(), 5158)
+
+    brain1.reset_overlay()
+    ending_visible = brain_pial1.lh.alpha
+    assert (ending_visible.sum() == 327680)
 
 
 
