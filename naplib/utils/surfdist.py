@@ -3,14 +3,13 @@ Copied from the surfdist package https://github.com/NeuroanatomyAndConnectivity/
 a bug with numba versions in surfdist making it incompatible as a dependency.
 """
 
-import numpy as np
 import gdist
-import nibabel as nib
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
-from mpl_toolkits.mplot3d import Axes3D
+import numpy as np
+from nibabel.freesurfer.io import read_annot
 
-def load_freesurfer_label(annot_input, label_name, cortex=None):
+
+def load_freesurfer_label(annot_input, label_name):
     """
     Get source node list for a specified freesurfer label.
 
@@ -21,8 +20,8 @@ def load_freesurfer_label(annot_input, label_name, cortex=None):
     cortex : not used
     """
 
-    labels, color_table, names = nib.freesurfer.read_annot(annot_input)
-    names = [i.decode('utf-8') for i in names]
+    labels, _, names = read_annot(annot_input)
+    names = [i.decode("utf-8") for i in names]
     label_value = names.index(label_name)
     label_nodes = np.array(np.where(np.in1d(labels, label_value)), dtype=np.int32)
 
@@ -30,7 +29,6 @@ def load_freesurfer_label(annot_input, label_name, cortex=None):
 
 
 def dist_calc(surf, cortex, source_nodes):
-
     """
     Calculate exact geodesic distance along cortical surface from set of source nodes.
     "dist_type" specifies whether to calculate "min", "mean", "median", or "max" distance values
@@ -39,11 +37,14 @@ def dist_calc(surf, cortex, source_nodes):
 
     cortex_vertices, cortex_triangles = surf_keep_cortex(surf, cortex)
     translated_source_nodes = translate_src(source_nodes, cortex)
-    data = gdist.compute_gdist(cortex_vertices, cortex_triangles, source_indices = translated_source_nodes)
+    data = gdist.compute_gdist(
+        cortex_vertices, cortex_triangles, source_indices=translated_source_nodes
+    )
     dist = recort(data, surf, cortex)
     del data
 
     return dist
+
 
 def surf_keep_cortex(surf, cortex):
     """
@@ -70,6 +71,7 @@ def surf_keep_cortex(surf, cortex):
 
     return cortex_vertices, cortex_triangles
 
+
 def triangles_keep_cortex(triangles, cortex):
     """
     Remove triangles with nodes not contained in the cortex label array
@@ -77,15 +79,21 @@ def triangles_keep_cortex(triangles, cortex):
 
     # for or each face/triangle keep only those that only contain nodes within the list of cortex nodes
     input_shape = triangles.shape
-    triangle_is_in_cortex = np.all(np.reshape(np.in1d(triangles.ravel(), cortex), input_shape), axis=1)
+    triangle_is_in_cortex = np.all(
+        np.reshape(np.in1d(triangles.ravel(), cortex), input_shape), axis=1
+    )
 
     cortex_triangles_old = np.array(triangles[triangle_is_in_cortex], dtype=np.int32)
 
     # reassign node index before outputting triangles
     new_index = np.digitize(cortex_triangles_old.ravel(), cortex, right=True)
-    cortex_triangles = np.array(np.arange(len(cortex))[new_index].reshape(cortex_triangles_old.shape), dtype=np.int32)
+    cortex_triangles = np.array(
+        np.arange(len(cortex))[new_index].reshape(cortex_triangles_old.shape),
+        dtype=np.int32,
+    )
 
     return cortex_triangles
+
 
 def translate_src(src, cortex):
     """
@@ -95,6 +103,7 @@ def translate_src(src, cortex):
 
     return src_new
 
+
 def recort(input_data, surf, cortex):
     """
     Return data values to space of full cortex (including medial wall), with medial wall equal to zero.
@@ -103,14 +112,21 @@ def recort(input_data, surf, cortex):
     data[cortex] = input_data
     return data
 
-def surfdist_viz(coords, faces, stat_map=None,
-        elev=0, azim=0, cmap='coolwarm',
-        threshold=None, alpha='auto',
-        bg_map=None, bg_on_stat=False,
-        figsize=None,
-        **kwargs):
 
-    ''' Visualize results on cortical surface using matplotlib.
+def surfdist_viz(
+    coords,
+    faces,
+    stat_map=None,
+    elev=0,
+    azim=0,
+    cmap="coolwarm",
+    threshold=None,
+    alpha="auto",
+    bg_map=None,
+    bg_on_stat=False,
+    figsize=None,
+):
+    """Visualize results on cortical surface using matplotlib.
 
     Parameters
     ----------
@@ -130,7 +146,7 @@ def surfdist_viz(coords, faces, stat_map=None,
     threshold : float, threshold to be applied to the map, will be applied in
                 positive and negative direction, i.e. values < -abs(threshold)
                 and > abs(threshold) will be shown.
-    alpha : float, determines the opacity of the background mesh, in'auto' mode
+    alpha : float, determines the opacity of the background mesh, in 'auto' mode
             alpha defaults to .5 when no background map is given, to 1 otherwise.
     bg_map : numpy array of shape (n_nodes,) to be plotted underneath the
              statistical map. Specifying a sulcal depth map as bg_map results
@@ -145,21 +161,21 @@ def surfdist_viz(coords, faces, stat_map=None,
     Returns
     -------
     Matplotlib figure object
-    '''
+    """
 
     # load mesh and derive axes limits
     faces = np.array(faces, dtype=int)
     limits = [coords.min(), coords.max()]
 
     # set alpha if in auto mode
-    if alpha == 'auto':
+    if isinstance(alpha, str) and alpha == "auto":
         if bg_map is None:
-            alpha = .5
+            alpha = 0.5
         else:
             alpha = 1
 
     # if cmap is given as string, translate to matplotlib cmap
-    if type(cmap) == str:
+    if isinstance(cmap, str):
         cmap = plt.cm.get_cmap(cmap)
 
     # initiate figure and 3d axes
@@ -167,36 +183,42 @@ def surfdist_viz(coords, faces, stat_map=None,
         fig = plt.figure(figsize=figsize)
     else:
         fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d', xlim=limits, ylim=limits)
+    ax = fig.add_subplot(111, projection="3d", xlim=limits, ylim=limits)
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
 
     # plot mesh without data
-    p3dcollec = ax.plot_trisurf(coords[:, 0], coords[:, 1], coords[:, 2],
-                                triangles=faces, linewidth=0.,
-                                antialiased=False,
-                                color='white')
+    p3dcollec = ax.plot_trisurf(
+        coords[:, 0],
+        coords[:, 1],
+        coords[:, 2],
+        triangles=faces,
+        linewidth=0.0,
+        antialiased=False,
+        color="white",
+    )
 
     # If depth_map and/or stat_map are provided, map these onto the surface
     # set_facecolors function of Poly3DCollection is used as passing the
     # facecolors argument to plot_trisurf does not seem to work
     if bg_map is not None or stat_map is not None:
-
         face_colors = np.ones((faces.shape[0], 4))
-        face_colors[:, :3] = .5*face_colors[:, :3]
+        face_colors[:, :3] = 0.5 * face_colors[:, :3]
 
         if bg_map is not None:
             bg_data = bg_map
             if bg_data.shape[0] != coords.shape[0]:
-                raise ValueError('The bg_map does not have the same number '
-                                 'of vertices as the mesh.')
+                raise ValueError(
+                    "The bg_map does not have the same number "
+                    "of vertices as the mesh."
+                )
             bg_faces = np.mean(bg_data[faces], axis=1)
             bg_faces = bg_faces - bg_faces.min()
             bg_faces = bg_faces / bg_faces.max()
             face_colors = plt.cm.gray_r(bg_faces)
 
         # modify alpha values of background
-        face_colors[:, 3] = alpha*face_colors[:, 3]
+        face_colors[:, 3] = alpha * face_colors[:, 3]
 
         if stat_map is not None:
             stat_map_data = stat_map
@@ -210,14 +232,16 @@ def surfdist_viz(coords, faces, stat_map=None,
             if threshold is not None:
                 kept_indices = np.where(abs(stat_map_faces) >= threshold)[0]
                 stat_map_faces = stat_map_faces - vmin
-                stat_map_faces = stat_map_faces / (vmax-vmin)
+                stat_map_faces = stat_map_faces / (vmax - vmin)
                 if bg_on_stat:
-                    face_colors[kept_indices] = cmap(stat_map_faces[kept_indices]) * face_colors[kept_indices]
+                    face_colors[kept_indices] = (
+                        cmap(stat_map_faces[kept_indices]) * face_colors[kept_indices]
+                    )
                 else:
                     face_colors[kept_indices] = cmap(stat_map_faces[kept_indices])
             else:
                 stat_map_faces = stat_map_faces - vmin
-                stat_map_faces = stat_map_faces / (vmax-vmin)
+                stat_map_faces = stat_map_faces / (vmax - vmin)
                 if bg_on_stat:
                     face_colors = cmap(stat_map_faces) * face_colors
                 else:
