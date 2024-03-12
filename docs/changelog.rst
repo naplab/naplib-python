@@ -30,7 +30,7 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 Version 2.0.0
 -------------
-- |MajorFeature| : Added the ``Brain`` class for representing a brain to the ``naplib.localization`` module. This can be used to plot intracranial electrodes on static or interactive 3D brain plots, estimate anatomical locations of electrodes, calculate statistics on brains, and more. See Examples for illustrations of use-cases.
+- |MajorFeature| : Added the ``Brain`` class for representing a brain to the ``naplib.localization`` module. This can be used to plot intracranial electrodes on static or interactive 3D brain plots with the ``naplib.visualization module``, estimate anatomical locations of electrodes, calculate statistics on brains, and more. See Examples for illustrations of use-cases.
 
 Version 1.4.0
 -------------
