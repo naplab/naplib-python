@@ -766,8 +766,8 @@ class Brain:
         """
         Split STG into middle (mSTG) and posterior (pSTG) halves.
         """
-        self.lh.split_stg()
-        self.rh.split_stg()
+        self.lh.split_stg(method)
+        self.rh.split_stg(method)
         return self
 
     def remove_tts(self, method="split"):
