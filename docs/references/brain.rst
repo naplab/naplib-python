@@ -1,14 +1,14 @@
-Brain object
+Localization
 ============
 
-.. currentmodule:: naplib
+.. currentmodule:: naplib.localization
 
-Brain object
-------------
+Localization on a Freesurfer Brain
+----------------------------------
 
 .. autoclass:: Brain
     :members:
 
-.. minigallery:: naplib.Brain
+.. minigallery:: naplib.localization.Brain
         :add-heading: Examples using ``Brain ``
 

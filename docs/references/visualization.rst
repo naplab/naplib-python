@@ -23,6 +23,16 @@ STRF Plot
 
 .. autofunction:: strf_plot
 
+Intracranial Electrodes
+-----------------------
+
+.. autofunction:: plot_brain_elecs
+
+Brain Surface Overlay
+---------------------
+
+.. autofunction:: plot_brain_overlay
+
 Frequency Response
 ------------------
 

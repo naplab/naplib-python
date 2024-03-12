@@ -15,6 +15,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import naplib as nl
+from naplib.localization import Brain
+from naplib.visualization import plot_brain_elecs, plot_brain_overlay
 
 ###############################################################################
 # Load freesurfer fsaverage data if we don't have it
@@ -26,7 +28,7 @@ mne.datasets.fetch_fsaverage('./fsaverage/')
 
 ###############################################################################
 # Create a brain with the pial surface for computing metrics
-brain = nl.Brain('pial', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+brain = Brain('pial', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
 # Specify the coordinates of 30 electrodes in fsaverage space
 coords = np.array([[-47.281147  ,  17.026093  , -21.833099  ],
@@ -77,13 +79,13 @@ print(dist_from_HG)
 
 ###############################################################################
 # Create a brain with the inflated surface for plotting
-brain = nl.Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
+brain = Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
 ###############################################################################
 # Plot electrode locations with matplotlib, and color the electrodes
 # by their distance from HG
 
-fig, axes = brain.plot_brain_elecs(coords, isleft, values=dist_from_HG, hemi='lh', view='lateral')
+fig, axes = plot_brain_elecs(brain, coords, isleft, values=dist_from_HG, hemi='lh', view='lateral')
 plt.show()
 
 ###############################################################################
@@ -94,7 +96,7 @@ plt.show()
 # them by the anatomical labels they were assigned to (black for posterior STG and red for middle STG)
 
 colors = ['k' if lab == 'pSTG' else 'r' for lab in anatomical_labels]
-fig, axes = brain.plot_brain_elecs(coords, isleft, colors=colors, backend='plotly')
+fig, axes = plot_brain_elecs(brain, coords, isleft, colors=colors, backend='plotly')
 fig.write_html("interactive_brain_plot.html") # save as an interactive html plot
 fig.show() # show the interactive plot in the notebook
 
@@ -103,7 +105,7 @@ fig.show() # show the interactive plot in the notebook
 brain.paint_overlay('mSTG', -3)
 brain.paint_overlay('pSTG', 3)
 brain.paint_overlay('MTG', 1)
-fig, axes = brain.plot_brain_overlay(view='lateral')
+fig, axes = plot_brain_overlay(brain, view='lateral')
 plt.show()
 
 
