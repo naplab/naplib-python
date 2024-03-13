@@ -5,7 +5,8 @@ import os
 import mne
 import matplotlib.pyplot as plt
 
-from naplib import Brain
+from naplib.localization import Brain
+from naplib.visualization import plot_brain_elecs, plot_brain_overlay
 
 @pytest.fixture(scope='module')
 def data():
@@ -147,34 +148,34 @@ def test_mark_overlay(data):
 def test_plot_brain_overlay(data):
     brain1 = Brain('pial', subject_dir='./.fsaverage_tmp/').simplify_labels()
     brain1.paint_overlay('STG', value=1)
-    fig, axes = brain1.plot_brain_overlay()
+    fig, axes = plot_brain_overlay(brain1)
     assert len(axes) == 2
     plt.close()
 
 def test_mpl_both_hemis(data):
 
-    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
+    fig, axes = plot_brain_elecs(data['brain_pial'], data['coords'], data['isleft'], values=np.ones((len(data['coords']),)), hemi='both', backend='mpl')
     assert len(axes) == 3 # includes the colorbar
     plt.close()
 
-    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], hemi='both', backend='mpl')
+    fig, axes = plot_brain_elecs(data['brain_pial'], data['coords'], data['isleft'], hemi='both', backend='mpl')
     assert len(axes) == 2 # no colorbar
     plt.close()
 
 
 def test_mpl_one_hemi(data):
     colors = np.random.rand(len(data['coords']), 4)
-    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='lh', view='frontal', backend='mpl')
+    fig, axes = plot_brain_elecs(data['brain_pial'], data['coords'], data['isleft'], colors=colors, hemi='lh', view='frontal', backend='mpl')
     assert len(axes) == 1
     plt.close()
 
-    fig, axes = data['brain_pial'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='rh', backend='mpl')
+    fig, axes = plot_brain_elecs(data['brain_inflated'], data['coords'], data['isleft'], colors=colors, hemi='rh', backend='mpl')
     assert len(axes) == 1
     plt.close()
 
 def test_plotly_electrode_coloring(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
-    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], colors=colors, hemi='both', view='best', backend='plotly')
+    fig, axes = plot_brain_elecs(data['brain_inflated'], data['coords'], data['isleft'], colors=colors, hemi='both', view='best', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (327680, 4)
@@ -193,7 +194,7 @@ def test_plotly_electrode_coloring(data):
 
 def test_plotly_electrode_coloring_by_value(data):
     colors = ['k' if isL else 'r' for isL in data['isleft']]
-    fig, axes = data['brain_inflated'].plot_brain_elecs(data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', view='medial', backend='plotly')
+    fig, axes = plot_brain_elecs(data['brain_inflated'], data['coords'], data['isleft'], values=data['isleft'], vmin=-1, vmax=2, cmap='binary', hemi='both', view='medial', backend='plotly')
     assert len(fig.data) == 4
     assert fig.data[0]['x'].shape == (163842,)
     assert fig.data[0]['facecolor'].shape == (327680, 4)
