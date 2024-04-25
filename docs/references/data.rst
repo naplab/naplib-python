@@ -1,5 +1,5 @@
-Data object
-===========
+Core Functions
+==============
 
 .. currentmodule:: naplib
 
@@ -24,3 +24,8 @@ join_fields
 -----------
 
 .. autofunction:: join_fields
+
+set_logging
+-----------
+
+.. autofunction:: set_logging

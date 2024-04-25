@@ -9,6 +9,8 @@ from scipy import signal as sig
 import seaborn as sns
 from packaging import version
 
+from .. import logger
+
 
 def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     """
@@ -354,15 +356,16 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     data : shape (n_samples, n_features)
         Data to cluster and display. 
     axes : list of plt.Axes, length 2, optional
-        array of length 2 containing matplotlib axes to plot on.
+        Array of length 2 containing matplotlib axes to plot on.
         axes[0] will be for the dendrogram and axes[1] will be for the data. If not
         specified, will create new axes in subplots.
     varnames : list of strings, length must = n_features, default=None
-        variable names which will be printed as yticklabels on the data plot
+        Variable names which will be printed as yticklabels on the data plot
     cmap : string, default='bwr'
         colormap for the data plot
     n_clusters : int, default=2
-        number of clusters which will be used when computing cluster labels that are returned
+        Number of clusters which will be used when computing cluster labels that are returned,
+        and also for coloring the dendrogram by cluster.
     metric : str, default='euclidean'
         Distance metric. See scipy.spatial.distance.pdist for valid metrics.
     linkage : str, default='ward'
@@ -391,7 +394,7 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     >>> x[:,1] += rng.normal(loc=1, scale=3, size=(100,))
     >>> x[:,2] += rng.normal(loc=-1, scale=3, size=(100,))
     >>> varnames = ['var1','var2','var3','var4','var5']
-    >>> clust, labels, fig, axes = hcp(x, varnames=varnames)
+    >>> clust, labels, fig, axes = hcp(x, n_clusters=3, varnames=varnames)
 
     .. figure:: /figures/hierarchicalclusterplot1.png
         :width: 400px
@@ -405,8 +408,39 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     else:
         return_axes = False
         
-    dend = shc.dendrogram(shc.linkage(data, method=linkage, metric=metric), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
+    Z = shc.linkage(data, method=linkage, metric=metric)
+    num_colors = -1
+    color_thresh_bounds = [0, 1]
+    # starting guess for color_thresh
+    if n_clusters == 1:
+        color_thresh = 1.1
+    elif n_clusters >= data.shape[0]:
+        color_thresh = 0
+    else:
+        color_thresh = 0.5
+    
+    max_while_loop = 25
+    while_loops = 0
+    while (num_colors != n_clusters) and (while_loops < max_while_loop):
+        
+        if while_loops > 0:
+            if num_colors < n_clusters: # threshold was too high
+                color_thresh_bounds[1] = color_thresh # it's the new upper bound
+                color_thresh = (color_thresh + color_thresh_bounds[0]) / 2
+            else: # threshold was too low
+                color_thresh_bounds[0] = color_thresh # it's the new lower bound
+                color_thresh = (color_thresh + color_thresh_bounds[1]) / 2
+        
+        dend = shc.dendrogram(Z, no_plot=True, show_leaf_counts=False, get_leaves=True, no_labels=True, color_threshold=color_thresh*max(Z[:,2]))
+        num_colors = len(set(dend['leaves_color_list']))
+        while_loops += 1
 
+    if (num_colors != n_clusters):
+        logger.warning('Failed to identify the cut threshold to produce the correct number of colors in the dendrogram plot. The output will still be correct, just not colored correctly.')
+
+    # now plot for real
+    dend = shc.dendrogram(Z, show_leaf_counts=False, get_leaves=True, no_labels=True, ax=axes[0], color_threshold=color_thresh*max(Z[:,2])) 
+    
     axes[0].set_yticks([])
 
     leaves = dend['leaves']

@@ -23,6 +23,17 @@ def set_logging(level: Union[int, str]):
     ----------
     level : string or int
         Any log level that is recognized by python's built-in ``logging`` module
+
+    Examples
+    --------
+    >>> import logging
+    >>> import naplib as nl
+    >>> # Set log level to INFO, which means any logging done with naplib.logger
+    >> # internally will be shown as long as it is at least as serious as INFO level
+    >>> nl.set_logging(logging.INFO)
+    >>> # Now we can call some naplib function that incorporates logging and get
+    >>> # the logging output we want
+    >>> nl.naplab.process_ieeg(...)
     '''
     if not isinstance(level, (int, str)):
         raise ValueError('Level must be of type int or str')
