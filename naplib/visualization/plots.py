@@ -354,15 +354,16 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     data : shape (n_samples, n_features)
         Data to cluster and display. 
     axes : list of plt.Axes, length 2, optional
-        array of length 2 containing matplotlib axes to plot on.
+        Array of length 2 containing matplotlib axes to plot on.
         axes[0] will be for the dendrogram and axes[1] will be for the data. If not
         specified, will create new axes in subplots.
     varnames : list of strings, length must = n_features, default=None
-        variable names which will be printed as yticklabels on the data plot
+        Variable names which will be printed as yticklabels on the data plot
     cmap : string, default='bwr'
         colormap for the data plot
     n_clusters : int, default=2
-        number of clusters which will be used when computing cluster labels that are returned
+        Number of clusters which will be used when computing cluster labels that are returned,
+        and also for coloring the dendrogram by cluster.
     metric : str, default='euclidean'
         Distance metric. See scipy.spatial.distance.pdist for valid metrics.
     linkage : str, default='ward'
@@ -431,6 +432,10 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
         dend = shc.dendrogram(Z, no_plot=True, show_leaf_counts=False, get_leaves=True, no_labels=True, color_threshold=color_thresh*max(Z[:,2]))
         num_colors = len(set(dend['leaves_color_list']))
         while_loops += 1
+
+    if (num_colors != n_clusters):
+        logger.warning('Failed to identify the cut threshold to produce the correct number of colors in the dendrogram plot. The output will still be correct, just not colored correctly.')
+
     # now plot for real
     dend = shc.dendrogram(Z, show_leaf_counts=False, get_leaves=True, no_labels=True, ax=axes[0], color_threshold=color_thresh*max(Z[:,2])) 
     
