@@ -21,7 +21,6 @@ def interp_axis(new_x, x, y, axis=0):
     y_interp : np.ndarray
         New y array with the ``axis`` having been interpolated
     """
-
     # Swap axes to move the interpolation axis to the front
     y = np.swapaxes(y, axis, 0)
     
