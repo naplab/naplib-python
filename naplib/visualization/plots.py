@@ -344,7 +344,7 @@ def shaded_error_plot(*args, ax=None, reduction='mean', err_method='stderr', col
 
     return ax
 
-def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2, metric='euclidean', linkage='ward'):
+def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clusters=2, metric='euclidean', linkage='ward', color_thresh=0.7):
     '''
     Perform hierarchical clustering and plot dendrogram and clustered values as an
     image underneath. See Examples below for a depiction.
@@ -369,6 +369,10 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
         Linkage method. Must be one of 'single','complete','average','weighted','centroid',
         'median', or 'ward'. Some linkage methods are only valid for certain distance
         metrics.
+    color_thresh : float, default=0.7
+        Threshold (between 0 and 1) for coloring separate dendrogram subtrees. All subtrees with a root node below
+        this point will be colored as their own color. This is passed to the ``color_threshold`` parameter of
+        scipy.cluster.hierarchy.dendrogram()
 
     Returns
     -------
@@ -405,8 +409,9 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     else:
         return_axes = False
         
-    dend = shc.dendrogram(shc.linkage(data, method=linkage, metric=metric), show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True)
-
+    Z = shc.linkage(data, method=linkage, metric=metric)
+    dend = shc.dendrogram(Z, show_leaf_counts=False, ax=axes[0], get_leaves=True, no_labels=True, color_threshold=color_thresh*max(Z[:,2]))
+    
     axes[0].set_yticks([])
 
     leaves = dend['leaves']
