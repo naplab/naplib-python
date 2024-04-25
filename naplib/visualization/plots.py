@@ -391,7 +391,7 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
     >>> x[:,1] += rng.normal(loc=1, scale=3, size=(100,))
     >>> x[:,2] += rng.normal(loc=-1, scale=3, size=(100,))
     >>> varnames = ['var1','var2','var3','var4','var5']
-    >>> clust, labels, fig, axes = hcp(x, varnames=varnames)
+    >>> clust, labels, fig, axes = hcp(x, n_clusters=3, varnames=varnames)
 
     .. figure:: /figures/hierarchicalclusterplot1.png
         :width: 400px
