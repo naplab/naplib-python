@@ -22,3 +22,13 @@ Forward Fill
 ------------
 
 .. autofunction:: forward_fill
+
+Center of Mass
+--------------
+
+.. autofunction:: center_of_mass
+
+Interpolate Along Axis
+----------------------
+
+.. autofunction:: interp_axis
