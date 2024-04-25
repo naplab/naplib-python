@@ -9,6 +9,8 @@ from scipy import signal as sig
 import seaborn as sns
 from packaging import version
 
+from .. import logger
+
 
 def kde_plot(data, groupings=None, hist=True, alpha=0.2, bins=None, **kwargs):
     """
