@@ -431,8 +431,6 @@ def hierarchical_cluster_plot(data, axes=None, varnames=None, cmap='bwr', n_clus
         dend = shc.dendrogram(Z, no_plot=True, show_leaf_counts=False, get_leaves=True, no_labels=True, color_threshold=color_thresh*max(Z[:,2]))
         num_colors = len(set(dend['leaves_color_list']))
         while_loops += 1
-        
-        
     # now plot for real
     dend = shc.dendrogram(Z, show_leaf_counts=False, get_leaves=True, no_labels=True, ax=axes[0], color_threshold=color_thresh*max(Z[:,2])) 
     
