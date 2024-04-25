@@ -21,6 +21,22 @@ def test_correct_clustering(data):
     _, labels, _, _ = hierarchical_cluster_plot(data['x'], n_clusters=2)
     assert np.array_equal(labels, np.array([0,1,1,1,1,0,0])) or np.array_equal(labels, np.array([1,0,0,0,0,1,1]))
 
+def test_correct_coloring(data):
+    dend, labels, _, _ = hierarchical_cluster_plot(data['x'], n_clusters=2)
+    assert len(set(dend['leaves_color_list'])) == 2
+    assert len(np.unique(labels)) == 2
+
+    dend, labels, _, _ = hierarchical_cluster_plot(data['x'], n_clusters=3)
+    assert len(set(dend['leaves_color_list'])) == 3
+    assert len(np.unique(labels)) == 3
+
+    dend, labels, _, _ = hierarchical_cluster_plot(data['x'], n_clusters=4)
+    assert len(set(dend['leaves_color_list'])) == 4
+    assert len(np.unique(labels)) == 4
+
+
+    
+
 def test_varname_labels(data):
     _, _, _, axes = hierarchical_cluster_plot(data['x'], varnames=data['var'], n_clusters=2)
     ylbl = axes[1].get_yticklabels()
