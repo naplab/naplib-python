@@ -37,8 +37,8 @@ def phase_amplitude_extract(data=None, field='resp', fs='dataf', Wn=[[70, 150]],
     bandnames : list of strings, length=n_freq_bands, optional
         If provided, these are used to create the field names for each frequency band's amplitude
         and phase in the output Data. Should be the same length as the number of bands
-        specified in Wn. For example, if Wn=[[8,12],[70,150]], and bandnames=['theta','highgamma'],
-        then the fields of the output Data will be {'theta phase', 'theta amp', 'highgamma phase',
+        specified in Wn. For example, if Wn=[[8,12],[70,150]], and bandnames=['alpha','highgamma'],
+        then the fields of the output Data will be {'alpha phase', 'alpha amp', 'highgamma phase',
         'highgamma amp'}. But if bandnames=None, then they will be {'[ 8 12] phase', '[ 8 12] amp',
         '[ 70 150] phase', '[ 70 150] amp'}.
     fs_out : int, default=None
