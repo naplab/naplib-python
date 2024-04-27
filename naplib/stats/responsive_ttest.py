@@ -5,6 +5,7 @@ from mne.stats import fdr_correction
 
 from naplib.utils import _parse_outstruct_args
 from naplib.data import Data
+from naplib import logger
 
 
 def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre_post=[1, 1], alpha=0.05, average=False, fdr_method='indep', alternative='two-sided', equal_var=True):
@@ -152,9 +153,13 @@ def responsive_ttest(data=None, resp='resp', befaft='befaft', sfreq='dataf', pre
         pre_end = round(pre_post[1] * sfreq[t]) + bef
         post_start = round(pre_post[2] * sfreq[t]) + bef
         post_end = round(pre_post[3] * sfreq[t]) + bef
+        
+        if pre_start < 0:
+            logger.warning("pre_post too large for the data's befaft period. Changing pre_post[0] so that it begins as early as possible for this data. This will result in a different size window for pre-stimulus compared to post-stimulus. Try using a smaller pre_post.")
+            pre_start = 0
 
         if not (pre_start < pre_end and pre_end <= post_start and post_start < post_end):
-            raise ValueError('pre_post provided resulted in a non-increasing time window.')        
+            raise ValueError('pre_post provided resulted in a non-increasing time window.') 
 
         if bef < 5:
             raise ValueError(f'befaft period is too short, there must be at least 5 samples of response before stimulus onset.')
