@@ -365,7 +365,7 @@ def plot_brain_elecs(
 def _plot_brain_elecs_standalone(
     brain,
     surfs,
-    sulci,
+    sulci=None,
     elecs=None,
     elec_isleft=None,
     elec_values=None,
@@ -396,7 +396,6 @@ def _plot_brain_elecs_standalone(
     )
 
     assert isinstance(surfs, dict)
-    assert isinstance(sulci, dict)
 
     if cortex not in colormap_map:
         raise ValueError(
@@ -445,7 +444,8 @@ def _plot_brain_elecs_standalone(
     for i, hemi in enumerate(hemi_keys):
         verts = surfs[hemi][0]
         triangles = surfs[hemi][1]
-        sulc = sulci[hemi]
+        if sulci[hemi] is not None:
+            sulc = sulci[hemi]
 
         if isinstance(view, str):
             elev, azim = _view(hemi, mode=view, backend=backend)
@@ -455,14 +455,21 @@ def _plot_brain_elecs_standalone(
             raise ValueError("Argument `view` should be a string or tuple.")
 
         # color by sulci
-        triangle_values_sulci = np.array(
-            [[sulc[nn] for nn in triangles[i]] for i in range(len(triangles))]
-        ).mean(1)
-        colors_sulci = cmap_sulci_func(triangle_values_sulci)
+        if sulci[hemi] is not None:
+            triangle_values_sulci = np.array(
+                [[sulc[nn] for nn in triangles[i]] for i in range(len(triangles))]
+            ).mean(1)
+            colors_sulci = cmap_sulci_func(triangle_values_sulci)
+        else:
+            colors_sulci = np.ones((len(triangles),4))
+            colors_sulci[:,:3] = 0.5
+            
 
         if backend == "plotly":
+
             colors_sulci *= 255
             colors_sulci = colors_sulci.astype("int")
+            
             if len(hemi_keys) == 2:
                 # add some offset between hemispheres
                 # if plotting both hemispheres on brain, need to offset since
@@ -495,9 +502,13 @@ def _plot_brain_elecs_standalone(
             p3dc = ax.plot_trisurf(
                 verts[:, 0], verts[:, 1], verts[:, 2], triangles=triangles
             )
-            # set the face colors of the Poly3DCollection
-            colors_sulci[:, -1] = brain_alpha
-            p3dc.set_fc(colors_sulci)
+            if sulci[hemi] is not None:
+                # set the face colors of the Poly3DCollection
+                colors_sulci[:, -1] = brain_alpha
+                p3dc.set_fc(colors_sulci)
+            else:
+                p3dc.set_alpha(brain_alpha)
+            
 
         if elecs is None:
             continue
