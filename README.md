@@ -31,7 +31,7 @@ The basic data structure for storing neural recording data is the ``Data`` objec
 
 ### Brain Plotting
 
-In addition to analysis and processing tools, naplib-python contains a suite of visualization tools, including brain plotting for ECoG and intracranial EEG electrodes. The backend can use either pure matplotlib for static plots, or plotly for 3D interactive plots. Here is a 3D interactive plot of some ECoG data.
+In addition to analysis and processing tools, naplib-python contains a suite of visualization tools, including brain plotting for ECoG and intracranial EEG electrodes. The backend can use either pure matplotlib for static plots, or plotly for 3D interactive plots.
 
 ![](./docs/figures/plotly_brain_video_short.gif)
 
