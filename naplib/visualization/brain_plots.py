@@ -2,6 +2,7 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import plotly.graph_objs as go
+import plotly
 from matplotlib.cm import ScalarMappable
 from matplotlib.colors import Normalize
 
@@ -160,8 +161,10 @@ def _plotly_trisurf(points3D, simplices, facecolor, opacity=1, name=""):
     return triangles
 
 
-def _plotly_scatter3d(coords, elec_colors, name=""):
+def _plotly_scatter3d(coords, elec_colors, elec_alpha, name=""):
     marker = go.scatter3d.Marker(color=elec_colors)
+    if not isinstance(elec_alpha, (np.ndarray, list)):
+        elec_alpha = np.asarray([elec_alpha] * len(coords))
     scatter = go.Scatter3d(
         x=coords[:, 0],
         y=coords[:, 1],
@@ -169,8 +172,18 @@ def _plotly_scatter3d(coords, elec_colors, name=""):
         mode="markers",
         marker=marker,
         name=name,
+        customdata=elec_alpha,
     )
     return scatter
+
+def _set_opacity(trace):
+    """https://community.plotly.com/t/varying-opacity-in-scatter-3d/75505/5"""
+    if hasattr(trace, customdata) and isinstance(trace.customdata, float):
+        opacities = trace.customdata
+        r, g, b = plotly.colors.hex_to_rgb(trace.marker.color)
+        trace.marker.color = [
+            f'rgba({r}, {g}, {b}, {a})'
+            for a in map(lambda x: x[0], opacities)]
 
 
 def plot_brain_elecs(
@@ -232,16 +245,17 @@ def plot_brain_elecs(
         since coordinates are assumed to represent coordinates in the pial space. If plotting pial,
         then this can be set to False (default) to show true electrode placement, or True to map
         to the surface.
-    elec_size : int, default=4
-        Size of the markers representing electrodes.
+    elec_size : int | np.ndarray, default=4
+        Size of the markers representing electrodes. If an array, should give the size for each electrode.
     cortex : {'classic','high_contrast','mid_contrast','low_contrast','bone'}, default='classic'
         How to map the sulci to greyscale. 'classic' will leave sulci untouched, which may be
         better for plotting the pial surface, but 'high_contrast' will enhance the contrast between
         gyri and sulci, which may be better for inflated surfaces.
     cmap : str, default='cool'
         Colormap for electrode values if values are provided.
-    alpha : float | np.ndarray
+    alpha : float | np.ndarray, optional, default=1
         Opacity of the electrodes. Either a single float or an array of same length as number of electrodes.
+        If None, then the colors provided should be an array of RGBA values, not just RGB.
     vmin : float, optional
         Minimum value for colormap normalization. If None, uses the min of valus.
     vmax : float, optional
@@ -396,11 +410,19 @@ def _plot_brain_elecs_standalone(
     )
 
     assert isinstance(surfs, dict)
+    
+    if isinstance(elec_size, list):
+        elec_size = np.asarray(elec_size)
 
     if cortex not in colormap_map:
         raise ValueError(
             f"Invalid cortex. Must be one of {'classic','high_contrast','low_contrast','bone_r'} but got {cortex}"
         )
+        
+    if isinstance(elec_alpha, list) or isinstance(elec_alpha, np.ndarray):
+        update_opacity_per_elec = True
+    else:
+        update_opacity_per_elec = False
 
     sulci_cmap_kwargs, sulci_cmap_nonlinearity = colormap_map[cortex]
 
@@ -547,9 +569,14 @@ def _plot_brain_elecs_standalone(
                 )
         elif isinstance(colors, list):
             if isinstance(elec_alpha, (float, int)):
-                elec_colors = np.asarray(
-                    [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
-                )
+                if isinstance(elec_alpha, list) or isinstance(elec_alpha, np.ndarray):
+                    elec_colors = np.asarray(
+                        [mpl.colors.to_rgba(cc, alph) for cc, alph in zip(colors, elec_alpha)]
+                    )
+                else:
+                    elec_colors = np.asarray(
+                        [mpl.colors.to_rgba(cc, elec_alpha) for cc in colors]
+                    )
             else:
                 elec_colors = np.asarray(
                     [
@@ -559,7 +586,7 @@ def _plot_brain_elecs_standalone(
                 )
         elif isinstance(colors, np.ndarray):
             elec_colors = colors.copy()
-            if elec_colors.shape[1] > 3:
+            if elec_colors.shape[1] == 4 and elec_alpha is not None:
                 elec_colors[:, 3] = elec_alpha
         else:
             raise TypeError(
@@ -570,18 +597,27 @@ def _plot_brain_elecs_standalone(
         if hemi == "lh":
             coords = coords[elec_isleft]
             elec_colors = elec_colors[elec_isleft]
+            if isinstance(elec_size, (np.ndarray)):
+                elec_size_hemi = elec_size[elec_isleft]
+            else:
+                elec_size_hemi = elec_size
+            
         else:
             coords = coords[~elec_isleft]
             elec_colors = elec_colors[~elec_isleft]
+            if isinstance(elec_size, (np.ndarray)):
+                elec_size_hemi = elec_size[~elec_isleft]
+            else:
+                elec_size_hemi = elec_size
 
         if backend == "plotly":
             elec_colors *= 255
             elec_colors = elec_colors.astype("int")
-            scatter = _plotly_scatter3d(coords, elec_colors, name=f"elecs-{hemi}")
+            scatter = _plotly_scatter3d(coords, elec_colors, elec_alpha=elec_alpha, name=f"elecs-{hemi}")
             trace_list.append(scatter)
         else:  # mpl
             x, y, z = coords.T
-            ax.scatter(x, y, z, s=elec_size, c=elec_colors, **kwargs)
+            ax.scatter(x, y, z, s=elec_size_hemi, c=elec_colors, **kwargs)
 
     if backend == "plotly":
         axis = dict(
@@ -613,6 +649,9 @@ def _plot_brain_elecs_standalone(
         )
 
         fig = go.Figure(data=trace_list, layout=layout)
+
+        if update_opacity_per_elec:
+            fig.for_each_trace(_set_opacity)
 
         # change electrode size to custom size if specified
         if elec_size is not None:
