@@ -178,7 +178,7 @@ def _plotly_scatter3d(coords, elec_colors, elec_alpha, name=""):
 
 def _set_opacity(trace):
     """https://community.plotly.com/t/varying-opacity-in-scatter-3d/75505/5"""
-    if hasattr(trace, customdata) and isinstance(trace.customdata, float):
+    if hasattr(trace, 'customdata') and isinstance(trace.customdata, float):
         opacities = trace.customdata
         r, g, b = plotly.colors.hex_to_rgb(trace.marker.color)
         trace.marker.color = [
