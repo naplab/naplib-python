@@ -139,13 +139,12 @@ class Data(Iterable):
 
     def delete_field(self, fieldname):
         '''
-        Set the information in a single field with a new list of data.
+        Remove an entire field from the Data object.
 
         Parameters
         ----------
         fieldname : string
-            Name of field to add. If this field already exists in the Data
-            then the current field will be overwritten.
+            Name of field to delete.
         '''
         if not isinstance(fieldname, str):
             raise TypeError(f'Field must be a str, but found {type(fieldname)}')
