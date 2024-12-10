@@ -336,7 +336,7 @@ class Data(Iterable):
             else:
                 del self.data[index]
         else:
-            raise TypeError(f'Found {type(fieldname)} for index')
+            raise TypeError(f'Found {type(index)} for index')
 
     def append(self, trial_data, strict=None):
         '''
