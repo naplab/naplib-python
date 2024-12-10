@@ -304,7 +304,7 @@ class Data(Iterable):
         ----------
         index : int or string
             Which trial to delete, or which field to delete. If an integer, must be 
-            <= the length of the Data, since you can only delete an existing trial 
+            < the length of the Data, since you can only delete an existing trial 
 
         Examples
         --------
