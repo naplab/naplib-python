@@ -48,6 +48,18 @@ def test_create_outstruct_from_dict():
     assert outstruct['y'][0] == 'y0'
     assert outstruct['y'][1] == 'y1'
 
+def test_delete_field_from_outstruct():
+    data = {'x':[1,2], 'y':[3,4], 'z':[5,6]}
+    outstruct = Data(data)
+    del outstruct['z']
+    assert outstruct.fields == ['x','y']
+
+def test_delete_trial_from_outstruct():
+    data = {'x':[1,2], 'y':[3,4], 'z':[5,6]}
+    outstruct = Data(data)
+    del outstruct[0]
+    assert outstruct[0] == {'x': 2, 'y': 4, 'z': 6}
+
 def test_create_outstruct_from_dict_different_lengths():
     data = {'x': [np.array([1,2]), np.array([3,4])], 'y': ['y0', 'y1', 'y2']}
     with pytest.raises(ValueError):

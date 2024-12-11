@@ -136,6 +136,20 @@ class Data(Iterable):
             raise Exception(f'Length of field ({len(fielddata)}) is not equal to length of this Data ({len(self)})')
         for i, trial in enumerate(self.data):
             trial[fieldname] = fielddata[i]
+
+    def delete_field(self, fieldname):
+        '''
+        Remove an entire field from the Data object.
+
+        Parameters
+        ----------
+        fieldname : string
+            Name of field to delete.
+        '''
+        if not isinstance(fieldname, str):
+            raise TypeError(f'Field must be a str, but found {type(fieldname)}')
+        for trial in self.data:
+            del trial[fieldname]
     
     def get_field(self, fieldname):
         '''
@@ -280,6 +294,48 @@ class Data(Iterable):
                 self.append(data)
             else:
                 self.data[index] = data
+
+    def __delitem__(self, index):
+        '''
+        Delete a specific trial or set of trials, or delete a specific field, using
+        bracket indexing. See examples below for details.
+
+        Parameters
+        ----------
+        index : int or string
+            Which trial to delete, or which field to delete. If an integer, must be 
+            < the length of the Data, since you can only delete an existing trial 
+
+        Examples
+        --------
+        >>> # Delete a field of a Data
+        >>> from naplib import Data
+        >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
+        ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> data = Data(trial_data)
+        >>> del data[0]
+        >>> data[0]
+        {'name': 'One', 'trial': 1, 'resp': [[4, 5], [6, 7]]}
+
+        >>> # We can also delete all values of a field across trials
+        >>> trial_data = [{'name': 'Zero', 'trial': 0, 'resp': [[0,1],[2,3]]},
+        ...               {'name': 'One', 'trial': 1, 'resp': [[4,5],[6,7]]}]
+        >>> data = Data(trial_data)
+        >>> del data['name']
+        >>> data[0]
+        {'trial': 0, 'resp': [[0, 1], [2, 3]]}
+        '''
+        if isinstance(index, str):
+            self.delete_field(index)
+        elif isinstance(index, int):
+            if index >= len(self):
+                raise IndexError((f'Index is too large. Current data is length {len(self)} '
+                    'but tried to delete index {index}. If you want to add to the end of the list '
+                    'of trials, use the Data.append() method.'))
+            else:
+                del self.data[index]
+        else:
+            raise TypeError(f'Found {type(index)} for index')
 
     def append(self, trial_data, strict=None):
         '''
