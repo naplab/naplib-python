@@ -116,7 +116,7 @@ def rereference(arr, data=None, field='resp', method='avg', return_reference=Fal
     return data_rereferenced
 
 
-def make_contact_rereference_arr(channelnames, extent=None):
+def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
     """
     Create grid which defines re-referencing scheme based on electrodes being on the same contact as
     each other.
@@ -134,6 +134,10 @@ def make_contact_rereference_arr(channelnames, extent=None):
         from each other (inclusive) are still grouped together. For example, if ``extent=1``, only the
         nearest electrode on either side of a given electrode on the same contact is still grouped with it.
         This ``extent=1`` produces the traditional local average reference scheme.
+    grid_sizes : dict, optional, default={}
+        If provided, contains {'contact_name': (nrow, ncol)} values for any known ECoG grid sizes.
+        E.g. {'GridA': (8, 16)} indicates that electrodes on contact 'GridA' are arranged in an 8 x 16 grid, 
+        which is needed to determine adjacent electrodes for local average referencing with ``extent >= 1``.
     
     Returns
     -------
@@ -191,12 +195,17 @@ def make_contact_rereference_arr(channelnames, extent=None):
                 if 'grid' in contact.lower():
                     side = np.sqrt(num_ch)
                     half_side = np.sqrt(num_ch/2)
-                    if np.isclose(side, int(side)):
+                    # Check grid_sizes dict
+                    if contact in grid_sizes:
+                        nrows, ncols = grid_sizes[contact]
+                    # Assume a square
+                    elif np.isclose(side, int(side)):
                         nrows, ncols = side, side
+                    # Assume a 1 x 2 rectangle
                     elif np.isclose(half_side, int(half_side)):
                         nrows, ncols = half_side, half_side*2
                     else:
-                        raise Exception('Cannot automatically determine grid layout')
+                        raise Exception(f'Cannot determine {contact} layout. Please include layout in `grid_sizes`')
                     adjacent = _find_adjacent_numbers(nrows, ncols, ch, extent)
                     curr = np.where(channelnames==f'{contact}{ch}')[0]
                     inds = []
