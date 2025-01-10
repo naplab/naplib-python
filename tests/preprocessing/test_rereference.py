@@ -27,8 +27,8 @@ def test_create_contact_rereference_arr():
                           [0,0,0,0,1,1,1,1],
                           [0,0,0,0,1,1,1,1],
                          ])
-    g = ['LT1','LT2','RT1','RT2'] + [f'GridA{n}' for n in range(1,5)]
-    arr = make_contact_rereference_arr(g, extent=1)
+    g = ['LT1','LT2','GridA1','GridA2'] + [f'GridB{n}' for n in range(1,5)]
+    arr = make_contact_rereference_arr(g, extent=1, grid_sizes={'GridA':(1,2)})
     arr1 = make_contact_rereference_arr(g)
     assert np.allclose(expected, arr)
     assert np.allclose(expected1, arr1)
