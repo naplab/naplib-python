@@ -4,11 +4,6 @@ from naplib import Data
 
 
 def test_create_contact_rereference_arr():
-    
-    g = ['LT1','LT2','RT1','RT2']
-    arr = make_contact_rereference_arr(g)
-    assert np.allclose(expected, arr)
-    
     expected = np.array([[0,1,0,0,0,0,0,0],
                          [1,0,0,0,0,0,0,0],
                          [0,0,0,1,0,0,0,0],
