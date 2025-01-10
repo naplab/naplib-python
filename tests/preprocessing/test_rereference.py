@@ -4,6 +4,11 @@ from naplib import Data
 
 
 def test_create_contact_rereference_arr():
+    
+    g = ['LT1','LT2','RT1','RT2']
+    arr = make_contact_rereference_arr(g)
+    assert np.allclose(expected, arr)
+    
     expected = np.array([[0,1,0,0,0,0,0,0],
                          [1,0,0,0,0,0,0,0],
                          [0,0,0,1,0,0,0,0],
@@ -13,9 +18,20 @@ def test_create_contact_rereference_arr():
                          [0,0,0,0,1,1,0,1],
                          [0,0,0,0,1,1,1,0],
                         ])
+    expected1 = np.array([[1,1,0,0,0,0,0,0],
+                          [1,1,0,0,0,0,0,0],
+                          [0,0,1,1,0,0,0,0],
+                          [0,0,1,1,0,0,0,0],
+                          [0,0,0,0,1,1,1,1],
+                          [0,0,0,0,1,1,1,1],
+                          [0,0,0,0,1,1,1,1],
+                          [0,0,0,0,1,1,1,1],
+                         ])
     g = ['LT1','LT2','RT1','RT2'] + [f'GridA{n}' for n in range(1,5)]
     arr = make_contact_rereference_arr(g, extent=1)
+    arr1 = make_contact_rereference_arr(g)
     assert np.allclose(expected, arr)
+    assert np.allclose(expected1, arr1)
 
 def test_rereference_avg():
     arr = np.array([[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]])
