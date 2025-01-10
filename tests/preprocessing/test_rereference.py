@@ -4,7 +4,15 @@ from naplib import Data
 
 
 def test_create_contact_rereference_arr():
-    expected = np.array([[1,1,0,0],[1,1,0,0],[0,0,1,1],[0,0,1,1]])
+    expected = np.array([[1,1,0,0,0,0,0,0],
+                         [1,1,0,0,0,0,0,0],
+                         [0,0,1,1,0,0,0,0],
+                         [0,0,1,1,0,0,0,0],
+                         [0,0,0,0,0,1,1,1],
+                         [0,0,0,0,1,0,1,1],
+                         [0,0,0,0,1,1,0,1],
+                         [0,0,0,0,1,1,1,0],
+                        ])
     g = ['LT1','LT2','RT1','RT2'] + [f'GridA{n}' for n in range(1,5)]
     arr = make_contact_rereference_arr(g, extent=1)
     assert np.allclose(expected, arr)
