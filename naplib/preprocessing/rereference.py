@@ -209,7 +209,6 @@ def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
                     adjacent = _find_adjacent_numbers(nrows, ncols, ch, extent)
                     curr = np.where(channelnames==f'{contact}{ch}')[0]
                     inds = []
-                    print(ch, adjacent)
                     for adj in adjacent:
                         inds.append(np.where(channelnames==f'{contact}{adj}')[0])
                     
