@@ -134,6 +134,7 @@ def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
         from each other (inclusive) are still grouped together. For example, if ``extent=1``, only the
         nearest electrode on either side of a given electrode on the same contact is still grouped with it.
         This ``extent=1`` produces the traditional local average reference scheme.
+        The default ``extent=None`` produces the traditional common average reference scheme.
     grid_sizes : dict, optional, default={}
         If provided, contains {'contact_name': (nrow, ncol)} values for any known ECoG grid sizes.
         E.g. {'GridA': (8, 16)} indicates that electrodes on contact 'GridA' are arranged in an 8 x 16 grid, 
@@ -172,15 +173,21 @@ def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
                     adjacent_numbers.append(adjacent_num)
     
         return np.array(adjacent_numbers, dtype=int)
+        
     connections = np.zeros((len(channelnames),) * 2, dtype=float)
     channelnames = np.array(channelnames)
     contact_arrays = np.array([x.rstrip('0123456789') for x in channelnames])
-    contacts, ch_per_contact = np.unique([x.rstrip('0123456789') for x in channelnames], return_counts=True)
+    contacts = np.unique(contact_arrays)
+    # Determine the channel numbers on each contact
+    ch_per_contact = {contact:[int(x.replace(contact,'')) for x in channelnames
+                               if x.rstrip('0123456789')==contact] 
+                      for contact in contacts}
+
     if extent is None:
         # Common average referencing per electrode array (ECoG grid or sEEG shank)
         # CAR will end up subtracting parts of channel ch from itself
-        for contact, num_ch in zip(contacts, ch_per_contact):
-            for ch in range(1,num_ch+1):
+        for contact in contacts:
+            for ch in ch_per_contact[contact]:
                 curr = np.where(channelnames==f'{contact}{ch}')[0]
                 inds = np.where(contact_arrays==contact)[0]
                 connections[curr,inds] = 1
@@ -189,10 +196,11 @@ def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
     else:
         # Local average referencing within each electrode array
         # LAR will NOT subtract parts of channel ch from itself
-        for contact, num_ch in zip(contacts, ch_per_contact):
-            for ch in range(1,num_ch+1):
+        for contact in contacts:
+            for ch in ch_per_contact[contact]:
                 # Local referencing for ECoG grids
                 if 'grid' in contact.lower():
+                    num_ch = len(ch_per_contact[contact])
                     side = np.sqrt(num_ch)
                     half_side = np.sqrt(num_ch/2)
                     # Check grid_sizes dict
@@ -221,6 +229,9 @@ def make_contact_rereference_arr(channelnames, extent=None, grid_sizes={}):
                             inds.append(np.where(channelnames==f'{contact}{cc}')[0])
 
                 inds = np.concatenate(inds)
-                connections[curr,inds] = 1
+                if len(inds) < 1:
+                    print(f'{contact}{cc} has no re-references.')
+                else:
+                    connections[curr,inds] = 1
                 
     return connections
