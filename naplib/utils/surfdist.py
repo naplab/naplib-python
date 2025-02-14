@@ -126,6 +126,8 @@ def surfdist_viz(
     bg_on_stat=False,
     figsize=None,
     ax=None,
+    vmin=None,
+    vmax=None,
 ):
     """Visualize results on cortical surface using matplotlib.
 
@@ -232,8 +234,10 @@ def surfdist_viz(
 
             # Ensure symmetric colour range, based on Nilearn helper function:
             # https://github.com/nilearn/nilearn/blob/master/nilearn/plotting/img_plotting.py#L52
-            vmax = max(-np.nanmin(stat_map_faces), np.nanmax(stat_map_faces))
-            vmin = -vmax
+            if vmax is None:
+                vmax = max(-np.nanmin(stat_map_faces), np.nanmax(stat_map_faces))
+            if vmin is None:
+                vmin = -vmax
 
             if threshold is not None:
                 kept_indices = np.where(abs(stat_map_faces) >= threshold)[0]

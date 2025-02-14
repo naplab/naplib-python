@@ -78,6 +78,20 @@ dist_from_HG = brain.distance_from_region(coords, isleft, region='pmHG', metric=
 print(dist_from_HG)
 
 ###############################################################################
+# Smoothly interpolate values over the brain's surface from electrodes
+
+# As an example, we will use the y coordinate of the electrode
+values_per_electrode = coords[:,1] - coords[:,1].min()
+
+# Interpolate onto only the temporal lobe, using the 5 nearest neighbor interpolation with
+# a maximum distance of 10mm
+brain.interpolate_electrodes_onto_brain(coords, values_per_electrode, isleft, roi='temporal', k=5, max_dist=10)
+
+# Plot the overlay for just the left hemisphere
+fig, axes = plot_brain_overlay(brain, cmap='Reds', view='lateral', figsize=(12,6), hemi='lh')
+plt.show()
+
+###############################################################################
 # Create a brain with the inflated surface for plotting
 brain = Brain('inflated', subject_dir='./fsaverage/').split_hg('midpoint').split_stg().simplify_labels()
 
