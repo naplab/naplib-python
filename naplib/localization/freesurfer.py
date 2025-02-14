@@ -766,6 +766,68 @@ class Hemisphere:
         self.has_overlay[verts == 1] = True
         self.has_overlay_cells[add_overlay == 1] = True
         return self
+    
+    def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist):
+        """
+        Use electrode coordinates to interpolate 1-dimensional values corresponding
+        to each electrode onto the brain's surface.
+        
+        Parameters
+        ----------
+        coords : np.ndarray (elecs, 3)
+            3D coordinates of electrodes
+        values : np.ndarray (elecs,)
+            Value for each electrode
+        k : int
+            Number of nearest neighbors to consider
+        max_dist : float
+            Maximum distance outside of which nearest neighbors will be ignored
+        
+        Notes
+        -----
+        After running this function, you can use the visualization function ``plot_brain_overlay``
+        for a quick matplotlib plot, or you can extract the surface values from the ``self.overlay``
+        attribute for plotting with another tool like pysurfer.
+        """
+        # Euclidean distances from each surface vertex to each coordinate
+        dists = cdist(self.surf[0], coords)
+        sorted_dists = np.sort(dists, axis=-1)[:, :k]
+        indices = np.argsort(dists, axis=-1)[:, :k] # get closest k electrodes to each vertex
+
+        # Mask out distances greater than max_dist
+        valid_mask = sorted_dists <= max_dist
+
+        # Retrieve the corresponding values using indices
+        neighbor_values = values[indices]
+
+        # Mask invalid values
+        masked_values = np.where(valid_mask, neighbor_values, np.nan)
+        masked_distances = np.where(valid_mask, sorted_dists, np.nan)
+
+        # Compute weights: inverse distance weighting (avoiding division by zero)
+        weights = np.where(valid_mask, 1 / (masked_distances + 1e-10), 0)
+
+        # # Compute weighted sum and normalize by total weight per vertex
+        weighted_sum = np.nansum(masked_values * weights, axis=1)
+        total_weight = np.nansum(weights, axis=1)
+
+        # # Normalize to get final smoothed values
+        updated_vertices = total_weight > 0
+        total_weight[~updated_vertices] += 1e-10 # this just gets ride of the division by zero warning, but doesn't affect result since these values are turned to nan anyway
+        smoothed_values = np.where(updated_vertices, weighted_sum / total_weight, np.nan)
+
+        # update the surface vertices and triangle attributes with the values
+        verts = updated_vertices.astype('float')
+        trigs = np.zeros(self.n_trigs, dtype=float)
+        for i in range(self.n_trigs):
+            trigs[i] = np.mean([verts[self.trigs[i, j]] != 0 for j in range(3)])
+
+        self.overlay[updated_vertices] = smoothed_values[updated_vertices]
+        self.has_overlay[updated_vertices] = True
+        self.has_overlay_cells[trigs == 1] = True
+        
+        return self
+        
 
     def mark_overlay(self, verts, value=1, inner_radius=0.8, taper=True):
         """
@@ -800,6 +862,11 @@ class Hemisphere:
         self.keep_visible = keep_visible > min_alpha
         self.keep_visible_cells = self.alpha > min_alpha
         self.alpha = np.maximum(self.alpha, min_alpha)
+        return self
+    
+    def reset_overlay_except(self, labels):
+        keep_visible, self.alpha, _ = self.zones(labels, min_alpha=0)
+        self.overlay[~keep_visible] = 0
         return self
 
 
@@ -1134,7 +1201,7 @@ class Brain:
 
     def set_visible(self, labels, min_alpha=0):
         """
-        Set certain regions as visible with a float label.
+        Set certain regions as visible with a float label, and the rest will be invisible.
 
         Parameters
         ----------
@@ -1149,6 +1216,55 @@ class Brain:
         """
         self.lh.set_visible(labels, min_alpha)
         self.rh.set_visible(labels, min_alpha)
+        return self
+    
+    def reset_overlay_except(self, labels):
+        """
+        Keep certain regions and the rest as colorless.
+
+        Parameters
+        ----------
+        labels : str | list[str]
+            Label(s) to set as visible.
+
+        Returns
+        -------
+        self : instance of self
+        """
+        self.lh.reset_overlay_except(labels)
+        self.rh.reset_overlay_except(labels)
+        return self
+    
+    def interpolate_electrodes_onto_brain(self, coords, values, isleft=None, k=10, max_dist=20, reset_overlay_first=True):
+        """
+        Use electrode coordinates to interpolate 1-dimensional values corresponding
+        to each electrode onto the brain's surface.
+        
+        Parameters
+        ----------
+        coords : np.ndarray (elecs, 3)
+            3D coordinates of electrodes
+        values : np.ndarray (elecs,)
+            Value for each electrode
+        k : int
+            Number of nearest neighbors to consider
+        max_dist : float
+            Maximum distance outside of which nearest neighbors will be ignored
+        reset_overlay_first : bool
+            If True (default), reset the overlay before creating a new overlay
+        
+        Notes
+        -----
+        After running this function, you can use the visualization function ``plot_brain_overlay``
+        for a quick matplotlib plot, or you can extract the surface values from the ``self.lh.overlay``
+        and ``self.lh.overlay_cell`` attributes, etc, for plotting with another tool like pysurfer.
+        """
+        if reset_overlay_first:
+            self.reset_overlay()
+        if isleft is None:
+            isleft = coords[:,0] < 0
+        self.lh.interpolate_electrodes_onto_brain(coords[isleft], values[isleft], k=k, max_dist=max_dist)
+        self.rh.interpolate_electrodes_onto_brain(coords[~isleft], values[~isleft], k=k, max_dist=max_dist)
         return self
 
 
