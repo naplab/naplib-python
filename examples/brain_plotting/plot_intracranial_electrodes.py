@@ -85,7 +85,7 @@ values_per_electrode = coords[:,1] - coords[:,1].min()
 
 # Interpolate onto only the temporal lobe, using the 5 nearest neighbor interpolation with
 # a maximum distance of 10mm
-brain.interpolate_electrodes_onto_brain(coords, values, isleft, roi='temporal', k=5, max_dist=10)
+brain.interpolate_electrodes_onto_brain(coords, values_per_electrode, isleft, roi='temporal', k=5, max_dist=10)
 
 # Plot the overlay for just the left hemisphere
 fig, axes = plot_brain_overlay(brain, cmap='Reds', view='lateral', figsize=(12,6), hemi='lh')
