@@ -74,24 +74,26 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
     raise ValueError(f"Unknown `mode`: {mode}.")
 
 
-def _plot_hemi(hemi, cmap="coolwarm", ax=None, denorm=False, view="best", thresh=None):
+def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", thresh=None, vmin=None, vmax=None):
     surfdist_viz(
         *hemi.surf,
         hemi.overlay,
         *_view(hemi.hemi, mode=view),
-        cmap=cmap(hemi.overlay.max()) if denorm else cmap,
+        cmap=cmap,
         threshold=thresh,
         alpha=hemi.alpha,
         bg_map=hemi.sulc,
         bg_on_stat=True,
         ax=ax,
+        vmin=vmin,
+        vmax=vmax
     )
     ax.axes.set_axis_off()
     ax.grid(False)
 
 
 def plot_brain_overlay(
-    brain, cmap="coolwarm", ax=None, denorm=False, view="best", **kwargs
+    brain, cmap="coolwarm", ax=None, hemi='both', denorm=False, view="best", cmap_quantile=1.0, **kwargs
 ):
     """
     Plot brain overlay on the 3D cortical surface using matplotlib.
@@ -106,10 +108,17 @@ def plot_brain_overlay(
         Colormap to use.
     ax : list | tuple of matplotlib Axes
         2 Axes to plot the left and right hemispheres with.
+    hemi : {'both', 'lh', 'rh'}, default='both'
+        Hemisphere(s) to plot. If 'both', then 2 subplots are created, one for each hemisphere.
+        Otherwise only one hemisphere is displayed with its overlay.
     denorm : bool, default=False
         Whether to center the overlay labels around 0 or not before sending to the colormap.
     view : {'lateral','medial','frontal','top','best'}, default='best'
         Which view to plot for each hemisphere.
+    cmap_quantile : float (optional), default=1.0
+        If less than 1, will only use the central ``cmap_quantile`` portion of the range
+        of values to create the vmin and vmax for the colormap. For example, if set to 0.95,
+        then only the middle 95% of the values will be used to set the range of the colormap.
     **kwargs : kwargs
         Any other kwargs to pass to matplotlib.pyplot.figure (such as figsize)
 
@@ -121,14 +130,49 @@ def plot_brain_overlay(
     """
     fig = plt.figure(**kwargs)
     if ax is None:
-        ax1 = fig.add_subplot(1, 2, 1, projection="3d")
-        ax2 = fig.add_subplot(1, 2, 2, projection="3d")
-        ax = (ax1, ax2)
+        if hemi in ['both', 'b']:
+            ax1 = fig.add_subplot(1, 2, 1, projection="3d")
+            ax2 = fig.add_subplot(1, 2, 2, projection="3d")
+            ax = (ax1, ax2)
+        else:
+            ax = fig.add_subplot(1, 1, 1, projection="3d")
+            if hemi in ['left','lh']:
+                ax = [ax, None]
+            elif hemi in ['right','rh']:
+                ax = [None, ax]
     else:
-        ax1, ax2 = ax
+        if hemi in ['both', 'b']:
+            assert len(ax) == 2
 
-    _plot_hemi(brain.lh, cmap, ax1, denorm, view=view)
-    _plot_hemi(brain.rh, cmap, ax2, denorm, view=view)
+    if cmap_quantile is not None:
+        assert cmap_quantile <= 1 and cmap_quantile > 0
+        cmap_diff = (1.0 - cmap_quantile) / 2.
+        vmin_l = np.quantile(brain.lh.overlay[brain.lh.overlay!=0], cmap_diff)
+        vmax_l = np.quantile(brain.lh.overlay[brain.lh.overlay!=0], 1.0 - cmap_diff)
+        vmin_r = np.quantile(brain.lh.overlay[brain.rh.overlay!=0], cmap_diff)
+        vmax_r = np.quantile(brain.lh.overlay[brain.rh.overlay!=0], 1.0 - cmap_diff)
+    else:
+        vmin_l = brain.lh.overlay[brain.lh.overlay!=0].min()
+        vmax_l = brain.lh.overlay[brain.lh.overlay!=0].max()
+        vmin_r = brain.lh.overlay[brain.rh.overlay!=0].min()
+        vmax_r = brain.lh.overlay[brain.rh.overlay!=0].max()
+    
+    # determine vmin and vmax
+    if hemi in ['both', 'b']:
+        vmin = min([vmin_l, vmin_r])
+        vmax = min([vmax_l, vmax_r])
+    elif hemi in ['left','lh']:
+        vmin = vmin_l
+        vmax = vmax_l
+    elif hemi in ['right','rh']:
+        vmin = vmin_r
+        vmax = vmax_r
+        
+            
+    if ax[0] is not None:
+        _plot_hemi(brain.lh, cmap, ax[0], view=view, vmin=vmin, vmax=vmax)
+    if ax[1] is not None:
+        _plot_hemi(brain.rh, cmap, ax[1], view=view, vmin=vmin, vmax=vmax)
 
     return fig, ax
 
