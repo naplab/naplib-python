@@ -111,6 +111,11 @@ num2region = {
 }
 region2num = {v: k for k, v in num2region.items()}
 
+temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
+temporal_regions_superlist = [num2region[num] for num in temporal_regions_nums]
+temporal_regions_superlist += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
+
+
 num2region_mni = {
     0: 'unknown',
     1: 'bankssts',
@@ -767,7 +772,7 @@ class Hemisphere:
         self.has_overlay_cells[add_overlay == 1] = True
         return self
     
-    def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist):
+    def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist, roi='all'):
         """
         Use electrode coordinates to interpolate 1-dimensional values corresponding
         to each electrode onto the brain's surface.
@@ -782,6 +787,9 @@ class Hemisphere:
             Number of nearest neighbors to consider
         max_dist : float
             Maximum distance outside of which nearest neighbors will be ignored
+        roi : list of strings, or string in {'all', 'temporal'}, default='all'
+            Regions to allow interpolation over. By default, the entire brain surface
+            is allowed. Can also be specified as a list of string labels (drawing from self.label_names)
         
         Notes
         -----
@@ -789,6 +797,20 @@ class Hemisphere:
         for a quick matplotlib plot, or you can extract the surface values from the ``self.overlay``
         attribute for plotting with another tool like pysurfer.
         """
+        
+        if isinstance(roi, str) and roi == 'all':
+            roi_list = self.label_names
+        elif isinstance(roi, str) and roi == 'temporal':
+            if self.atlas == 'MNI152':
+                raise ValueError("roi='temporal' is not supported for MNI brain. Must specify list of specific region names")
+            roi_list = temporal_regions_superlist
+        else:
+            roi_list = roi
+            assert isinstance(roi, list)
+            
+        roi_list_subset = [x for x in roi_list if x in self.label_names]
+        zones_to_include, _, _ = self.zones(roi_list_subset)
+        
         # Euclidean distances from each surface vertex to each coordinate
         dists = cdist(self.surf[0], coords)
         sorted_dists = np.sort(dists, axis=-1)[:, :k]
@@ -812,7 +834,7 @@ class Hemisphere:
         total_weight = np.nansum(weights, axis=1)
 
         # # Normalize to get final smoothed values
-        updated_vertices = total_weight > 0
+        updated_vertices = np.logical_and(total_weight > 0, zones_to_include)
         total_weight[~updated_vertices] += 1e-10 # this just gets ride of the division by zero warning, but doesn't affect result since these values are turned to nan anyway
         smoothed_values = np.where(updated_vertices, weighted_sum / total_weight, np.nan)
 
@@ -1235,7 +1257,7 @@ class Brain:
         self.rh.reset_overlay_except(labels)
         return self
     
-    def interpolate_electrodes_onto_brain(self, coords, values, isleft=None, k=10, max_dist=20, reset_overlay_first=True):
+    def interpolate_electrodes_onto_brain(self, coords, values, isleft=None, k=10, max_dist=10, roi='all', reset_overlay_first=True):
         """
         Use electrode coordinates to interpolate 1-dimensional values corresponding
         to each electrode onto the brain's surface.
@@ -1246,11 +1268,17 @@ class Brain:
             3D coordinates of electrodes
         values : np.ndarray (elecs,)
             Value for each electrode
-        k : int
+        isleft : np.ndarray (elecs,), optional
+            If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
+            If not given, this will be inferred from the first dimension of the coords (negative is left).
+        k : int, default=10
             Number of nearest neighbors to consider
-        max_dist : float
-            Maximum distance outside of which nearest neighbors will be ignored
-        reset_overlay_first : bool
+        max_dist : float, default=10
+            Maximum distance (in mm) outside of which nearest neighbors will be ignored
+        roi : list of strings, or string in {'all', 'temporal'}, default='all'
+            Regions to allow interpolation over. By default, the entire brain surface
+            is allowed. Can also be specified as a list of string labels (drawing from self.lh.label_names)
+        reset_overlay_first : bool, default=True
             If True (default), reset the overlay before creating a new overlay
         
         Notes
@@ -1263,8 +1291,8 @@ class Brain:
             self.reset_overlay()
         if isleft is None:
             isleft = coords[:,0] < 0
-        self.lh.interpolate_electrodes_onto_brain(coords[isleft], values[isleft], k=k, max_dist=max_dist)
-        self.rh.interpolate_electrodes_onto_brain(coords[~isleft], values[~isleft], k=k, max_dist=max_dist)
+        self.lh.interpolate_electrodes_onto_brain(coords[isleft], values[isleft], k=k, max_dist=max_dist, roi=roi)
+        self.rh.interpolate_electrodes_onto_brain(coords[~isleft], values[~isleft], k=k, max_dist=max_dist, roi=roi)
         return self
 
 
@@ -1306,4 +1334,3 @@ def find_closest_vertices(surface_coords, point_coords):
     point_coords = np.atleast_2d(point_coords)
     dists = cdist(surface_coords, point_coords)
     return np.argmin(dists, axis=0), np.min(dists, axis=0)
-
