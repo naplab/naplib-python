@@ -1285,7 +1285,7 @@ class Brain:
         -----
         After running this function, you can use the visualization function ``plot_brain_overlay``
         for a quick matplotlib plot, or you can extract the surface values from the ``self.lh.overlay``
-        and ``self.lh.overlay_cell`` attributes, etc, for plotting with another tool like pysurfer.
+        and ``self.rh.overlay`` attributes, etc, for plotting with another tool like pysurfer or plotly.
         """
         if reset_overlay_first:
             self.reset_overlay()
