@@ -74,13 +74,13 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
     raise ValueError(f"Unknown `mode`: {mode}.")
 
 
-def _plot_hemi(hemi, cmap="coolwarm", ax=None, denorm=False, view="best"):
+def _plot_hemi(hemi, cmap="coolwarm", ax=None, denorm=False, view="best", thresh=None):
     surfdist_viz(
         *hemi.surf,
         hemi.overlay,
         *_view(hemi.hemi, mode=view),
         cmap=cmap(hemi.overlay.max()) if denorm else cmap,
-        threshold=0.25,
+        threshold=thresh,
         alpha=hemi.alpha,
         bg_map=hemi.sulc,
         bg_on_stat=True,
@@ -111,7 +111,7 @@ def plot_brain_overlay(
     view : {'lateral','medial','frontal','top','best'}, default='best'
         Which view to plot for each hemisphere.
     **kwargs : kwargs
-        Any other kwargs to pass to matplotlib.pyplot.figure
+        Any other kwargs to pass to matplotlib.pyplot.figure (such as figsize)
 
     Returns
     -------
