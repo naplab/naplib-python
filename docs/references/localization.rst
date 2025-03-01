@@ -3,6 +3,17 @@ Localization
 
 .. currentmodule:: naplib.localization
 
+Convert from MNI152 to FSAverage
+--------------------------------
+
+.. autofunction:: mni152_to_fsaverage
+
+Convert from FSAverage to MNI152
+--------------------------------
+
+.. autofunction:: fsaverage_to_mni152
+
+
 Localization on a Freesurfer Brain
 ----------------------------------
 
