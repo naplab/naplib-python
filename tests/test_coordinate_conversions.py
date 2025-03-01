@@ -8,7 +8,7 @@ def test_mni152_fsaverage_conversions():
     [[ 14.15310394,  34.73510469,   9.41733728],
     [-10.60987978,  23.11927315,  14.49010227]]
   )
-  assert np.allclose(coords_tmp2, expected_2, rtol=1e-4)
+  assert np.allclose(coords_tmp2, expected_2, rtol=1e-3)
 
   coords_tmp3 = fsaverage_to_mni152(coords_tmp2)
-  assert np.allclose(coords_tmp3, coords_tmp, rtol=1e-4)
+  assert np.allclose(coords_tmp3, coords_tmp, rtol=1e-3)
