@@ -28,6 +28,30 @@ Change tags (adopted from `sklearn <https://scikit-learn.org/stable/whats_new/v0
 
 - |API| : you will need to change your code to have the same effect in the future; or a feature will be removed in the future.
 
+Version 2.5.0
+-------------
+- |Feature| : Add functions to convert electrode coordinates between MNI152 and fsaverage space, with ``localization.mni152_to_fsaverage`` and ``localization.fsaverage_to_mni152``.
+
+Version 2.4.0
+-------------
+- |Enhancement| : Adds the ability to set vmin and vmax to ``plot_brain_overlay``.
+
+Version 2.3.0
+-------------
+- |MajorFeature| : Adds the ability to interpolate electrode data onto the brain surface using ``interpolate_electrodes_onto_brain`` as well as enhanced functionality of the ``plot_brain_overlay`` function to plot such data.
+
+Version 2.2.0
+-------------
+- |Enhancement| : Adds the ``del`` keyword functionality to the Data object and its sub-components.
+- |Enhancement| : Enhance the capability of local electrode rereferencing.
+
+
+Version 2.1.0
+-------------
+- |Feature| : Allow the ``Brain`` class to work with MNI152 brains.
+- |Enhancement| : Allow ``plot_brain_elecs`` to work with varied opacity per electrodes.
+- |Fix| : Fix a bug in responsiveness_ttest.
+
 Version 2.0.0
 -------------
 - |MajorFeature| : Added the ``Brain`` class for representing a brain to the ``naplib.localization`` module. This can be used to plot intracranial electrodes on static or interactive 3D brain plots with the ``naplib.visualization module``, estimate anatomical locations of electrodes, calculate statistics on brains, and more. See Examples for illustrations of use-cases.
