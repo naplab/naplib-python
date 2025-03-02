@@ -56,5 +56,5 @@ import naplib.utils
 from .data import Data, join_fields, concat
 import naplib.naplab
 
-__version__ = "2.4.0"
+__version__ = "2.5.0"
 
