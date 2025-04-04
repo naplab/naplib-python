@@ -122,4 +122,12 @@ brain.paint_overlay('MTG', 1)
 fig, axes = plot_brain_overlay(brain, view='lateral')
 plt.show()
 
+###############################################################################
+# Directly plot brain region labels overlaid on the brain
+brain = Brain('pial', subject_dir='./fsaverage/')
 
+brain.lh.overlay = brain.lh.labels
+brain.rh.overlay = brain.rh.labels
+
+fig, axes = plot_brain_overlay(brain, cmap='tab20', vmin=1, vmax=75)
+plt.show()

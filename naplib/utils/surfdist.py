@@ -180,7 +180,10 @@ def surfdist_viz(
 
     # if cmap is given as string, translate to matplotlib cmap
     if isinstance(cmap, str):
-        cmap = plt.cm.get_cmap(cmap)
+        try:
+            cmap = plt.cm.get_cmap(cmap)
+        except AttributeError:
+            cmap = plt.get_cmap(cmap)
 
     if ax is None:
         premade_ax = False
