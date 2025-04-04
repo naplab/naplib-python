@@ -123,7 +123,7 @@ fig, axes = plot_brain_overlay(brain, view='lateral')
 plt.show()
 
 ###############################################################################
-# Directly plot brain region labels overlaid on the brain
+# Directly plot Destrieux Atlas region labels overlaid on the brain
 brain = Brain('pial', subject_dir='./fsaverage/')
 
 brain.lh.overlay = brain.lh.labels
