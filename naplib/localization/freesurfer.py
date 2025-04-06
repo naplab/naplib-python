@@ -292,29 +292,43 @@ class Hemisphere:
                 self.ignore[load_freesurfer_label(annot_file, reg)] = True
 
         self.labels = np.zeros(self.n_verts, dtype=int)
-        annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
-        annot_file_mni = self.label_file(f"FSL_MNI152.{self.hemi}.aparc.split_STG_MTG.annot")
-        if self.coordinate_space == 'FSAverage':
+
+        if self.coordinate_space == 'MNI152':
+            if self.atlas == 'Desikan-Killiany':
+                annot_file = self.label_file(f"FSL_MNI152.{self.hemi}.aparc.split_STG_MTG.annot")
+            else:
+                annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
+
+            if os.path.exists(annot_file):
+                for ind, reg in num2region_mni.items():
+                    if reg.startswith("O"):
+                        continue
+                    self.labels[load_freesurfer_label(annot_file, reg)] = ind
+
+                self.labels[self.ignore] = 0
+                self.num2label = num2region_mni
+                self.label2num = {v: k for k, v in self.num2label.items()}
+            else:
+                ano
+                if os.path.exists()
+                raise ValueError('Unknown atlas for MNI152. Try a custom atlas.')
+        elif self.coordinate_space  == "FSAverage":
+            if self.atlas == 'Desikan-Killiany':
+                annot_file = self.label_file(f"{self.hemi}.aparc.annot")
+            elif self.atlas == 'Destrieux':
+                annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
+            else:
+                annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
             for ind, reg in num2region.items():
                 if reg.startswith("O"):
                     continue
                 self.labels[load_freesurfer_label(annot_file, reg)] = ind
-        elif self.coordinate_space == 'MNI152':
-            for ind, reg in num2region_mni.items():
-                if reg.startswith("O"):
-                    continue
-                self.labels[load_freesurfer_label(annot_file_mni, reg)] = ind
-        else:
-            raise ValueError('Bad coordinate space')
-        self.labels[self.ignore] = 0
-        if self.coordinate_space == 'FSAverage':
+            
+            self.labels[self.ignore] = 0
             self.num2label = num2region
             self.label2num = {v: k for k, v in self.num2label.items()}
-        elif self.coordinate_space == 'MNI152':
-            self.num2label = num2region_mni
-            self.label2num = {v: k for k, v in self.num2label.items()}
         else:
-            raise ValueError('Bad atlas')
+            raise ValueError('Bad coordinate space')
             
         self.simplified = False
 
