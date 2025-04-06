@@ -171,6 +171,8 @@ class Hemisphere:
         hemi: str,
         surf_type: str = "pial",
         subject: str = "fsaverage",
+        coordinate_space: str = 'FSAverage',
+        atlas: str = '',
         subject_dir=None,
     ):
         """
@@ -193,41 +195,47 @@ class Hemisphere:
             raise ValueError(f"Argument `hemi` should be in {HEMIS}.")
         if surf_type not in SURF_TYPES:
             raise ValueError(f"Argument `surf_type` should be in {SURF_TYPES}.")
+        if not atlas:
+            if coordinate_space == 'FSAverage':
+                atlas = 'Destrieux'
+            # Use DK for MNI152 or any other
+            else:
+                atlas = 'Desikan-Killiany'
 
         self.hemi = hemi
         self.surf_type = surf_type
         self.subject = subject
+        self.coordinate_space = coordinate_space
+        self.atlas = atlas
 
         if subject_dir is None:
             subject_dir = os.environ.get("SUBJECTS_DIR", "./")
 
         self.subject_dir = subject_dir
-        
-        self.atlas = 'FSAverage'
 
-        if os.path.exists(self.surf_file(f"{hemi}.{surf_type}")):
-            self.surf = read_geometry(self.surf_file(f"{hemi}.{surf_type}"))
-        else:
+        # Check if fsaverage geometry exists
+        if self.coordinate_space == 'FSAverage':
+            if os.path.exists(self.surf_file(f"{hemi}.{surf_type}")):
+                self.surf = read_geometry(self.surf_file(f"{hemi}.{surf_type}"))
+                self.surf_pial = read_geometry(self.surf_file(f"{hemi}.pial"))
+            else:
+                self.coordinate_space = 'MNI152'
+                print('Trying MNI152 coordinate space')
+        # Use MN152 coordinate space if not
+        if self.coordinate_space == 'MNI152':
             # try to find .mat file
             surf_ = loadmat(self.surf_file(f"{hemi}_pial.mat"))
             coords, faces = surf_['coords'], surf_['faces']
             faces -= 1 # make faces zero-indexed
             self.surf = (coords, faces)
-            self.atlas = 'MNI152'
-        
-        if self.atlas == 'FSAverage':
-            self.surf_pial = read_geometry(self.surf_file(f"{hemi}.pial"))
-        else:
-            # try to find .mat file
-            surf_ = loadmat(self.surf_file(f"{hemi}_pial.mat"))
-            coords, faces = surf_['coords'], surf_['faces']
-            faces -= 1 # make faces zero-indexed
             self.surf_pial = (coords, faces)
+        else:
+            raise ValueError(f"Argument `coordinate_space`={self.coordinate_space} not implemented.")
         
         try:
             self.cort = np.sort(read_label(self.label_file(f"{hemi}.cortex.label")))
         except Exception as e:
-            logger.warning(f'No {hemi}.cortext.label file found. Assuming the entire surface is cortex.')
+            logger.warning(f'No {hemi}.cortex.label file found. Assuming the entire surface is cortex.')
             self.cort = np.arange(self.surf[0].shape[0])
     
         try:
@@ -286,23 +294,23 @@ class Hemisphere:
         self.labels = np.zeros(self.n_verts, dtype=int)
         annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
         annot_file_mni = self.label_file(f"FSL_MNI152.{self.hemi}.aparc.split_STG_MTG.annot")
-        if self.atlas == 'FSAverage':
+        if self.coordinate_space == 'FSAverage':
             for ind, reg in num2region.items():
                 if reg.startswith("O"):
                     continue
                 self.labels[load_freesurfer_label(annot_file, reg)] = ind
-        elif self.atlas == 'MNI152':
+        elif self.coordinate_space == 'MNI152':
             for ind, reg in num2region_mni.items():
                 if reg.startswith("O"):
                     continue
                 self.labels[load_freesurfer_label(annot_file_mni, reg)] = ind
         else:
-            raise ValueError('Bad atlas')
+            raise ValueError('Bad coordinate space')
         self.labels[self.ignore] = 0
-        if self.atlas == 'FSAverage':
+        if self.coordinate_space == 'FSAverage':
             self.num2label = num2region
             self.label2num = {v: k for k, v in self.num2label.items()}
-        elif self.atlas == 'MNI152':
+        elif self.coordinate_space == 'MNI152':
             self.num2label = num2region_mni
             self.label2num = {v: k for k, v in self.num2label.items()}
         else:
@@ -325,7 +333,7 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.atlas == 'FSAverage':
+        if self.coordinate_space == 'FSAverage':
             conversions = {
                 "Other": [],  # Autofill all uncovered vertecies
                 "HG": ["G_temp_sup-G_T_transv"],
@@ -353,7 +361,7 @@ class Hemisphere:
             }
             
 
-        elif self.atlas == 'MNI152':
+        elif self.coordinate_space == 'MNI152':
             d1 = {k: [k] for k in region2num_mni.keys() if k not in ['O_IFG','parsopercularis','parstriangularis','parsorbitalis']}
             d2_override = {
                 "Other": [],
@@ -502,8 +510,8 @@ class Hemisphere:
             )
         self.is_mangled_hg = True
 
-        if self.atlas == 'MNI152':
-            raise ValueError(f'split_hg() is not supported for MNI atlas.')
+        if self.coordinate_space == 'MNI152':
+            raise ValueError(f'split_hg() is not supported for MNI coordinate space.')
             
         hg = self.filter_labels(["G_temp_sup-G_T_transv", "HG"])
 
@@ -621,8 +629,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.atlas == 'MNI152':
-            raise ValueError(f'remove_tts() is not supported for MNI atlas.')
+        if self.coordinate_space == 'MNI152':
+            raise ValueError(f'remove_tts() is not supported for MNI coordinate space.')
         
         if self.is_mangled_tts:
             raise RuntimeError(
@@ -679,8 +687,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.atlas == 'MNI152':
-            raise ValueError(f'split_stg() is not supported for MNI atlas.')
+        if self.coordinate_space == 'MNI152':
+            raise ValueError(f'split_stg() is not supported for MNI coordinate space.')
         
         if self.is_mangled_stg:
             raise RuntimeError(
@@ -723,7 +731,7 @@ class Hemisphere:
             )
         self.is_mangled_ifg = True
 
-        if self.atlas == 'FSAverage':
+        if self.coordinate_space == 'FSAverage':
             ifg = self.filter_labels(
                 [
                     "G_front_inf-Opercular",
@@ -734,7 +742,7 @@ class Hemisphere:
                     "IFG.orb",
                 ]
             )
-        else: # MNI152
+        elif self.coordinate_space == 'MNI152':
             ifg = self.filter_labels(
                 [
                     "parsopercularis",
@@ -745,6 +753,9 @@ class Hemisphere:
                     "IFG.orb",
                 ]
             )
+        else:
+            print('No change for coordinate space', self.coordinate_space)
+            return self
 
         self.labels[ifg] = self.label2num["IFG" if self.simplified else "O_IFG"]
 
@@ -801,7 +812,7 @@ class Hemisphere:
         if isinstance(roi, str) and roi == 'all':
             roi_list = self.label_names
         elif isinstance(roi, str) and roi == 'temporal':
-            if self.atlas == 'MNI152':
+            if self.coordinate_space == 'MNI152':
                 raise ValueError("roi='temporal' is not supported for MNI brain. Must specify list of specific region names")
             roi_list = temporal_regions_superlist
         else:
@@ -894,7 +905,12 @@ class Hemisphere:
 
 class Brain:
     def __init__(
-        self, surf_type: str = "pial", subject: str = "fsaverage", subject_dir=None
+        self,
+        surf_type: str = "pial", 
+        subject: str = "fsaverage", 
+        coordinate_space: str = 'FSAverage',
+        atlas: str = '',
+        subject_dir=None
     ):
         """
         Brain representation containing a left and right hemisphere. Can be used for plotting,
@@ -909,6 +925,12 @@ class Brain:
             files can be found.
         subject : str, default='fsaverage'
             Subject to use, must be a directory within ``subject_dir``
+        coordinate_space : str, default='FSAverage'
+            Coordinate space, used to determine surface geometry
+        atlas : str, default=''
+            Atlas labels to use. Defaults to 'Destrieux' for coordinate_space='FSAverage'
+            and Desikan-Killiany otherwise. Can also be an annotation file name given by
+            ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
         subject_dir : str/path-like, defaults to SUBJECT_DIR environment variable, or the current directory
             if that does not exist.
             Path containing the subject's folder.
@@ -942,8 +964,8 @@ class Brain:
         self.surf_type = surf_type
         self.subject = subject
 
-        self.lh = Hemisphere("lh", surf_type, subject, subject_dir=subject_dir)
-        self.rh = Hemisphere("rh", surf_type, subject, subject_dir=subject_dir)
+        self.lh = Hemisphere("lh", surf_type, subject, coordinate_space, atlas, subject_dir=subject_dir)
+        self.rh = Hemisphere("rh", surf_type, subject, coordinate_space, atlas, subject_dir=subject_dir)
 
     @property
     def num2label(self):
