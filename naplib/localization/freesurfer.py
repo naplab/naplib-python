@@ -7,7 +7,7 @@ import warnings
 from os.path import join as pjoin
 
 import numpy as np
-from nibabel.freesurfer.io import read_geometry, read_label, read_morph_data
+from nibabel.freesurfer.io import read_geometry, read_label, read_morph_data, read_annot
 from scipy.spatial.distance import cdist
 from skspatial.objects import Line, Plane
 from hdf5storage import loadmat
