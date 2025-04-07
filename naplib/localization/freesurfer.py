@@ -20,85 +20,7 @@ warnings.filterwarnings("ignore", message="nopython", append=True)
 HEMIS = ("lh", "rh")
 SURF_TYPES = ("pial", "inflated")
 
-
-num2region = {
-    # Unknown
-    0: "Unknown",
-    # Destrieux labels
-    1: "G_and_S_frontomargin",
-    2: "G_and_S_occipital_inf",
-    3: "G_and_S_paracentral",
-    4: "G_and_S_subcentral",
-    5: "G_and_S_transv_frontopol",
-    6: "G_and_S_cingul-Ant",
-    7: "G_and_S_cingul-Mid-Ant",
-    8: "G_and_S_cingul-Mid-Post",
-    9: "G_cingul-Post-dorsal",
-    10: "G_cingul-Post-ventral",
-    11: "G_cuneus",
-    12: "G_front_inf-Opercular",
-    13: "G_front_inf-Orbital",
-    14: "G_front_inf-Triangul",
-    15: "G_front_middle",
-    16: "G_front_sup",
-    17: "G_Ins_lg_and_S_cent_ins",
-    18: "G_insular_short",
-    19: "G_occipital_middle",
-    20: "G_occipital_sup",
-    21: "G_oc-temp_lat-fusifor",
-    22: "G_oc-temp_med-Lingual",
-    23: "G_oc-temp_med-Parahip",
-    24: "G_orbital",
-    25: "G_pariet_inf-Angular",
-    26: "G_pariet_inf-Supramar",
-    27: "G_parietal_sup",
-    28: "G_postcentral",
-    29: "G_precentral",
-    30: "G_precuneus",
-    31: "G_rectus",
-    32: "G_subcallosal",
-    33: "G_temp_sup-G_T_transv",
-    34: "G_temp_sup-Lateral",
-    35: "G_temp_sup-Plan_polar",
-    36: "G_temp_sup-Plan_tempo",
-    37: "G_temporal_inf",
-    38: "G_temporal_middle",
-    39: "Lat_Fis-ant-Horizont",
-    40: "Lat_Fis-ant-Vertical",
-    41: "Lat_Fis-post",
-    42: "Pole_occipital",
-    43: "Pole_temporal",
-    44: "S_calcarine",
-    45: "S_central",
-    46: "S_cingul-Marginalis",
-    47: "S_circular_insula_ant",
-    48: "S_circular_insula_inf",
-    49: "S_circular_insula_sup",
-    50: "S_collat_transv_ant",
-    51: "S_collat_transv_post",
-    52: "S_front_inf",
-    53: "S_front_middle",
-    54: "S_front_sup",
-    55: "S_interm_prim-Jensen",
-    56: "S_intrapariet_and_P_trans",
-    57: "S_oc_middle_and_Lunatus",
-    58: "S_oc_sup_and_transversal",
-    59: "S_occipital_ant",
-    60: "S_oc-temp_lat",
-    61: "S_oc-temp_med_and_Lingual",
-    62: "S_orbital_lateral",
-    63: "S_orbital_med-olfact",
-    64: "S_orbital-H_Shaped",
-    65: "S_parieto_occipital",
-    66: "S_pericallosal",
-    67: "S_postcentral",
-    68: "S_precentral-inf-part",
-    69: "S_precentral-sup-part",
-    70: "S_suborbital",
-    71: "S_subparietal",
-    72: "S_temporal_inf",
-    73: "S_temporal_sup",
-    74: "S_temporal_transverse",
+num2region_D_custom = {
     # My custom labels
     75: "O_pmHG",
     76: "O_alHG",
@@ -109,61 +31,11 @@ num2region = {
     81: "O_pSTG",
     82: "O_IFG",
 }
-region2num = {v: k for k, v in num2region.items()}
 
-temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
-temporal_regions_superlist = [num2region[num] for num in temporal_regions_nums]
-temporal_regions_superlist += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
-
-
-num2region_mni = {
-    0: 'unknown',
-    1: 'bankssts',
-    2: 'caudalanteriorcingulate',
-    3: 'caudalmiddlefrontal',
-    4: 'corpuscallosum',
-    5: 'cuneus',
-    6: 'entorhinal',
-    7: 'fusiform',
-    8: 'inferiorparietal',
-    9: 'inferiortemporal',
-    10: 'isthmuscingulate',
-    11: 'lateraloccipital',
-    12: 'lateralorbitofrontal',
-    13: 'lingual',
-    14: 'medialorbitofrontal',
-    15: 'middletemporal',
-    16: 'parahippocampal',
-    17: 'paracentral',
-    18: 'parsopercularis',
-    19: 'parsorbitalis',
-    20: 'parstriangularis',
-    21: 'pericalcarine',
-    22: 'postcentral',
-    23: 'posteriorcingulate',
-    24: 'precentral',
-    25: 'precuneus',
-    26: 'rostralanteriorcingulate',
-    27: 'rostralmiddlefrontal',
-    28: 'superiorfrontal',
-    29: 'superiorparietal',
-    30: 'superiortemporal',
-    31: 'supramarginal',
-    32: 'frontalpole',
-    33: 'temporalpole',
-    34: 'transversetemporal',
-    35: 'insula',
-    36: 'cMTG',
-    37: 'mMTG',
-    38: 'rMTG',
-    39: 'cSTG',
-    40: 'mSTG',
-    41: 'rSTG',
+num2region_DK_custom = {
     # My custom labels
     42: "O_IFG",
 }
-region2num_mni = {v: k for k, v in num2region_mni.items()}
-
 
 class Hemisphere:
     def __init__(
@@ -299,19 +171,6 @@ class Hemisphere:
             else:
                 annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
 
-            if os.path.exists(annot_file):
-                for ind, reg in num2region_mni.items():
-                    if reg.startswith("O"):
-                        continue
-                    self.labels[load_freesurfer_label(annot_file, reg)] = ind
-
-                self.labels[self.ignore] = 0
-                self.num2label = num2region_mni
-                self.label2num = {v: k for k, v in self.num2label.items()}
-            else:
-                ano
-                if os.path.exists()
-                raise ValueError('Unknown atlas for MNI152. Try a custom atlas.')
         elif self.coordinate_space  == "FSAverage":
             if self.atlas == 'Desikan-Killiany':
                 annot_file = self.label_file(f"{self.hemi}.aparc.annot")
@@ -319,17 +178,29 @@ class Hemisphere:
                 annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
             else:
                 annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
-            for ind, reg in num2region.items():
-                if reg.startswith("O"):
-                    continue
-                self.labels[load_freesurfer_label(annot_file, reg)] = ind
-            
-            self.labels[self.ignore] = 0
-            self.num2label = num2region
-            self.label2num = {v: k for k, v in self.num2label.items()}
+
         else:
             raise ValueError('Bad coordinate space')
             
+        if os.path.exists(annot_file):
+            _,_,regions = read_annot(annot_file)
+            regions = [i.decode("utf-8") for i in regions]
+            num2region = {k:v for k,v in enumerate(regions)}
+
+            for ind, reg in num2region.items():
+                self.labels[load_freesurfer_label(annot_file, reg)] = ind
+        else:
+            raise ValueError('Unknown atlas. Try "Desikan-Killiany" or "Destrieux".')
+
+        if self.atlas == 'Destrieux':
+            num2region.update(num2region_D_custom)
+        elif self.atlas == 'Desikan-Killiany' and self.coordinate_space == 'MNI152':
+            num2region.update(num2region_DK_custom)
+
+        self.labels[self.ignore] = 0
+        self.num2label = num2region
+        self.label2num = {v: k for k, v in self.num2label.items()}
+
         self.simplified = False
 
         self.is_mangled_hg = False
@@ -828,7 +699,9 @@ class Hemisphere:
         elif isinstance(roi, str) and roi == 'temporal':
             if self.coordinate_space == 'MNI152':
                 raise ValueError("roi='temporal' is not supported for MNI brain. Must specify list of specific region names")
-            roi_list = temporal_regions_superlist
+            temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
+            roi_list = [self.num2label[num] for num in temporal_regions_nums]
+            roi_list += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
         else:
             roi_list = roi
             assert isinstance(roi, list)
