@@ -59,6 +59,12 @@ class Hemisphere:
             files can be found.
         subject : str, default='fsaverage'
             Subject to use, must be a directory within ``subject_dir``
+        coordinate_space : str, default='FSAverage'
+            Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
+        atlas : str, default=''
+            Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
+            and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
+            ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
         subject_dir : str/path-like, defaults to SUBJECT_DIR environment variable, or the current directory
             if that does not exist.
             Path containing the subject's folder.
@@ -805,18 +811,16 @@ class Brain:
 
         Parameters
         ----------
-        hemi : str
-            Either 'lh' or 'rh'.
         surf_type : str, default='pial'
             Cortical surface type, either 'pial' or 'inflated' or another if the corresponding
             files can be found.
         subject : str, default='fsaverage'
             Subject to use, must be a directory within ``subject_dir``
         coordinate_space : str, default='FSAverage'
-            Coordinate space, used to determine surface geometry
+            Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
         atlas : str, default=''
-            Atlas labels to use. Defaults to 'Destrieux' for coordinate_space='FSAverage'
-            and Desikan-Killiany otherwise. Can also be an annotation file name given by
+            Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
+            and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
             ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
         subject_dir : str/path-like, defaults to SUBJECT_DIR environment variable, or the current directory
             if that does not exist.
