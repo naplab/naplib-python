@@ -107,7 +107,7 @@ class Hemisphere:
             faces -= 1 # make faces zero-indexed
             self.surf = (coords, faces)
             self.surf_pial = (coords, faces)
-        else:
+        if self.coordinate_space not in ['FSAverage','MNI152']:
             raise ValueError(f"Argument `coordinate_space`={self.coordinate_space} not implemented.")
         
         try:
