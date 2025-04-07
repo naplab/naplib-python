@@ -212,13 +212,13 @@ class Hemisphere:
 
     def simplify_labels(self):
         """
-        Simplify Destrieux labels into shortforms.
+        Simplify Destrieux and Desikan-Killiany labels into shortforms.
 
         Returns
         -------
         self : instance of self
         """
-        if self.coordinate_space == 'FSAverage':
+        if self.atlas == 'Destrieux':
             conversions = {
                 "Other": [],  # Autofill all uncovered vertecies
                 "HG": ["G_temp_sup-G_T_transv"],
@@ -246,8 +246,8 @@ class Hemisphere:
             }
             
 
-        elif self.coordinate_space == 'MNI152':
-            d1 = {k: [k] for k in region2num_mni.keys() if k not in ['O_IFG','parsopercularis','parstriangularis','parsorbitalis']}
+        elif self.atlas == 'Desikan-Killiany':
+            d1 = {k: [k] for k in self.label2num.keys() if k not in ['O_IFG','parsopercularis','parstriangularis','parsorbitalis']}
             d2_override = {
                 "Other": [],
                 "IFG": ["O_IFG"],
@@ -395,8 +395,8 @@ class Hemisphere:
             )
         self.is_mangled_hg = True
 
-        if self.coordinate_space == 'MNI152':
-            raise ValueError(f'split_hg() is not supported for MNI coordinate space.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'split_hg() only supported for Destrieux atlas.')
             
         hg = self.filter_labels(["G_temp_sup-G_T_transv", "HG"])
 
@@ -514,8 +514,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.coordinate_space == 'MNI152':
-            raise ValueError(f'remove_tts() is not supported for MNI coordinate space.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'remove_tts() only supported for Destrieux atlas.')
         
         if self.is_mangled_tts:
             raise RuntimeError(
@@ -572,8 +572,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.coordinate_space == 'MNI152':
-            raise ValueError(f'split_stg() is not supported for MNI coordinate space.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'split_stg() only supported for Destrieux atlas.')
         
         if self.is_mangled_stg:
             raise RuntimeError(
@@ -616,7 +616,7 @@ class Hemisphere:
             )
         self.is_mangled_ifg = True
 
-        if self.coordinate_space == 'FSAverage':
+        if self.atlas == 'Destrieux':
             ifg = self.filter_labels(
                 [
                     "G_front_inf-Opercular",
@@ -627,7 +627,7 @@ class Hemisphere:
                     "IFG.orb",
                 ]
             )
-        elif self.coordinate_space == 'MNI152':
+        elif self.atlas == 'Desikan-Killiany':
             ifg = self.filter_labels(
                 [
                     "parsopercularis",
@@ -697,8 +697,8 @@ class Hemisphere:
         if isinstance(roi, str) and roi == 'all':
             roi_list = self.label_names
         elif isinstance(roi, str) and roi == 'temporal':
-            if self.coordinate_space == 'MNI152':
-                raise ValueError("roi='temporal' is not supported for MNI brain. Must specify list of specific region names")
+            if self.atlas != 'Destrieux':
+                raise ValueError("roi='temporal' only supported for Destrieux atlas. Must specify list of specific region names")
             temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
             roi_list = [self.num2label[num] for num in temporal_regions_nums]
             roi_list += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
