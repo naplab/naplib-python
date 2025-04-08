@@ -22,14 +22,14 @@ SURF_TYPES = ("pial", "inflated")
 
 num2region_D_custom = {
     # My custom labels
-    75: "O_pmHG",
-    76: "O_alHG",
-    77: "O_Te10",
-    78: "O_Te11",
-    79: "O_Te12",
-    80: "O_mSTG",
-    81: "O_pSTG",
-    82: "O_IFG",
+    76: "O_pmHG",
+    77: "O_alHG",
+    78: "O_Te10",
+    79: "O_Te11",
+    80: "O_Te12",
+    81: "O_mSTG",
+    82: "O_pSTG",
+    83: "O_IFG",
 }
 
 num2region_DK_custom = {
@@ -196,7 +196,7 @@ class Hemisphere:
             for ind, reg in num2region.items():
                 self.labels[load_freesurfer_label(annot_file, reg)] = ind
         else:
-            raise ValueError('Unknown atlas. Try "Desikan-Killiany" or "Destrieux".')
+            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux".')
 
         if self.atlas == 'Destrieux':
             num2region.update(num2region_D_custom)
@@ -705,7 +705,7 @@ class Hemisphere:
         elif isinstance(roi, str) and roi == 'temporal':
             if self.atlas != 'Destrieux':
                 raise ValueError("roi='temporal' only supported for Destrieux atlas. Must specify list of specific region names")
-            temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
+            temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 76, 77, 78, 79, 80, 81, 82]
             roi_list = [self.num2label[num] for num in temporal_regions_nums]
             roi_list += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
         else:
