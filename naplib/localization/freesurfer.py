@@ -705,9 +705,11 @@ class Hemisphere:
         elif isinstance(roi, str) and roi == 'temporal':
             if self.atlas != 'Destrieux':
                 raise ValueError("roi='temporal' only supported for Destrieux atlas. Must specify list of specific region names")
-            temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 76, 77, 78, 79, 80, 81, 82]
-            roi_list = [self.num2label[num] for num in temporal_regions_nums]
-            roi_list += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
+            if self.simplified:
+                roi_list = ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
+            else:
+                temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 76, 77, 78, 79, 80, 81, 82]
+                roi_list = [self.num2label[num] for num in temporal_regions_nums]
         else:
             roi_list = roi
             assert isinstance(roi, list)
