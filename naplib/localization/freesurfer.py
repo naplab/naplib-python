@@ -44,7 +44,7 @@ class Hemisphere:
         surf_type: str = "pial",
         subject: str = "fsaverage",
         coordinate_space: str = 'FSAverage',
-        atlas: str = '',
+        atlas=None,
         subject_dir=None,
     ):
         """
@@ -61,7 +61,7 @@ class Hemisphere:
             Subject to use, must be a directory within ``subject_dir``
         coordinate_space : str, default='FSAverage'
             Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
-        atlas : str, default=''
+        atlas : str, default=None
             Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
             and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
             ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
@@ -84,6 +84,8 @@ class Hemisphere:
         self.surf_type = surf_type
         self.subject = subject
         self.coordinate_space = coordinate_space
+        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{self.atlas}.annot')):
+            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
         self.atlas = atlas
 
         if subject_dir is None:
@@ -327,6 +329,7 @@ class Hemisphere:
         """
         if isinstance(labels, str):
             labels = (labels,)
+        labels = [l for l in labels if l in self.label2num]
 
         verts = np.zeros(self.n_verts, dtype=bool)
         zones = np.zeros(self.n_verts, dtype=int)
@@ -804,7 +807,7 @@ class Brain:
         surf_type: str = "pial", 
         subject: str = "fsaverage", 
         coordinate_space: str = 'FSAverage',
-        atlas: str = '',
+        atlas=None,
         subject_dir=None
     ):
         """
@@ -820,7 +823,7 @@ class Brain:
             Subject to use, must be a directory within ``subject_dir``
         coordinate_space : str, default='FSAverage'
             Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
-        atlas : str, default=''
+        atlas : str, default=None
             Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
             and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
             ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
@@ -974,7 +977,7 @@ class Brain:
             If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
             If not given, this will be inferred from the first dimension of the coords (negative is left).
         distance_cutoff : float, default=10
-            Electrodes further than this distance (in mm) from the cortical surface will be labeled as "Other"
+            Electrodes further than this distance (in mm) from the cortical surface will be labeled as None
         is_surf : boolean np.ndarray
             Array of the same shape as the number of vertices in the surface (e.g. len(self.lh.surf[0])) indicating
             whether those points should be included as surface options. If an electrode is closest to a point
