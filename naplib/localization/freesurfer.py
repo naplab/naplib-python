@@ -959,7 +959,7 @@ class Brain:
         return labels
 
     def annotate_coords(
-        self, coords, isleft, distance_cutoff=10, is_surf=None, text=True
+        self, coords, isleft=None, distance_cutoff=10, is_surf=None, text=True
     ):
         """
         Get labels (like pmHG, IFG, etc) for coordinates. Note, the coordinates should match the
@@ -970,8 +970,9 @@ class Brain:
         ----------
         coords : np.ndarray
             Array of coordinates, shape (num_elecs, 3).
-        isleft : np.ndarray
-            Boolean array whether each electrode belongs to the left hemisphere, shape (num_elecs,).
+        isleft : np.ndarray (elecs,), optional
+            If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
+            If not given, this will be inferred from the first dimension of the coords (negative is left).
         distance_cutoff : float, default=10
             Electrodes further than this distance (in mm) from the cortical surface will be labeled as "Other"
         is_surf : boolean np.ndarray
@@ -987,6 +988,9 @@ class Brain:
             Array of labels, either as strings or ints.
 
         """
+        if isleft is None:
+            isleft = coords[:,0] < 0
+            
         verts, dists = get_nearest_vert_index(
             coords, isleft, self.lh.surf, self.rh.surf, verbose=False
         )
@@ -999,7 +1003,7 @@ class Brain:
         )
         return labels
 
-    def distance_from_region(self, coords, isleft, region="pmHG", metric="surf"):
+    def distance_from_region(self, coords, isleft=None, region="pmHG", metric="surf"):
         """
         Get distance from a certain region for each electrode's coordinates. Can compute
         distance along the cortical surface or as euclidean distance. For proper results, assuming
@@ -1009,8 +1013,9 @@ class Brain:
         ----------
         coords : np.ndarray
             Array of coordinates in pial space for this brain's subject_id, shape (num_elecs, 3).
-        isleft : np.ndarray
-            Boolean array whether each electrode belongs to the left hemisphere, shape (num_elecs,).
+        isleft : np.ndarray (elecs,), optional
+            If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
+            If not given, this will be inferred from the first dimension of the coords (negative is left).
         region : str, default='pmHG'
             Anatomical label. Must exist in the labels for the brain.
         metric : {'surf','euclidean'}, default='surf'
@@ -1021,6 +1026,8 @@ class Brain:
         distances : np.ndarray
             Array of distances, in mm.
         """
+        if isleft is None:
+            isleft = coords[:,0] < 0
 
         region_label_num = self.label2num[region]
 
