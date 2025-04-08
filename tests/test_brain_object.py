@@ -98,7 +98,7 @@ def test_annotate_coords(data):
 
 def test_annotate_coords_custom_atlas(data):
     annots = data['brain_custom'].annotate_coords(data['coords'], data['isleft'])
-    expected = array(['L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI',
+    expected = np.array(['L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI',
        'L_A5_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_STGa_ROI',
        'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI', 'L_A5_ROI',
        'L_A4_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_A5_ROI',
