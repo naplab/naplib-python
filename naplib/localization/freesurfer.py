@@ -84,14 +84,15 @@ class Hemisphere:
         self.surf_type = surf_type
         self.subject = subject
         self.coordinate_space = coordinate_space
-        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{atlas}.annot')):
-            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
-        self.atlas = atlas
 
         if subject_dir is None:
             subject_dir = os.environ.get("SUBJECTS_DIR", "./")
 
         self.subject_dir = subject_dir
+        
+        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{atlas}.annot')):
+            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
+        self.atlas = atlas
 
         # Check if fsaverage geometry exists
         if self.coordinate_space == 'FSAverage':
