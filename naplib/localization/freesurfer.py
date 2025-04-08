@@ -84,7 +84,7 @@ class Hemisphere:
         self.surf_type = surf_type
         self.subject = subject
         self.coordinate_space = coordinate_space
-        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{self.atlas}.annot')):
+        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{atlas}.annot')):
             raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
         self.atlas = atlas
 
