@@ -959,8 +959,8 @@ class Brain:
         if is_surf is not None:
             labels[~is_surf] = 0
         if text:
-            labels[is_left] = np.array([self.lh.num2label[label] for label in labels[is_left]])
-            labels[~is_left] = np.array([self.rh.num2label[label] for label in labels[~is_left]])
+            labels = np.array([self.lh.num2label[label] if is_left[i] else self.rh.num2label[label]
+             for i,label in enumerate(labels)])
         return labels
 
     def annotate_coords(
