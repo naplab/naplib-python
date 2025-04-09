@@ -89,7 +89,7 @@ class Hemisphere:
             subject_dir = os.environ.get("SUBJECTS_DIR", "./")
 
         self.subject_dir = subject_dir
-        
+
         if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{atlas}.annot')):
             raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
         self.atlas = atlas
@@ -959,7 +959,8 @@ class Brain:
         if is_surf is not None:
             labels[~is_surf] = 0
         if text:
-            labels = np.array([self.num2label[label] for label in labels])
+            labels[is_left] = np.array([self.lh.num2label[label] for label in labels[is_left]])
+            labels[~is_left] = np.array([self.rh.num2label[label] for label in labels[~is_left]])
         return labels
 
     def annotate_coords(
@@ -994,7 +995,7 @@ class Brain:
         """
         if isleft is None:
             isleft = coords[:,0] < 0
-            
+
         verts, dists = get_nearest_vert_index(
             coords, isleft, self.lh.surf, self.rh.surf, verbose=False
         )
