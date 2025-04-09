@@ -661,8 +661,6 @@ class Hemisphere:
         self.alpha = np.ones(self.surf[1].shape[0])
         self.keep_visible = np.ones_like(self.overlay).astype("bool")
         self.keep_visible_cells = np.ones_like(self.alpha).astype("bool")
-        self.has_overlay = np.zeros_like(self.overlay).astype("bool")
-        self.has_overlay_cells = np.zeros_like(self.alpha).astype("bool")
         return self
 
     def paint_overlay(self, labels, value=1):
@@ -672,10 +670,8 @@ class Hemisphere:
         Returns:
             self
         """
-        verts, add_overlay, _ = self.zones(labels)
-        self.overlay[verts] = value
-        self.has_overlay[verts == 1] = True
-        self.has_overlay_cells[add_overlay == 1] = True
+        for label in labels:
+            self.overlay[self.labels==self.label2num[label]] = value
         return self
     
     def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist, roi='all'):
@@ -755,8 +751,6 @@ class Hemisphere:
             trigs[i] = np.mean([verts[self.trigs[i, j]] != 0 for j in range(3)])
 
         self.overlay[updated_vertices] = smoothed_values[updated_vertices]
-        self.has_overlay[updated_vertices] = True
-        self.has_overlay_cells[trigs == 1] = True
         
         return self
         
@@ -964,7 +958,7 @@ class Brain:
         return labels
 
     def annotate_coords(
-        self, coords, isleft=None, distance_cutoff=10, is_surf=None, text=True
+        self, coords, isleft=None, distance_cutoff=10, is_surf=None, text=True, get_dists=False,
     ):
         """
         Get labels (like pmHG, IFG, etc) for coordinates. Note, the coordinates should match the
@@ -986,11 +980,15 @@ class Brain:
             with a False indicator in this array, then it will get None as its label.
         text : bool, default=True
             Whether to return labels as string names, or integer labels.
+        get_dists : bool, default=False
+            Whether to return distances for each electrode to the nearest vertex.
 
         Returns
         -------
         labels : np.ndarray
             Array of labels, either as strings or ints.
+        dists : np.ndarray, optional
+            Array of minimum distances as floats
 
         """
         if isleft is None:
@@ -1006,7 +1004,10 @@ class Brain:
                 for lab, dist in zip(labels, dists)
             ]
         )
-        return labels
+        if get_dists:
+            return labels, dists
+        else:
+            return labels
 
     def distance_from_region(self, coords, isleft=None, region="pmHG", metric="surf"):
         """
