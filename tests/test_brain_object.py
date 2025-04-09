@@ -101,9 +101,10 @@ def test_annotate_coords_custom_atlas(data):
     expected = np.array(['L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI',
        'L_A5_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_STGa_ROI',
        'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI', 'L_A5_ROI',
-       'L_A4_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_A5_ROI',
-       'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_A5_ROI', 'L_A5_ROI',
+       'L_A4_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'R_A5_ROI',
+       'R_A5_ROI', 'R_A4_ROI', 'R_A4_ROI', 'R_A5_ROI', 'R_A5_ROI',
        'L_STSda_ROI', 'L_A5_ROI', 'L_A5_ROI', 'L_A5_ROI', 'L_A5_ROI'], dtype='<U11')
+
 
     assert np.array_equal(annots, expected)
 
