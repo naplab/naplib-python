@@ -792,7 +792,7 @@ class Hemisphere:
 
         Parameters
         ----------
-        merge_func : callable
+        merge_func : callable, default=numpy.mean
             Function to merge values within each parcel.  Should accept a 1D
             NumPy array and return a scalar.
         """
@@ -1259,7 +1259,7 @@ class Brain:
 
         Parameters
         ----------
-        merge_func : callable, optional
+        merge_func : callable, default=numpy.mean
             The function used to combine the overlay values within each parcel.
             The function should accept an array-like object of values and return a
             single value.  Common examples include `numpy.mean` (default),
