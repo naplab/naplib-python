@@ -47,10 +47,11 @@ def data():
 
     brain_inflated = Brain('inflated', subject_dir='./.fsaverage_tmp/').split_hg('midpoint').split_stg().simplify_labels()
     brain_pial = Brain('pial', subject_dir='./.fsaverage_tmp/').split_hg('midpoint').split_stg().join_ifg().simplify_labels()
-    
+    brain_custom = Brain('pial', atlas='HCPMMP1', subject_dir='./.fsaverage_tmp/')
 
     return {'brain_inflated': brain_inflated,
             'brain_pial': brain_pial,
+            'brain_custom': brain_custom,
             'coords': coords,
             'isleft': isleft}
 
@@ -92,6 +93,18 @@ def test_annotate_coords(data):
        'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG',
        'pSTG', 'mSTG', 'mSTG', 'mSTG', 'pSTG', 'pSTG', 'pSTG', 'pSTG',
        'pSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG', 'mSTG'], dtype='<U4')
+
+    assert np.array_equal(annots, expected)
+
+def test_annotate_coords_custom_atlas(data):
+    annots = data['brain_custom'].annotate_coords(data['coords'], data['isleft'])
+    expected = np.array(['L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI',
+       'L_A5_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'L_STGa_ROI',
+       'L_STGa_ROI', 'L_STGa_ROI', 'L_STGa_ROI', 'L_A5_ROI', 'L_A5_ROI',
+       'L_A4_ROI', 'L_A5_ROI', 'L_A4_ROI', 'L_A4_ROI', 'R_A5_ROI',
+       'R_A5_ROI', 'R_A4_ROI', 'R_A4_ROI', 'R_A5_ROI', 'R_A5_ROI',
+       'L_STSda_ROI', 'L_A5_ROI', 'L_A5_ROI', 'L_A5_ROI', 'L_A5_ROI'], dtype='<U11')
+
 
     assert np.array_equal(annots, expected)
 

@@ -123,11 +123,21 @@ fig, axes = plot_brain_overlay(brain, view='lateral')
 plt.show()
 
 ###############################################################################
-# Directly plot Destrieux Atlas region labels overlaid on the brain
+# Plot default Destrieux Atlas region labels overlaid on the brain
 brain = Brain('pial', subject_dir='./fsaverage/')
 
 brain.lh.overlay = brain.lh.labels
 brain.rh.overlay = brain.rh.labels
 
-fig, axes = plot_brain_overlay(brain, cmap='tab20', vmin=1, vmax=75)
+fig, axes = plot_brain_overlay(brain, cmap='tab20')
+plt.show()
+
+###############################################################################
+# Load and plot Glasser Atlas region labels overlaid on the brain
+brain = Brain('pial', atlas='HCPMMP1', subject_dir='./fsaverage/')
+
+brain.lh.overlay = brain.lh.labels
+brain.rh.overlay = brain.rh.labels
+
+fig, axes = plot_brain_overlay(brain, cmap='prism')
 plt.show()

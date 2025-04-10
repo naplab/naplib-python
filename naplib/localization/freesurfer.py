@@ -7,7 +7,7 @@ import warnings
 from os.path import join as pjoin
 
 import numpy as np
-from nibabel.freesurfer.io import read_geometry, read_label, read_morph_data
+from nibabel.freesurfer.io import read_geometry, read_label, read_morph_data, read_annot
 from scipy.spatial.distance import cdist
 from skspatial.objects import Line, Plane
 from hdf5storage import loadmat
@@ -20,150 +20,22 @@ warnings.filterwarnings("ignore", message="nopython", append=True)
 HEMIS = ("lh", "rh")
 SURF_TYPES = ("pial", "inflated")
 
-
-num2region = {
-    # Unknown
-    0: "Unknown",
-    # Destrieux labels
-    1: "G_and_S_frontomargin",
-    2: "G_and_S_occipital_inf",
-    3: "G_and_S_paracentral",
-    4: "G_and_S_subcentral",
-    5: "G_and_S_transv_frontopol",
-    6: "G_and_S_cingul-Ant",
-    7: "G_and_S_cingul-Mid-Ant",
-    8: "G_and_S_cingul-Mid-Post",
-    9: "G_cingul-Post-dorsal",
-    10: "G_cingul-Post-ventral",
-    11: "G_cuneus",
-    12: "G_front_inf-Opercular",
-    13: "G_front_inf-Orbital",
-    14: "G_front_inf-Triangul",
-    15: "G_front_middle",
-    16: "G_front_sup",
-    17: "G_Ins_lg_and_S_cent_ins",
-    18: "G_insular_short",
-    19: "G_occipital_middle",
-    20: "G_occipital_sup",
-    21: "G_oc-temp_lat-fusifor",
-    22: "G_oc-temp_med-Lingual",
-    23: "G_oc-temp_med-Parahip",
-    24: "G_orbital",
-    25: "G_pariet_inf-Angular",
-    26: "G_pariet_inf-Supramar",
-    27: "G_parietal_sup",
-    28: "G_postcentral",
-    29: "G_precentral",
-    30: "G_precuneus",
-    31: "G_rectus",
-    32: "G_subcallosal",
-    33: "G_temp_sup-G_T_transv",
-    34: "G_temp_sup-Lateral",
-    35: "G_temp_sup-Plan_polar",
-    36: "G_temp_sup-Plan_tempo",
-    37: "G_temporal_inf",
-    38: "G_temporal_middle",
-    39: "Lat_Fis-ant-Horizont",
-    40: "Lat_Fis-ant-Vertical",
-    41: "Lat_Fis-post",
-    42: "Pole_occipital",
-    43: "Pole_temporal",
-    44: "S_calcarine",
-    45: "S_central",
-    46: "S_cingul-Marginalis",
-    47: "S_circular_insula_ant",
-    48: "S_circular_insula_inf",
-    49: "S_circular_insula_sup",
-    50: "S_collat_transv_ant",
-    51: "S_collat_transv_post",
-    52: "S_front_inf",
-    53: "S_front_middle",
-    54: "S_front_sup",
-    55: "S_interm_prim-Jensen",
-    56: "S_intrapariet_and_P_trans",
-    57: "S_oc_middle_and_Lunatus",
-    58: "S_oc_sup_and_transversal",
-    59: "S_occipital_ant",
-    60: "S_oc-temp_lat",
-    61: "S_oc-temp_med_and_Lingual",
-    62: "S_orbital_lateral",
-    63: "S_orbital_med-olfact",
-    64: "S_orbital-H_Shaped",
-    65: "S_parieto_occipital",
-    66: "S_pericallosal",
-    67: "S_postcentral",
-    68: "S_precentral-inf-part",
-    69: "S_precentral-sup-part",
-    70: "S_suborbital",
-    71: "S_subparietal",
-    72: "S_temporal_inf",
-    73: "S_temporal_sup",
-    74: "S_temporal_transverse",
+num2region_D_custom = {
     # My custom labels
-    75: "O_pmHG",
-    76: "O_alHG",
-    77: "O_Te10",
-    78: "O_Te11",
-    79: "O_Te12",
-    80: "O_mSTG",
-    81: "O_pSTG",
-    82: "O_IFG",
+    76: "O_pmHG",
+    77: "O_alHG",
+    78: "O_Te10",
+    79: "O_Te11",
+    80: "O_Te12",
+    81: "O_mSTG",
+    82: "O_pSTG",
+    83: "O_IFG",
 }
-region2num = {v: k for k, v in num2region.items()}
 
-temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 75, 76, 77, 78, 79, 80, 81]
-temporal_regions_superlist = [num2region[num] for num in temporal_regions_nums]
-temporal_regions_superlist += ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
-
-
-num2region_mni = {
-    0: 'unknown',
-    1: 'bankssts',
-    2: 'caudalanteriorcingulate',
-    3: 'caudalmiddlefrontal',
-    4: 'corpuscallosum',
-    5: 'cuneus',
-    6: 'entorhinal',
-    7: 'fusiform',
-    8: 'inferiorparietal',
-    9: 'inferiortemporal',
-    10: 'isthmuscingulate',
-    11: 'lateraloccipital',
-    12: 'lateralorbitofrontal',
-    13: 'lingual',
-    14: 'medialorbitofrontal',
-    15: 'middletemporal',
-    16: 'parahippocampal',
-    17: 'paracentral',
-    18: 'parsopercularis',
-    19: 'parsorbitalis',
-    20: 'parstriangularis',
-    21: 'pericalcarine',
-    22: 'postcentral',
-    23: 'posteriorcingulate',
-    24: 'precentral',
-    25: 'precuneus',
-    26: 'rostralanteriorcingulate',
-    27: 'rostralmiddlefrontal',
-    28: 'superiorfrontal',
-    29: 'superiorparietal',
-    30: 'superiortemporal',
-    31: 'supramarginal',
-    32: 'frontalpole',
-    33: 'temporalpole',
-    34: 'transversetemporal',
-    35: 'insula',
-    36: 'cMTG',
-    37: 'mMTG',
-    38: 'rMTG',
-    39: 'cSTG',
-    40: 'mSTG',
-    41: 'rSTG',
+num2region_DK_custom = {
     # My custom labels
     42: "O_IFG",
 }
-region2num_mni = {v: k for k, v in num2region_mni.items()}
-
 
 class Hemisphere:
     def __init__(
@@ -171,6 +43,8 @@ class Hemisphere:
         hemi: str,
         surf_type: str = "pial",
         subject: str = "fsaverage",
+        coordinate_space: str = 'FSAverage',
+        atlas=None,
         subject_dir=None,
     ):
         """
@@ -185,6 +59,12 @@ class Hemisphere:
             files can be found.
         subject : str, default='fsaverage'
             Subject to use, must be a directory within ``subject_dir``
+        coordinate_space : str, default='FSAverage'
+            Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
+        atlas : str, default=None
+            Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
+            and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
+            ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
         subject_dir : str/path-like, defaults to SUBJECT_DIR environment variable, or the current directory
             if that does not exist.
             Path containing the subject's folder.
@@ -193,41 +73,50 @@ class Hemisphere:
             raise ValueError(f"Argument `hemi` should be in {HEMIS}.")
         if surf_type not in SURF_TYPES:
             raise ValueError(f"Argument `surf_type` should be in {SURF_TYPES}.")
+        if not atlas:
+            if coordinate_space == 'FSAverage':
+                atlas = 'Destrieux'
+            # Use DK for MNI152 or any other
+            else:
+                atlas = 'Desikan-Killiany'
 
         self.hemi = hemi
         self.surf_type = surf_type
         self.subject = subject
+        self.coordinate_space = coordinate_space
 
         if subject_dir is None:
             subject_dir = os.environ.get("SUBJECTS_DIR", "./")
 
         self.subject_dir = subject_dir
-        
-        self.atlas = 'FSAverage'
 
-        if os.path.exists(self.surf_file(f"{hemi}.{surf_type}")):
-            self.surf = read_geometry(self.surf_file(f"{hemi}.{surf_type}"))
-        else:
+        if atlas not in ['Desikan-Killiany', 'Destrieux'] and not os.path.exists(self.label_file(f'{self.hemi}.{atlas}.annot')):
+            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux"')
+        self.atlas = atlas
+
+        # Check if fsaverage geometry exists
+        if self.coordinate_space == 'FSAverage':
+            if os.path.exists(self.surf_file(f"{hemi}.{surf_type}")):
+                self.surf = read_geometry(self.surf_file(f"{hemi}.{surf_type}"))
+                self.surf_pial = read_geometry(self.surf_file(f"{hemi}.pial"))
+            else:
+                self.coordinate_space = 'MNI152'
+                print('Trying MNI152 coordinate space')
+        # Use MN152 coordinate space if not
+        if self.coordinate_space == 'MNI152':
             # try to find .mat file
             surf_ = loadmat(self.surf_file(f"{hemi}_pial.mat"))
             coords, faces = surf_['coords'], surf_['faces']
             faces -= 1 # make faces zero-indexed
             self.surf = (coords, faces)
-            self.atlas = 'MNI152'
-        
-        if self.atlas == 'FSAverage':
-            self.surf_pial = read_geometry(self.surf_file(f"{hemi}.pial"))
-        else:
-            # try to find .mat file
-            surf_ = loadmat(self.surf_file(f"{hemi}_pial.mat"))
-            coords, faces = surf_['coords'], surf_['faces']
-            faces -= 1 # make faces zero-indexed
             self.surf_pial = (coords, faces)
+        if self.coordinate_space not in ['FSAverage','MNI152']:
+            raise ValueError(f"Argument `coordinate_space`={self.coordinate_space} not implemented.")
         
         try:
             self.cort = np.sort(read_label(self.label_file(f"{hemi}.cortex.label")))
         except Exception as e:
-            logger.warning(f'No {hemi}.cortext.label file found. Assuming the entire surface is cortex.')
+            logger.warning(f'No {hemi}.cortex.label file found. Assuming the entire surface is cortex.')
             self.cort = np.arange(self.surf[0].shape[0])
     
         try:
@@ -284,30 +173,43 @@ class Hemisphere:
                 self.ignore[load_freesurfer_label(annot_file, reg)] = True
 
         self.labels = np.zeros(self.n_verts, dtype=int)
-        annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
-        annot_file_mni = self.label_file(f"FSL_MNI152.{self.hemi}.aparc.split_STG_MTG.annot")
-        if self.atlas == 'FSAverage':
-            for ind, reg in num2region.items():
-                if reg.startswith("O"):
-                    continue
-                self.labels[load_freesurfer_label(annot_file, reg)] = ind
-        elif self.atlas == 'MNI152':
-            for ind, reg in num2region_mni.items():
-                if reg.startswith("O"):
-                    continue
-                self.labels[load_freesurfer_label(annot_file_mni, reg)] = ind
+
+        if self.coordinate_space == 'MNI152':
+            if self.atlas == 'Desikan-Killiany':
+                annot_file = self.label_file(f"FSL_MNI152.{self.hemi}.aparc.split_STG_MTG.annot")
+            else:
+                annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
+
+        elif self.coordinate_space  == "FSAverage":
+            if self.atlas == 'Desikan-Killiany':
+                annot_file = self.label_file(f"{self.hemi}.aparc.annot")
+            elif self.atlas == 'Destrieux':
+                annot_file = self.label_file(f"{self.hemi}.aparc.a2009s.annot")
+            else:
+                annot_file = self.label_file(f'{self.hemi}.{self.atlas}.annot')
+
         else:
-            raise ValueError('Bad atlas')
-        self.labels[self.ignore] = 0
-        if self.atlas == 'FSAverage':
-            self.num2label = num2region
-            self.label2num = {v: k for k, v in self.num2label.items()}
-        elif self.atlas == 'MNI152':
-            self.num2label = num2region_mni
-            self.label2num = {v: k for k, v in self.num2label.items()}
-        else:
-            raise ValueError('Bad atlas')
+            raise ValueError('Bad coordinate space')
             
+        if os.path.exists(annot_file):
+            _,_,regions = read_annot(annot_file)
+            regions = [i.decode("utf-8") for i in regions]
+            num2region = {k:v for k,v in enumerate(regions)}
+
+            for ind, reg in num2region.items():
+                self.labels[load_freesurfer_label(annot_file, reg)] = ind
+        else:
+            raise ValueError('Bad atlas. Try "Desikan-Killiany" or "Destrieux".')
+
+        if self.atlas == 'Destrieux':
+            num2region.update(num2region_D_custom)
+        elif self.atlas == 'Desikan-Killiany' and self.coordinate_space == 'MNI152':
+            num2region.update(num2region_DK_custom)
+
+        self.labels[self.ignore] = 0
+        self.num2label = num2region
+        self.label2num = {v: k for k, v in self.num2label.items()}
+
         self.simplified = False
 
         self.is_mangled_hg = False
@@ -319,13 +221,13 @@ class Hemisphere:
 
     def simplify_labels(self):
         """
-        Simplify Destrieux labels into shortforms.
+        Simplify Destrieux and Desikan-Killiany labels into shortforms.
 
         Returns
         -------
         self : instance of self
         """
-        if self.atlas == 'FSAverage':
+        if self.atlas == 'Destrieux':
             conversions = {
                 "Other": [],  # Autofill all uncovered vertecies
                 "HG": ["G_temp_sup-G_T_transv"],
@@ -353,8 +255,8 @@ class Hemisphere:
             }
             
 
-        elif self.atlas == 'MNI152':
-            d1 = {k: [k] for k in region2num_mni.keys() if k not in ['O_IFG','parsopercularis','parstriangularis','parsorbitalis']}
+        elif self.atlas == 'Desikan-Killiany':
+            d1 = {k: [k] for k in self.label2num.keys() if k not in ['O_IFG','parsopercularis','parstriangularis','parsorbitalis']}
             d2_override = {
                 "Other": [],
                 "IFG": ["O_IFG"],
@@ -428,6 +330,7 @@ class Hemisphere:
         """
         if isinstance(labels, str):
             labels = (labels,)
+        labels = [l for l in labels if l in self.label2num]
 
         verts = np.zeros(self.n_verts, dtype=bool)
         zones = np.zeros(self.n_verts, dtype=int)
@@ -502,8 +405,8 @@ class Hemisphere:
             )
         self.is_mangled_hg = True
 
-        if self.atlas == 'MNI152':
-            raise ValueError(f'split_hg() is not supported for MNI atlas.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'split_hg() only supported for Destrieux atlas.')
             
         hg = self.filter_labels(["G_temp_sup-G_T_transv", "HG"])
 
@@ -621,8 +524,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.atlas == 'MNI152':
-            raise ValueError(f'remove_tts() is not supported for MNI atlas.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'remove_tts() only supported for Destrieux atlas.')
         
         if self.is_mangled_tts:
             raise RuntimeError(
@@ -679,8 +582,8 @@ class Hemisphere:
         -------
         self : instance of self
         """
-        if self.atlas == 'MNI152':
-            raise ValueError(f'split_stg() is not supported for MNI atlas.')
+        if self.atlas != 'Destrieux':
+            raise ValueError(f'split_stg() only supported for Destrieux atlas.')
         
         if self.is_mangled_stg:
             raise RuntimeError(
@@ -723,7 +626,7 @@ class Hemisphere:
             )
         self.is_mangled_ifg = True
 
-        if self.atlas == 'FSAverage':
+        if self.atlas == 'Destrieux':
             ifg = self.filter_labels(
                 [
                     "G_front_inf-Opercular",
@@ -734,7 +637,7 @@ class Hemisphere:
                     "IFG.orb",
                 ]
             )
-        else: # MNI152
+        elif self.atlas == 'Desikan-Killiany':
             ifg = self.filter_labels(
                 [
                     "parsopercularis",
@@ -745,6 +648,9 @@ class Hemisphere:
                     "IFG.orb",
                 ]
             )
+        else:
+            print('No change for coordinate space', self.coordinate_space)
+            return self
 
         self.labels[ifg] = self.label2num["IFG" if self.simplified else "O_IFG"]
 
@@ -755,8 +661,6 @@ class Hemisphere:
         self.alpha = np.ones(self.surf[1].shape[0])
         self.keep_visible = np.ones_like(self.overlay).astype("bool")
         self.keep_visible_cells = np.ones_like(self.alpha).astype("bool")
-        self.has_overlay = np.zeros_like(self.overlay).astype("bool")
-        self.has_overlay_cells = np.zeros_like(self.alpha).astype("bool")
         return self
 
     def paint_overlay(self, labels, value=1):
@@ -766,10 +670,11 @@ class Hemisphere:
         Returns:
             self
         """
-        verts, add_overlay, _ = self.zones(labels)
-        self.overlay[verts] = value
-        self.has_overlay[verts == 1] = True
-        self.has_overlay_cells[add_overlay == 1] = True
+        if isinstance(labels, str):
+            labels = [labels]
+        for label in labels:
+            if label in self.label2num:
+                self.overlay[self.labels==self.label2num[label]] = value
         return self
     
     def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist, roi='all'):
@@ -801,9 +706,13 @@ class Hemisphere:
         if isinstance(roi, str) and roi == 'all':
             roi_list = self.label_names
         elif isinstance(roi, str) and roi == 'temporal':
-            if self.atlas == 'MNI152':
-                raise ValueError("roi='temporal' is not supported for MNI brain. Must specify list of specific region names")
-            roi_list = temporal_regions_superlist
+            if self.atlas != 'Destrieux':
+                raise ValueError("roi='temporal' only supported for Destrieux atlas. Must specify list of specific region names")
+            if self.simplified:
+                roi_list = ['alHG','pmHG','HG','TTS','PT','PP','MTG','ITG','mSTG','pSTG','STG','STS','T.Pole']
+            else:
+                temporal_regions_nums = [33, 34, 35, 36, 74, 41, 43, 72, 73, 38, 37, 76, 77, 78, 79, 80, 81, 82]
+                roi_list = [self.num2label[num] for num in temporal_regions_nums]
         else:
             roi_list = roi
             assert isinstance(roi, list)
@@ -845,8 +754,6 @@ class Hemisphere:
             trigs[i] = np.mean([verts[self.trigs[i, j]] != 0 for j in range(3)])
 
         self.overlay[updated_vertices] = smoothed_values[updated_vertices]
-        self.has_overlay[updated_vertices] = True
-        self.has_overlay_cells[trigs == 1] = True
         
         return self
         
@@ -879,6 +786,28 @@ class Hemisphere:
 
         return self
 
+    def parcellate_overlay(self, merge_func=np.mean):
+        """
+        Merges overlay values within each parcel for a single hemisphere.
+
+        Parameters
+        ----------
+        merge_func : callable, default=numpy.mean
+            Function to merge values within each parcel.  Should accept a 1D
+            NumPy array and return a scalar.
+        """
+        # Vectorize label to number conversion for efficiency
+        label_nums = np.array([self.label2num[label] for label in self.label_names], dtype=self.labels.dtype)
+        
+        # Vectorize the core logic.
+        parcellated_overlay = np.zeros_like(self.overlay) # Create an empty array like self.overlay
+        for i, label_num in enumerate(label_nums):
+            inds = self.labels == label_num
+            if inds.any(): # important check in case a label has no vertices
+                parcellated_overlay[inds] = merge_func(self.overlay[inds])
+        self.overlay = parcellated_overlay
+        return self
+
     def set_visible(self, labels, min_alpha=0):
         keep_visible, self.alpha, _ = self.zones(labels, min_alpha=min_alpha)
         self.keep_visible = keep_visible > min_alpha
@@ -894,7 +823,12 @@ class Hemisphere:
 
 class Brain:
     def __init__(
-        self, surf_type: str = "pial", subject: str = "fsaverage", subject_dir=None
+        self,
+        surf_type: str = "pial", 
+        subject: str = "fsaverage", 
+        coordinate_space: str = 'FSAverage',
+        atlas=None,
+        subject_dir=None
     ):
         """
         Brain representation containing a left and right hemisphere. Can be used for plotting,
@@ -902,13 +836,17 @@ class Brain:
 
         Parameters
         ----------
-        hemi : str
-            Either 'lh' or 'rh'.
         surf_type : str, default='pial'
             Cortical surface type, either 'pial' or 'inflated' or another if the corresponding
             files can be found.
         subject : str, default='fsaverage'
             Subject to use, must be a directory within ``subject_dir``
+        coordinate_space : str, default='FSAverage'
+            Coordinate space of brain vertices. Must be 'FSAverage' or 'MNI152'
+        atlas : str, default=None
+            Atlas for brain parcellation. Defaults to 'Destrieux' for coordinate_space='FSAverage'
+            and 'Desikan-Killiany' for 'MNI152'. Can also be an annotation file name given by
+            ``{subject_dir}/{subject}/label/?h.{atlas}.annot``
         subject_dir : str/path-like, defaults to SUBJECT_DIR environment variable, or the current directory
             if that does not exist.
             Path containing the subject's folder.
@@ -942,8 +880,8 @@ class Brain:
         self.surf_type = surf_type
         self.subject = subject
 
-        self.lh = Hemisphere("lh", surf_type, subject, subject_dir=subject_dir)
-        self.rh = Hemisphere("rh", surf_type, subject, subject_dir=subject_dir)
+        self.lh = Hemisphere("lh", surf_type, subject, coordinate_space, atlas, subject_dir=subject_dir)
+        self.rh = Hemisphere("rh", surf_type, subject, coordinate_space, atlas, subject_dir=subject_dir)
 
     @property
     def num2label(self):
@@ -1040,11 +978,12 @@ class Brain:
         if is_surf is not None:
             labels[~is_surf] = 0
         if text:
-            labels = np.array([self.num2label[label] for label in labels])
+            labels = np.array([self.lh.num2label[label] if is_left[i] else self.rh.num2label[label]
+             for i,label in enumerate(labels)])
         return labels
 
     def annotate_coords(
-        self, coords, isleft, distance_cutoff=10, is_surf=None, text=True
+        self, coords, isleft=None, distance_cutoff=10, is_surf=None, text=True, get_dists=False,
     ):
         """
         Get labels (like pmHG, IFG, etc) for coordinates. Note, the coordinates should match the
@@ -1055,23 +994,31 @@ class Brain:
         ----------
         coords : np.ndarray
             Array of coordinates, shape (num_elecs, 3).
-        isleft : np.ndarray
-            Boolean array whether each electrode belongs to the left hemisphere, shape (num_elecs,).
+        isleft : np.ndarray (elecs,), optional
+            If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
+            If not given, this will be inferred from the first dimension of the coords (negative is left).
         distance_cutoff : float, default=10
-            Electrodes further than this distance (in mm) from the cortical surface will be labeled as "Other"
+            Electrodes further than this distance (in mm) from the cortical surface will be labeled as None
         is_surf : boolean np.ndarray
             Array of the same shape as the number of vertices in the surface (e.g. len(self.lh.surf[0])) indicating
             whether those points should be included as surface options. If an electrode is closest to a point
             with a False indicator in this array, then it will get None as its label.
         text : bool, default=True
             Whether to return labels as string names, or integer labels.
+        get_dists : bool, default=False
+            Whether to return distances for each electrode to the nearest vertex.
 
         Returns
         -------
         labels : np.ndarray
             Array of labels, either as strings or ints.
+        dists : np.ndarray, optional
+            Array of minimum distances as floats
 
         """
+        if isleft is None:
+            isleft = coords[:,0] < 0
+
         verts, dists = get_nearest_vert_index(
             coords, isleft, self.lh.surf, self.rh.surf, verbose=False
         )
@@ -1082,9 +1029,12 @@ class Brain:
                 for lab, dist in zip(labels, dists)
             ]
         )
-        return labels
+        if get_dists:
+            return labels, dists
+        else:
+            return labels
 
-    def distance_from_region(self, coords, isleft, region="pmHG", metric="surf"):
+    def distance_from_region(self, coords, isleft=None, region="pmHG", metric="surf"):
         """
         Get distance from a certain region for each electrode's coordinates. Can compute
         distance along the cortical surface or as euclidean distance. For proper results, assuming
@@ -1094,8 +1044,9 @@ class Brain:
         ----------
         coords : np.ndarray
             Array of coordinates in pial space for this brain's subject_id, shape (num_elecs, 3).
-        isleft : np.ndarray
-            Boolean array whether each electrode belongs to the left hemisphere, shape (num_elecs,).
+        isleft : np.ndarray (elecs,), optional
+            If provided, specifies a boolean which is True for each electrode that is in the left hemisphere.
+            If not given, this will be inferred from the first dimension of the coords (negative is left).
         region : str, default='pmHG'
             Anatomical label. Must exist in the labels for the brain.
         metric : {'surf','euclidean'}, default='surf'
@@ -1106,6 +1057,8 @@ class Brain:
         distances : np.ndarray
             Array of distances, in mm.
         """
+        if isleft is None:
+            isleft = coords[:,0] < 0
 
         region_label_num = self.label2num[region]
 
@@ -1293,6 +1246,32 @@ class Brain:
             isleft = coords[:,0] < 0
         self.lh.interpolate_electrodes_onto_brain(coords[isleft], values[isleft], k=k, max_dist=max_dist, roi=roi)
         self.rh.interpolate_electrodes_onto_brain(coords[~isleft], values[~isleft], k=k, max_dist=max_dist, roi=roi)
+        return self
+
+    def parcellate_overlay(self, merge_func=np.mean):
+        """Merges brain overlay values within each atlas parcel.
+
+        This method applies a merging function to the overlay values within each
+        anatomical parcel defined by an atlas.  It is typically used after
+        interpolating electrode data onto the brain surface
+        (e.g., via `brain.interpolate_electrodes_onto_brain()`) to summarize
+        the data within each parcel.
+
+        Parameters
+        ----------
+        merge_func : callable, default=numpy.mean
+            The function used to combine the overlay values within each parcel.
+            The function should accept an array-like object of values and return a
+            single value.  Common examples include `numpy.mean` (default),
+            `numpy.median`, and `numpy.max`.
+
+        Returns
+        -------
+        self : instance of self
+            Returns the instance itself, with the overlay data parcellated.
+        """
+        self.lh.parcellate_overlay(merge_func)
+        self.rh.parcellate_overlay(merge_func)
         return self
 
 
