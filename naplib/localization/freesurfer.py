@@ -670,8 +670,11 @@ class Hemisphere:
         Returns:
             self
         """
+        if isinstance(labels, str):
+            labels = [labels]
         for label in labels:
-            self.overlay[self.labels==self.label2num[label]] = value
+            if label in self.label2num:
+                self.overlay[self.labels==self.label2num[label]] = value
         return self
     
     def interpolate_electrodes_onto_brain(self, coords, values, k, max_dist, roi='all'):
