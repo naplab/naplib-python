@@ -786,6 +786,28 @@ class Hemisphere:
 
         return self
 
+    def parcellate_overlay(self, merge_func=np.mean):
+        """
+        Merges overlay values within each parcel for a single hemisphere.
+
+        Parameters
+        ----------
+        merge_func : callable
+            Function to merge values within each parcel.  Should accept a 1D
+            NumPy array and return a scalar.
+        """
+        # Vectorize label to number conversion for efficiency
+        label_nums = np.array([self.label2num[label] for label in self.label_names], dtype=self.labels.dtype)
+        
+        # Vectorize the core logic.
+        parcellated_overlay = np.zeros_like(self.overlay) # Create an empty array like self.overlay
+        for i, label_num in enumerate(label_nums):
+            inds = self.labels == label_num
+            if inds.any(): # important check in case a label has no vertices
+                parcellated_overlay[inds] = merge_func(self.overlay[inds])
+        self.overlay = parcellated_overlay
+        return self
+
     def set_visible(self, labels, min_alpha=0):
         keep_visible, self.alpha, _ = self.zones(labels, min_alpha=min_alpha)
         self.keep_visible = keep_visible > min_alpha
@@ -1224,6 +1246,32 @@ class Brain:
             isleft = coords[:,0] < 0
         self.lh.interpolate_electrodes_onto_brain(coords[isleft], values[isleft], k=k, max_dist=max_dist, roi=roi)
         self.rh.interpolate_electrodes_onto_brain(coords[~isleft], values[~isleft], k=k, max_dist=max_dist, roi=roi)
+        return self
+
+    def parcellate_overlay(self, merge_func=np.mean):
+        """Merges brain overlay values within each atlas parcel.
+
+        This method applies a merging function to the overlay values within each
+        anatomical parcel defined by an atlas.  It is typically used after
+        interpolating electrode data onto the brain surface
+        (e.g., via `brain.interpolate_electrodes_onto_brain()`) to summarize
+        the data within each parcel.
+
+        Parameters
+        ----------
+        merge_func : callable, optional
+            The function used to combine the overlay values within each parcel.
+            The function should accept an array-like object of values and return a
+            single value.  Common examples include `numpy.mean` (default),
+            `numpy.median`, and `numpy.max`.
+
+        Returns
+        -------
+        self : instance of self
+            Returns the instance itself, with the overlay data parcellated.
+        """
+        self.lh.parcellate_overlay(merge_func)
+        self.rh.parcellate_overlay(merge_func)
         return self
 
 
