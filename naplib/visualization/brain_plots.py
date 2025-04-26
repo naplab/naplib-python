@@ -18,9 +18,9 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
     ---------
     hemi : {'lh','rh'}
         Hemisphere
-    mode : {'lateral','medial','frontal','top','best'}, default='lateral'
+    mode : {'lateral','medial','frontal','occipital',top','bottom',best'}, default='lateral'
         What view to return azimuth and elevation for. One of 'lateral',
-        'best', 'medial','frontal','top'
+        'best', 'medial','frontal','occipital',top','bottom'
     backend : {'mpl','plotly'}, defualt='mpl'
         Plotting backend, either 'mpl' or 'plotly'
 
@@ -55,6 +55,14 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
         else:
             return (0, 90)
 
+    elif mode == "occipital":
+        if backend == "plotly":
+            eye = dict(x=0, y=-1, z=0)
+            center = dict(x=0, y=0, z=0)
+            return eye, center
+        else:
+            return (0, 270)
+
     elif mode == "top":
         if backend == "plotly":
             eye = dict(x=0, y=0, z=1)
@@ -62,6 +70,14 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
             return eye, center
         else:
             return (90, 270)
+
+    elif mode == "bottom":
+        if backend == "plotly":
+            eye = dict(x=0, y=0, z=-1)
+            center = dict(x=0, y=0, z=0)
+            return eye, center
+        else:
+            return (270, 270)
 
     elif mode == "best":
         if backend == "plotly":
@@ -75,10 +91,15 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
 
 
 def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin=None, vmax=None):
+    if isinstance(view, tuple):
+        elev, azim = view
+    else:
+        elev, azim = _view(hemi.hemi, mode=view)
+
     surfdist_viz(
         *hemi.surf,
         hemi.overlay,
-        *_view(hemi.hemi, mode=view),
+        elev, azim,
         cmap=cmap,
         threshold=threshold,
         alpha=hemi.alpha,
@@ -111,8 +132,10 @@ def plot_brain_overlay(
     hemi : {'both', 'lh', 'rh'}, default='both'
         Hemisphere(s) to plot. If 'both', then 2 subplots are created, one for each hemisphere.
         Otherwise only one hemisphere is displayed with its overlay.
-    view : {'lateral','medial','frontal','top','best'}, default='best'
-        Which view to plot for each hemisphere. 
+    view : {'lateral','medial','frontal','occipital',top','bottom',best'} | tuple, default='best'
+        View of the brain to display. A tuple can specify the (elevation, azimuth) for matplotlib backend,
+        or a tuple of dicts for (eye, center), which are the plotly.graph_objects.layout.scene.camera.eye and
+        plotly.graph_objects.layout.scene.camera.center for plotly backend.
     vmin : float, optional
         Minimum value for colormap. If not given, will use cmap_quantile or range or overlay values.
     vmax : float, optional
@@ -302,7 +325,7 @@ def plot_brain_elecs(
     hemi : {'both', 'lh', 'rh'}, default='both'
         Hemisphere(s) to plot. If 'both', then 2 subplots are created, one for each hemisphere.
         Otherwise only one hemisphere is displayed with its electrodes.
-    view : {'lateral','frontal','medial','top','best'} | tuple, default='lateral'
+    view : {'lateral','frontal','occipital',medial','top','bottom',best'} | tuple, default='lateral'
         View of the brain to display. A tuple can specify the (elevation, azimuth) for matplotlib backend,
         or a tuple of dicts for (eye, center), which are the plotly.graph_objects.layout.scene.camera.eye and
         plotly.graph_objects.layout.scene.camera.center for plotly backend.
