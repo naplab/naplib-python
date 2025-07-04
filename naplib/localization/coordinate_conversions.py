@@ -40,7 +40,7 @@ def fsaverage_to_mni152(coords):
     new_coords = (xform @ old_coords).T
     return new_coords
 
-def a_to_b(coords, src_pial, src_sphere, dst_pial, dst_sphere):
+def src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere):
     """
     Convert 3D coordinates from any space to another space.
     Each subject comes with a bunch of MRI files; In this function these files are used:
