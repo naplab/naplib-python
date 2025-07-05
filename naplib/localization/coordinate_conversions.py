@@ -68,6 +68,8 @@ def src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere, verbose=False
         Path to the destination pial surface file (e.g., 'lh.pial')
     dst_sphere : str
         Path to the destination sphere file (e.g., 'lh.sphere.reg')
+    verbose : bool, optional
+        If True, prints additional information about the conversion process. Default is False.
     
     Returns
     -------
