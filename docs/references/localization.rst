@@ -13,6 +13,10 @@ Convert from FSAverage to MNI152
 
 .. autofunction:: fsaverage_to_mni152
 
+Convert from any source space to any target space
+------------------------------------------------
+
+.. autofunction:: src_to_dst
 
 Localization on a Freesurfer Brain
 ----------------------------------
