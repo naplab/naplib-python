@@ -40,7 +40,7 @@ def fsaverage_to_mni152(coords):
     new_coords = (xform @ old_coords).T
     return new_coords
 
-def src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere):
+def src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere, verbose=False):
     """
     Convert 3D coordinates from any space to another space.
     Each subject comes with a bunch of MRI files; In this function these files are used:
@@ -104,7 +104,8 @@ def src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere):
     tree_elecs = cKDTree(lh_verts_sub)
     _, mapping_indices_elecs = tree_elecs.query(coords, k=1)
     
-    print(f"#Electrodes in LH: {np.sum(mapping_indices_elecs < lh_threshold)}, RH: {np.sum(mapping_indices_elecs >= lh_threshold)}")
+    if verbose:
+        print(f"#Electrodes in LH: {np.sum(mapping_indices_elecs < lh_threshold)}, RH: {np.sum(mapping_indices_elecs >= lh_threshold)}")
 
     mapping_indices_elecs_lh = mapping_indices_elecs[mapping_indices_elecs < lh_threshold]
     _, mapping_indices_elecs_warped_lh = tree_lh.query(src_sphere[mapping_indices_elecs_lh], k=1)
