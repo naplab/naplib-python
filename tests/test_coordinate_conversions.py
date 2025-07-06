@@ -4,11 +4,7 @@ import mne
 from naplib.localization import mni152_to_fsaverage, fsaverage_to_mni152, src_to_dst
 
 def test_mni152_fsaverage_conversions():
-  coords_tmp = np.array([[13.987, 36.
-  
-  , 10.067], [-10.54, 24.
-  
-  , 15.555]])
+  coords_tmp = np.array([[13.987, 36.5, 10.067], [-10.54, 24.5, 15.555]])
   coords_tmp2 = mni152_to_fsaverage(coords_tmp)
   expected_2 = np.array(
     [[ 14.15310394,  34.73510469,   9.41733728],
