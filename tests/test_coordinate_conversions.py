@@ -18,13 +18,13 @@ def test_mni152_fsaverage_conversions():
 def test_src_to_dst():
   coords = np.random.rand(2, 3) * 5
   
-  os.makedirs('./.fsaverage_tmp', exist_ok=True)
-  mne.datasets.fetch_fsaverage('./.fsaverage_tmp/')
+  os.makedirs('./.fsaverage_tmp2', exist_ok=True)
+  mne.datasets.fetch_fsaverage('./.fsaverage_tmp2/')
   
-  src_pial = './.fsaverage_tmp/fsaverage/surf/lh.pial'
-  src_sphere = './.fsaverage_tmp/fsaverage/surf/lh.sphere.reg'
-  dst_pial = './.fsaverage_tmp/fsaverage/surf/lh.inflated'
-  dst_sphere = './.fsaverage_tmp/fsaverage/surf/lh.sphere.reg'
+  src_pial = './.fsaverage_tmp2/fsaverage/surf/lh.pial'
+  src_sphere = './.fsaverage_tmp2/fsaverage/surf/lh.sphere.reg'
+  dst_pial = './.fsaverage_tmp2/fsaverage/surf/lh.inflated'
+  dst_sphere = './.fsaverage_tmp2/fsaverage/surf/lh.sphere.reg'
 
   inflated_coords = src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere)
   
