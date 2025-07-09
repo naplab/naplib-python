@@ -1,5 +1,7 @@
 import numpy as np
-from naplib.localization import mni152_to_fsaverage, fsaverage_to_mni152
+import os
+import mne
+from naplib.localization import mni152_to_fsaverage, fsaverage_to_mni152, src_to_dst
 
 def test_mni152_fsaverage_conversions():
   coords_tmp = np.array([[13.987, 36.5, 10.067], [-10.54, 24.5, 15.555]])
@@ -12,3 +14,18 @@ def test_mni152_fsaverage_conversions():
 
   coords_tmp3 = fsaverage_to_mni152(coords_tmp2)
   assert np.allclose(coords_tmp3, coords_tmp, rtol=1e-3)
+
+def test_src_to_dst():
+  coords = np.random.rand(2, 3) * 5
+  
+  os.makedirs('./.fsaverage_tmp2', exist_ok=True)
+  mne.datasets.fetch_fsaverage('./.fsaverage_tmp2/')
+  
+  src_pial = './.fsaverage_tmp2/fsaverage/surf/lh.pial'
+  src_sphere = './.fsaverage_tmp2/fsaverage/surf/lh.sphere.reg'
+  dst_pial = './.fsaverage_tmp2/fsaverage/surf/lh.inflated'
+  dst_sphere = './.fsaverage_tmp2/fsaverage/surf/lh.sphere.reg'
+
+  inflated_coords = src_to_dst(coords, src_pial, src_sphere, dst_pial, dst_sphere)
+  
+  assert inflated_coords.shape[0] == coords.shape[0]
