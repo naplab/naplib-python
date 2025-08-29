@@ -124,6 +124,7 @@ def surfdist_viz(
     alpha="auto",
     bg_map=None,
     bg_on_stat=False,
+    bg_alpha=1.0,
     figsize=None,
     ax=None,
     vmin=None,
@@ -158,6 +159,8 @@ def surfdist_viz(
                  multiplied with the background map for shadowing. Otherwise,
                  only areas that are not covered by the statsitical map after
                  thresholding will show shadows.
+    bg_alpha : float, determines the opacity of the background map.
+               bg_alpha defaults to 1.0 and is only relevant if bg_on_stat
     figsize : tuple of intergers, dimensions of the figure that is produced.
     ax : Axis
         Axis to plot on, with 3d projection.
@@ -226,7 +229,7 @@ def surfdist_viz(
             bg_faces = np.mean(bg_data[faces], axis=1)
             bg_faces = bg_faces - bg_faces.min()
             bg_faces = bg_faces / bg_faces.max()
-            face_colors = plt.cm.gray_r(bg_faces)
+            face_colors = plt.cm.gray_r(bg_faces * bg_alpha)
 
         # modify alpha values of background
         face_colors[:, 3] = alpha * face_colors[:, 3]

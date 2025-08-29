@@ -105,6 +105,7 @@ def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin
         alpha=hemi.alpha,
         bg_map=hemi.sulc,
         bg_on_stat=True,
+        bg_alpha=hemi.sulc_alpha,
         ax=ax,
         vmin=vmin,
         vmax=vmax
