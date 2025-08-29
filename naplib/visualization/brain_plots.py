@@ -90,7 +90,7 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
     raise ValueError(f"Unknown `mode`: {mode}.")
 
 
-def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin=None, vmax=None):
+def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin=None, vmax=None, light_source=True):
     if isinstance(view, tuple):
         elev, azim = view
     else:
@@ -108,14 +108,15 @@ def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin
         bg_alpha=hemi.sulc_alpha,
         ax=ax,
         vmin=vmin,
-        vmax=vmax
+        vmax=vmax,
+        light_source=light_source
     )
     ax.axes.set_axis_off()
     ax.grid(False)
 
 
 def plot_brain_overlay(
-    brain, cmap="coolwarm", ax=None, hemi='both', view="best", vmin=None, vmax=None, cmap_quantile=1.0, threshold=None, **kwargs
+    brain, cmap="coolwarm", ax=None, hemi='both', view="best", vmin=None, vmax=None, cmap_quantile=1.0, threshold=None, light_source=True, **kwargs
 ):
     """
     Plot brain overlay on the 3D cortical surface using matplotlib.
@@ -150,6 +151,11 @@ def plot_brain_overlay(
     threshold : positive float, optional
         If given, then only values on the overlay which are less -threshold or greater than threshold will
         be shown.
+    light_source: None, bool, or tuple of int, optional
+        Whether to apply a light source for shading. If True, the light
+        source position is inferred from `elev` and `azim`. If a tuple of
+        (alt, az), these values will be used to specify the light source
+        position. If None or False, no shading is applied. Default is True.
     **kwargs : kwargs
         Any other kwargs to pass to matplotlib.pyplot.figure (such as figsize)
 
@@ -217,9 +223,9 @@ def plot_brain_overlay(
     
             
     if ax[0] is not None:
-        _plot_hemi(brain.lh, cmap, ax[0], view=view, vmin=vmin, vmax=vmax, threshold=threshold)
+        _plot_hemi(brain.lh, cmap, ax[0], view=view, vmin=vmin, vmax=vmax, threshold=threshold, light_source=light_source)
     if ax[1] is not None:
-        _plot_hemi(brain.rh, cmap, ax[1], view=view, vmin=vmin, vmax=vmax, threshold=threshold)
+        _plot_hemi(brain.rh, cmap, ax[1], view=view, vmin=vmin, vmax=vmax, threshold=threshold, light_source=light_source)
 
     return fig, ax
 
