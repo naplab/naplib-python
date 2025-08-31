@@ -90,7 +90,7 @@ def _view(hemi, mode: str = "lateral", backend: str = "mpl"):
     raise ValueError(f"Unknown `mode`: {mode}.")
 
 
-def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin=None, vmax=None, light_source=True):
+def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin=None, vmax=None, light_source=False):
     if isinstance(view, tuple):
         elev, azim = view
     else:
@@ -116,7 +116,7 @@ def _plot_hemi(hemi, cmap="coolwarm", ax=None, view="best", threshold=None, vmin
 
 
 def plot_brain_overlay(
-    brain, cmap="coolwarm", ax=None, hemi='both', view="best", vmin=None, vmax=None, cmap_quantile=1.0, threshold=None, light_source=True, **kwargs
+    brain, cmap="coolwarm", ax=None, hemi='both', view="best", vmin=None, vmax=None, cmap_quantile=1.0, threshold=None, light_source=False, **kwargs
 ):
     """
     Plot brain overlay on the 3D cortical surface using matplotlib.
