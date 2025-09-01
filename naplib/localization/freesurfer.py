@@ -124,6 +124,7 @@ class Hemisphere:
         except Exception as e:
             logger.warning(f'No {hemi}.sulc file found. No sulcus information will be used.')
             self.sulc = None
+        self.sulc_alpha = 1.0
 
 
         self.load_labels()
